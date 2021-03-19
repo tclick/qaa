@@ -29,6 +29,7 @@ scikit-learn = "^0.24.1"
 dask = "^2021.3.0"
 pandas = "^1.2.3"
 MDAnalysis = "1.0.0"
+nox-poetry = "^0.8.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
