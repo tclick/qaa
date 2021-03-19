@@ -35,6 +35,7 @@ from typing import List, NoReturn, Tuple, Union
 
 import click
 from click import core
+
 from . import __version__
 
 CONTEXT_SETTINGS = dict(
