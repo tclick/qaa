@@ -29,7 +29,6 @@ scikit-learn = "^0.24.1"
 dask = "^2021.3.0"
 pandas = "^1.2.3"
 MDAnalysis = "1.0.0"
-nox-poetry = "^0.8.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
@@ -67,6 +66,7 @@ isort = "^5.7.0"
 towncrier = "^19.2.0"
 nox = "^2020.12.31"
 pytest-coverage = "^0.0"
+nox-poetry = "^0.8.4"
 
 [tool.poetry.scripts]
 qaa = "qaa.__main__:main"
