@@ -64,6 +64,8 @@ Pygments = "^2.7.2"
 ipython = "^7.21.0"
 isort = "^5.7.0"
 towncrier = "^19.2.0"
+nox = "^2020.12.31"
+pytest-coverage = "^0.0"
 
 [tool.poetry.scripts]
 qaa = "qaa.__main__:main"
@@ -77,7 +79,6 @@ source = ["qaa"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 100
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools>=52.0.0"]
