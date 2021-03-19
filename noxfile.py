@@ -5,7 +5,8 @@ from pathlib import Path
 from textwrap import dedent
 
 import nox
-from nox_poetry import Session, session
+from nox_poetry import Session
+from nox_poetry import session
 
 package = "qaa"
 python_versions = ["3.10", "3.9", "3.8", "3.7"]
