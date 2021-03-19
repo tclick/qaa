@@ -1,0 +1,11 @@
+{
+  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+  "author": "Timothy H. Click",
+  "email": "tclick@okstate.edu",
+  "friendly_name": "Quasi-Anharmonic Analysis",
+  "github_user": "tclick",
+  "license": "MIT",
+  "package_name": "qaa",
+  "project_name": "qaa",
+  "version": "0.1.0"
+}
