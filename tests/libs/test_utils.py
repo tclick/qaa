@@ -13,10 +13,28 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 
-import pytest
+import MDAnalysis as mda
+from numpy import testing
 
 from qaa.libs import utils
 
+from ..datafile import TOPWW, TRJWW
+
 
 class TestUtils:
-    pass
+    def test_positions(self):
+        """
+        GIVEN topology and trajectory filenames
+        WHEN the get_positions function is called
+        THEN return an array of positions with shape (n_frames, n_atoms, 3)
+        """
+        universe = mda.Universe(TOPWW, TRJWW)
+        n_atoms = universe.atoms.n_atoms
+        n_frames = universe.trajectory.n_frames
+
+        array = utils.get_positions(TOPWW, TRJWW)
+        assert array.shape == (n_frames, n_atoms, 3)
+        testing.assert_allclose(array[0], universe.atoms.positions)
+
+        universe.trajectory[-1]
+        testing.assert_allclose(array[-1], universe.atoms.positions)
