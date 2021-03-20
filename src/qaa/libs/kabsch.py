@@ -26,12 +26,12 @@ from typing import Optional, Tuple
 import numpy as np
 from scipy import linalg
 
-from .typing import Array
+from .typing import ArrayLike
 
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-def kabsch_rotate(P: Array, Q: Array, /) -> Array:
+def kabsch_rotate(P: ArrayLike, Q: ArrayLike, /) -> ArrayLike:
     """
     Rotate matrix P unto matrix Q using Kabsch algorithm.
 
@@ -48,14 +48,16 @@ def kabsch_rotate(P: Array, Q: Array, /) -> Array:
         (N, D) matrix, where N is points and D is dimension,
         rotated
     """
-    U: Array = kabsch(P, Q)
+    U: ArrayLike = kabsch(P, Q)
 
     # Rotate P
-    P: Array = P @ U
+    P: ArrayLike = P @ U
     return P
 
 
-def kabsch_fit(P: Array, Q: Array, /, W: Optional[Array] = None) -> Array:
+def kabsch_fit(
+    P: ArrayLike, Q: ArrayLike, /, W: Optional[ArrayLike] = None
+) -> ArrayLike:
     """Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
     An optional vector of weights W may be provided.
 
@@ -75,16 +77,16 @@ def kabsch_fit(P: Array, Q: Array, /, W: Optional[Array] = None) -> Array:
         rotated and translated.
     """
     if W is not None:
-        P: Array = kabsch_weighted_fit(P, Q, W, rmsd=False)
+        P: ArrayLike = kabsch_weighted_fit(P, Q, W, rmsd=False)
     else:
-        QC: Array = centroid(Q)
-        Q: Array = Q - QC
-        P: Array = P - centroid(P)
-        P: Array = kabsch_rotate(P, Q) + QC
+        QC: ArrayLike = centroid(Q)
+        Q: ArrayLike = Q - QC
+        P: ArrayLike = P - centroid(P)
+        P: ArrayLike = kabsch_rotate(P, Q) + QC
     return P
 
 
-def kabsch(P: Array, Q: Array) -> Array:
+def kabsch(P: ArrayLike, Q: ArrayLike) -> ArrayLike:
     """
     Using the Kabsch algorithm with two sets of paired point P and Q, centered
     around the centroid. Each vector set is represented as an NxD
@@ -98,18 +100,18 @@ def kabsch(P: Array, Q: Array) -> Array:
 
     Parameters
     ----------
-    P : Array
+    P : ArrayLike
         (N, D) array, where N is points and D is dimension.
-    Q : Array
+    Q : ArrayLike
         (N, D) array, where N is points and D is dimension.
 
     Returns
     -------
-    U : Array
+    U : ArrayLike
         Rotation matrix (D, D)
     """
     # Computation of the covariance matrix
-    C: Array = P.T @ Q
+    C: ArrayLike = P.T @ Q
 
     # Computation of the optimal rotation matrix
     # This can be done using singular value decomposition (SVD)
@@ -126,12 +128,14 @@ def kabsch(P: Array, Q: Array) -> Array:
         V[:, -1] = -V[:, -1]
 
     # Create Rotation matrix U
-    U: Array = V @ W
+    U: ArrayLike = V @ W
 
     return U
 
 
-def kabsch_weighted(P: Array, Q: Array, /, W: Optional[Array] = None) -> Array:
+def kabsch_weighted(
+    P: ArrayLike, Q: ArrayLike, /, W: Optional[ArrayLike] = None
+) -> ArrayLike:
     """
     Using the Kabsch algorithm with two sets of paired point P and Q.
     Each vector set is represented as an NxD matrix, where D is the
@@ -145,11 +149,11 @@ def kabsch_weighted(P: Array, Q: Array, /, W: Optional[Array] = None) -> Array:
     For more info see http://en.wikipedia.org/wiki/Kabsch_algorithm
     Parameters
     ----------
-    P : Array
+    P : ArrayLike
         (N, D) matrix, where N is points and D is dimension.
-    Q : Array
+    Q : ArrayLike
         (N, D) matrix, where N is points and D is dimension.
-    W : Array or None
+    W : ArrayLike or None
         (N, ) vector, where N is points.
 
     Returns
@@ -162,8 +166,8 @@ def kabsch_weighted(P: Array, Q: Array, /, W: Optional[Array] = None) -> Array:
            Root mean squared deviation between P and Q
     """
     # Computation of the weighted covariance matrix
-    C: Array = np.zeros((3, 3))
-    W: Array = np.ones_like(P) / len(P) if W is None else np.array([W, W, W]).T
+    C: ArrayLike = np.zeros((3, 3))
+    W: ArrayLike = np.ones_like(P) / len(P) if W is None else np.array([W, W, W]).T
 
     # NOTE UNUSED psq = 0.0
     # NOTE UNUSED qsq = 0.0
@@ -171,11 +175,11 @@ def kabsch_weighted(P: Array, Q: Array, /, W: Optional[Array] = None) -> Array:
     n: int = len(P)
     for i, j, k in itertools.product(range(3), range(n), range(3)):
         C[i, k] += P[j, i] * Q[j, k] * W[j, i]
-    CMP: Array = (P * W).sum(axis=0)
-    CMQ: Array = (Q * W).sum(axis=0)
-    PSQ: Array = (P * P * W).sum() - (CMP * CMP).sum() * iw
-    QSQ: Array = (Q * Q * W).sum() - (CMQ * CMQ).sum() * iw
-    C: Array = (C - np.outer(CMP, CMQ) * iw) * iw
+    CMP: ArrayLike = (P * W).sum(axis=0)
+    CMQ: ArrayLike = (Q * W).sum(axis=0)
+    PSQ: ArrayLike = (P * P * W).sum() - (CMP * CMP).sum() * iw
+    QSQ: ArrayLike = (Q * Q * W).sum() - (CMQ * CMQ).sum() * iw
+    C: ArrayLike = (C - np.outer(CMP, CMQ) * iw) * iw
 
     # Computation of the optimal rotation matrix
     # This can be done using singular value decomposition (SVD)
@@ -192,61 +196,63 @@ def kabsch_weighted(P: Array, Q: Array, /, W: Optional[Array] = None) -> Array:
         V[:, -1] = -V[:, -1]
 
     # Create Rotation matrix U, translation vector V, and calculate RMSD:
-    U: Array = V @ W
+    U: ArrayLike = V @ W
     msd: float = (PSQ + QSQ) * iw - 2.0 * S.sum()
     msd = np.clip(msd, 0.0)
     rmsd = np.sqrt(msd)
-    V: Array = np.zeros(3)
+    V: ArrayLike = np.zeros(3)
     for i in range(3):
         t: float = (U[i, :] * CMQ).sum()
         V[i] = CMP[i] - t
-    V: Array = V * iw
+    V: ArrayLike = V * iw
     return U, V, rmsd
 
 
 def kabsch_weighted_fit(
-    P: Array, Q: Array, /, W: Optional[Array] = None, rmsd: bool = False
-) -> Tuple[Array, float]:
+    P: ArrayLike, Q: ArrayLike, /, W: Optional[ArrayLike] = None, rmsd: bool = False
+) -> Tuple[ArrayLike, float]:
     """
     Fit P to Q with optional weights W.
     Also returns the RMSD of the fit if rmsd=True.
 
     Parameters
     ----------
-    P : Array
+    P : ArrayLike
        (N, D) matrix, where N is points and D is dimension.
-    Q : Array
+    Q : ArrayLike
        (N, D) matrix, where N is points and D is dimension.
-    W : Array
+    W : ArrayLike
        (N, ) vector, where N is points
     rmsd : bool
        If True, rmsd is returned as well as the fitted coordinates.
 
     Returns
     -------
-    P' : Array
+    P' : ArrayLike
        (N, D) matrix, where N is points and D is dimension.
     RMSD : float
        if the function is called with rmsd=True
     """
     R, T, RMSD = kabsch_weighted(Q, P, W)
-    PNEW: Array = (P @ R.T) + T
+    PNEW: ArrayLike = (P @ R.T) + T
     if rmsd:
         return PNEW, RMSD
     else:
         return PNEW
 
 
-def kabsch_weighted_rmsd(P: Array, Q: Array, /, W: Optional[Array] = None) -> float:
+def kabsch_weighted_rmsd(
+    P: ArrayLike, Q: ArrayLike, /, W: Optional[ArrayLike] = None
+) -> float:
     """Calculate the RMSD between P and Q with optional weighhts W
 
     Parameters
     ----------
-    P : Array
+    P : ArrayLike
         (N, D) matrix, where N is points and D is dimension.
-    Q : Array
+    Q : ArrayLike
         (N, D) matrix, where N is points and D is dimension.
-    W : Array
+    W : ArrayLike
         (N, ) vector, where N is points
 
     Returns
@@ -257,20 +263,20 @@ def kabsch_weighted_rmsd(P: Array, Q: Array, /, W: Optional[Array] = None) -> fl
     return w_rmsd
 
 
-def quaternion_transform(r: Array, /) -> Array:
+def quaternion_transform(r: ArrayLike, /) -> ArrayLike:
     """Get optimal rotation
 
     note: translation will be zero when the centroids of each molecule are the same
     """
-    Wt_r: Array = makeW(*r).T
-    Q_r: Array = makeQ(*r)
-    rot: Array = Wt_r.dot(Q_r)[:3, :3]
+    Wt_r: ArrayLike = makeW(*r).T
+    Q_r: ArrayLike = makeQ(*r)
+    rot: ArrayLike = Wt_r.dot(Q_r)[:3, :3]
     return rot
 
 
-def makeW(r1: float, r2: float, r3: float, r4: float = 0) -> Array:
+def makeW(r1: float, r2: float, r3: float, r4: float = 0) -> ArrayLike:
     """matrix involved in quaternion rotation"""
-    W: Array = np.asarray(
+    W: ArrayLike = np.asarray(
         [
             [r4, r3, -r2, r1],
             [-r3, r4, r1, r2],
@@ -281,9 +287,9 @@ def makeW(r1: float, r2: float, r3: float, r4: float = 0) -> Array:
     return W
 
 
-def makeQ(r1: float, r2: float, r3: float, r4: float = 0) -> Array:
+def makeQ(r1: float, r2: float, r3: float, r4: float = 0) -> ArrayLike:
     """matrix involved in quaternion rotation"""
-    Q: Array = np.asarray(
+    Q: ArrayLike = np.asarray(
         [
             [r4, -r3, r2, r1],
             [r3, r4, -r1, r2],
@@ -294,45 +300,45 @@ def makeQ(r1: float, r2: float, r3: float, r4: float = 0) -> Array:
     return Q
 
 
-def quaternion_rotate(X: Array, Y: Array, /) -> Array:
+def quaternion_rotate(X: ArrayLike, Y: ArrayLike, /) -> ArrayLike:
     """Calculate the rotation
 
     Parameters
     ----------
-    X : Array
+    X : ArrayLike
         (N, D) matrix, where N is points and D is dimension.
-    Y: Array
+    Y: ArrayLike
         (N, D) matrix, where N is points and D is dimension.
 
     Returns
     -------
-    rot : Array
+    rot : ArrayLike
         Rotation matrix (D, D)
     """
     N: int = X.shape[0]
-    W: Array = np.asarray([makeW(*Y[k]) for k in range(N)])
-    Q: Array = np.asarray([makeQ(*X[k]) for k in range(N)])
-    Qt_dot_W: Array = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
+    W: ArrayLike = np.asarray([makeW(*Y[k]) for k in range(N)])
+    Q: ArrayLike = np.asarray([makeQ(*X[k]) for k in range(N)])
+    Qt_dot_W: ArrayLike = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
     # NOTE UNUSED W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
-    A: Array = np.sum(Qt_dot_W, axis=0)
+    A: ArrayLike = np.sum(Qt_dot_W, axis=0)
     eval, evec = linalg.eigh(A)
-    r: Array = evec[:, eval[0].argmax()]
-    rot: Array = quaternion_transform(r)
+    r: ArrayLike = evec[:, eval[0].argmax()]
+    rot: ArrayLike = quaternion_transform(r)
     return rot
 
 
-def centroid(X: Array) -> float:
+def centroid(X: ArrayLike) -> float:
     """
     Centroid is the mean position of all the points in all of the coordinate
     directions, from a vectorset X.
     https://en.wikipedia.org/wiki/Centroid
 
     ..math::
-        C = \langle X \rangle
+        C = :math:`\langle` X :math:`\rangle`
 
     Parameters
     ----------
-    X : Array
+    X : ArrayLike
         (N,D) matrix, where N is points and D is dimension.
     Returns
     -------
