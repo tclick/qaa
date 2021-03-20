@@ -18,7 +18,9 @@ import MDAnalysis as mda
 from .typing import ArrayLike, PathLike, Universe
 
 
-def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayLike[float, float, float]:
+def get_positions(
+    topology: PathLike, trajectory: PathLike
+) -> ArrayLike[float, float, float]:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
     Parameters
@@ -50,7 +52,9 @@ def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayLike[float, 
     return pos
 
 
-def reshape_positions(positions: ArrayLike[float, float, float]) -> ArrayLike[float, float]:
+def reshape_positions(
+    positions: ArrayLike[float, float, float]
+) -> ArrayLike[float, float]:
     """Reshape a n :math:`\times` m :math:`\times` 3 trajectory to a nx(m*3) 2D matrix.
 
     Parameters
