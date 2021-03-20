@@ -12,7 +12,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-
+import pytest
 import MDAnalysis as mda
 from numpy import testing
 
@@ -22,16 +22,24 @@ from ..datafile import TOPWW, TRJWW
 
 
 class TestUtils:
-    def test_positions(self):
+    @pytest.fixture
+    def universe(self) -> mda.Universe:
+        return mda.Universe(TOPWW, TRJWW)
+
+    @pytest.fixture
+    def n_atoms(self, universe: mda.Universe) -> int:
+        return universe.atoms.n_atoms
+
+    @pytest.fixture
+    def n_frames(self, universe: mda.Universe) -> int:
+        return universe.trajectory.n_frames
+
+    def test_positions(self, universe: mda.Universe, n_atoms: int, n_frames: int):
         """
         GIVEN topology and trajectory filenames
         WHEN the get_positions function is called
         THEN return an array of positions with shape (n_frames, n_atoms, 3)
         """
-        universe = mda.Universe(TOPWW, TRJWW)
-        n_atoms = universe.atoms.n_atoms
-        n_frames = universe.trajectory.n_frames
-
         array = utils.get_positions(TOPWW, TRJWW)
         assert array.shape == (n_frames, n_atoms, 3)
         testing.assert_allclose(array[0], universe.atoms.positions)
