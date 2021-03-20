@@ -48,3 +48,20 @@ def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayLike:
         pos = np.asarray([universe.atoms.positions for _ in universe.trajectory])
 
     return pos
+
+
+def reshape_positions(positions: ArrayLike[float, float, float]) -> ArrayLike[float, float]:
+    """Reshape a n :math:`\times` m :math:`\times` 3 trajectory to a nx(m*3) 2D matrix.
+
+    Parameters
+    ----------
+    positions : Array
+        A 3-D matrix with shape (n_frames, n_atoms, 3)
+
+    Return
+    ------
+    Array
+        A 2-D array with shape (n_frames, n_atoms * 3)
+    """
+    n_frames, n_atoms, n_dims = positions.shape
+    return positions.reshape((n_frames, n_atoms * n_dims))
