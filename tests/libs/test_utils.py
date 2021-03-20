@@ -12,8 +12,9 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-import pytest
 import MDAnalysis as mda
+import numpy as np
+import pytest
 from numpy import testing
 
 from qaa.libs import utils
@@ -46,3 +47,9 @@ class TestUtils:
 
         universe.trajectory[-1]
         testing.assert_allclose(array[-1], universe.atoms.positions)
+
+    def test_reshape(self, universe: mda.Universe, n_atoms: int, n_frames: int):
+        positions = np.array([universe.atoms.positions for _ in universe.trajectory])
+        new_positions = utils.reshape_positions(positions)
+
+        assert new_positions.shape == (n_frames, n_atoms * 3)
