@@ -67,6 +67,7 @@ towncrier = "^19.2.0"
 nox = "^2020.12.31"
 pytest-coverage = "^0.0"
 nox-poetry = "^0.8.4"
+numpydoc = "^1.1.0"
 
 [tool.poetry.scripts]
 qaa = "qaa.__main__:main"
