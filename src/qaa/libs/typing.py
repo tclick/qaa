@@ -14,11 +14,15 @@
 # --------------------------------------------------------------------------------------
 """Annotation type definitions."""
 from pathlib import Path
-from typing import TypeVar
+from typing import TypeVar, NewType, Union
 
 import MDAnalysis as mda
 from numpy.typing import ArrayLike
 from pandas._typing import FrameOrSeries
 
 PathLike = TypeVar("PathLike", str, Path)
-Universe = TypeVar("Universe", mda.Universe, mda.AtomGroup)
+
+# MDAnalysis types
+AtomType = NewType("AtomType", mda.AtomGroup)
+UniverseType = NewType("UniverseType", mda.Universe)
+AtomUniv = Union[UniverseType, AtomType]
