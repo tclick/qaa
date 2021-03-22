@@ -71,7 +71,7 @@ from ..libs.typing import ArrayType, AtomType, PathLike, UniverseType
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=Path.cwd() / "align_traj.log",
+    default=Path.cwd().joinpath("align_traj.log"),
     type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
     help="Log file",
 )
@@ -161,15 +161,18 @@ def cli(
     positions: ArrayType = asarray(
         [atoms.positions for _ in universe.trajectory[start:stop:step]]
     )
-    print(positions.shape)
+
     # Calculate average structure
     ref_pos = AverageStructure(atoms).run().positions
 
     logger.info("Aligning trajectory to average structures")
     aligned: ArrayType = align_trajectory(positions, ref_pos, tol=tol, verbose=verbose)
 
-    logger.info("Saving aligned trajectory to %s}", outfile)
-    with mda.Writer(outfile, n_atoms=atoms.n_atoms) as w:
+    outfile = Path(outfile)
+    logger.info("Saving aligned trajectory to %s}", outfile.as_posix())
+    format: str = "NCDF" if outfile.suffix == ".nc" else outfile.suffix[1:].upper()
+
+    with mda.Writer(outfile.as_posix(), n_atoms=atoms.n_atoms, format=format) as w:
         for i, ts in enumerate(universe.trajectory[start:stop:step]):
             atoms.positions[:] = aligned[i]
             w.write(atoms)
