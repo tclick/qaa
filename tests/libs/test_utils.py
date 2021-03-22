@@ -53,3 +53,13 @@ class TestUtils:
         new_positions = utils.reshape_positions(positions)
 
         assert new_positions.shape == (n_frames, n_atoms * 3)
+
+    def test_rmse(self, universe):
+        """
+        GIVEN the same set of coordinates twice
+        WHEN rmse is called
+        THEN a value of 0.0 should be returned
+        """
+        positions = universe.select_atoms("name CA").positions
+        error = rmse(positions, positions)
+        testing.assert_allclose(actual, 0.)
