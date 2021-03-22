@@ -19,10 +19,15 @@ from typing import NewType, TypeVar, Union
 import MDAnalysis as mda
 from numpy.typing import ArrayLike
 from pandas._typing import FrameOrSeries
+import dask.array as da
+import dask.dataframe as df
+
 
 PathLike = TypeVar("PathLike", str, Path)
 
 # MDAnalysis types
 AtomType = NewType("AtomType", mda.AtomGroup)
 UniverseType = NewType("UniverseType", mda.Universe)
-AtomUniv = Union[UniverseType, AtomType]
+AtomUniv = NewType("AtomUniv", Union[UniverseType, AtomType])
+ArrayType = NewType("ArrayType", Union[ArrayLike, da.array])
+FrameType = NewType("FrameType", Union[FrameOrSeries, df.DataFrame, df.Series])
