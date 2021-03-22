@@ -61,5 +61,5 @@ class TestUtils:
         THEN a value of 0.0 should be returned
         """
         positions = universe.select_atoms("name CA").positions
-        error = rmse(positions, positions)
-        testing.assert_allclose(actual, 0.)
+        error = utils.rmse(positions, positions)
+        testing.assert_allclose(error, 0.)
