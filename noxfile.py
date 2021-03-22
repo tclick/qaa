@@ -133,12 +133,9 @@ def coverage(session: Session) -> None:
     has_args = session.posargs and nsessions == 1
     args = session.posargs if has_args else ["report"]
 
-    session.install("coverage[toml]")
-
-    if not has_args and any(Path().glob(".coverage.*")):
-        session.run("coverage", "combine")
-
-    session.run("coverage", *args)
+    session.install_("coverage[toml]", "codecov")
+    session.run("coverage", "xml", "--fail-under=0")
+    session.run("codecov", *session.posargs)
 
 
 @session(python=python_versions)
