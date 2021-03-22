@@ -158,7 +158,9 @@ def cli(
     else:
         from numpy import asarray
 
-    positions: ArrayType = asarray([atoms.positions for _ in universe.trajectory[start:stop:step]])
+    positions: ArrayType = asarray(
+        [atoms.positions for _ in universe.trajectory[start:stop:step]]
+    )
     print(positions.shape)
     # Calculate average structure
     ref_pos = AverageStructure(atoms).run().positions
