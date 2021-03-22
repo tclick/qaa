@@ -68,6 +68,7 @@ nox = "^2020.12.31"
 pytest-coverage = "^0.0"
 nox-poetry = "^0.8.4"
 numpydoc = "^1.1.0"
+codecov = "^2.1.11"
 
 [tool.poetry.scripts]
 qaa = "qaa.__main__:main"
