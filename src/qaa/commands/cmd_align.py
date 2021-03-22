@@ -21,7 +21,7 @@ import click
 import MDAnalysis as mda
 
 from .. import _MASK, create_logging_dict
-from ..libs.align import align_to_average
+from ..libs.align import align_trajectory
 from ..libs.typing import ArrayType, AtomType, PathLike, UniverseType
 
 
@@ -154,7 +154,7 @@ def cli(
     ref_pos: ArrayType = reference.select_atoms(_MASK[mask.lower()]).positions
 
     logger.info("Aligning trajectory to average structures")
-    aligned: ArrayType = align_to_average(positions, ref_pos, tol=tol, verbose=verbose)
+    aligned: ArrayType = align_trajectory(positions, ref_pos, tol=tol, verbose=verbose)
 
     logger.info("Saving aligned trajectory to %s}", outfile)
     with mda.Writer(outfile, n_atoms=atoms.n_atoms) as w:
