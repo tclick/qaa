@@ -15,7 +15,7 @@
 """Various utilities."""
 import MDAnalysis as mda
 
-from .typing import ArrayLike, PathLike, Universe
+from .typing import ArrayLike, PathLike, UniverseType
 
 
 def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayLike:
@@ -33,7 +33,7 @@ def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayLike:
     Array
         The coordinates with shape (n_frames, n_atoms, 3)
     """
-    universe: Universe = mda.Universe(topology, trajectory)
+    universe: UniverseType = mda.Universe(topology, trajectory)
     n_atoms = universe.atoms.n_atoms
     n_frames = universe.trajectory.n_frames
     pos: ArrayLike
