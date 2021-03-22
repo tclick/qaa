@@ -13,13 +13,63 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 
+from pathlib import Path
+
+import MDAnalysis as mda
 import pytest
+from click.testing import CliRunner
+
+from qaa.cli import main
+
+from ..datafile import TOPWW, TRJWW
 
 
 class TestCase:
-    def test_something(self):
-        assert True is False
+    @pytest.mark.runner_setup
+    def test_help(self, cli_runner: CliRunner, tmp_path: Path):
+        """
+        GIVEN the align subcommand
+        WHEN the help option is invoked
+        THEN the help output should be displayed
+        """
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "reduce",
+                "-h",
+            ),
+            env=dict(AMBERHOME=tmp_path.as_posix()),
+        )
 
+        assert "Usage:" in result.output
+        assert result.exit_code == 0
 
-if __name__ == "__main__":
-    pytest.main()
+    @pytest.mark.runner_setup
+    def test_align(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+        """
+        GIVEN a trajectory file
+        WHEN invoking the reduce subcommand
+        THEN a trajectory is reduced to fewer atoms
+        """
+        logfile = tmp_path.joinpath("reduce.log")
+        patch = mocker.patch.object(mda, "Writer", autospec=True)
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "reduce",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-o",
+                tmp_path.joinpath("reduce.nc"),
+                "-l",
+                logfile,
+                "-m",
+                "ca",
+            ),
+        )
+
+        assert result.exit_code == 0
+        patch.assert_called()
+        assert logfile.exists()
