@@ -18,17 +18,18 @@ import time
 from pathlib import Path
 
 import click
-import numpy as np
 import MDAnalysis as mda
 
 from .. import _MASK, create_logging_dict
 from ..libs.align import align_to_average
-from ..libs.typing import ArrayType, PathLike, UniverseType, AtomType
+from ..libs.typing import ArrayType, AtomType, PathLike, UniverseType
+
 
 @click.command("align", short_help="Align trajectory to a reference")
 @click.option(
-    "-p",
+    "-s",
     "--top",
+    "topology",
     metavar="FILE",
     default=Path.cwd().joinpath("input.top"),
     show_default=True,
@@ -38,6 +39,7 @@ from ..libs.typing import ArrayType, PathLike, UniverseType, AtomType
 @click.option(
     "-f",
     "--traj",
+    "trajectory",
     metavar="FILE",
     default=Path.cwd().joinpath("input.nc"),
     show_default=True,
@@ -47,6 +49,7 @@ from ..libs.typing import ArrayType, PathLike, UniverseType, AtomType
 @click.option(
     "-r",
     "--ref",
+    "reference",
     metavar="FILE",
     default=Path.cwd().joinpath("average.pdb"),
     show_default=True,
@@ -115,9 +118,9 @@ from ..libs.typing import ArrayType, PathLike, UniverseType, AtomType
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    top: PathLike,
-    traj: PathLike,
-    ref: PathLike,
+    topology: PathLike,
+    trajectory: PathLike,
+    reference: PathLike,
     outfile: PathLike,
     logfile: PathLike,
     start: int,
@@ -136,17 +139,18 @@ def cli(
 
     if 0 < stop < start:
         msg: str = f"Final frame must be greater than start frame ({stop} <= {start}"
-        logger.exception("Final frame must be greater than start frame %d <= %d", stop, start)
+        logger.exception(
+            "Final frame must be greater than start frame %d <= %d", stop, start
+        )
         raise ValueError(msg)
-    frame_indices: ArrayType = np.arange(start, stop, step) if stop > 0 else None
 
-    logger.info("Loading %s and %s", top, traj)
-    universe: UniverseType = mda.Universe(top, traj)
+    logger.info("Loading %s and %s", topology, trajectory)
+    universe: UniverseType = mda.Universe(topology, trajectory)
     atoms: AtomType = universe.select_atoms(_MASK[mask.lower()])
-    positions: ArrayType = atoms.positions
+    positions: ArrayType = atoms.positions[start:stop:step, :]
 
     logger.info("Loading reference positions")
-    reference: UniverseType = mda.Universe(top, ref)
+    reference: UniverseType = mda.Universe(topology, reference)
     ref_pos: ArrayType = reference.select_atoms(_MASK[mask.lower()]).positions
 
     logger.info("Aligning trajectory to average structures")
@@ -154,6 +158,13 @@ def cli(
 
     logger.info("Saving aligned trajectory to %s}", outfile)
     with mda.Writer(outfile, n_atoms=atoms.n_atoms) as w:
-        for i, ts in enumerate(universe.trajectory):
+        for i, ts in enumerate(universe.trajectory[start:stop:step, :]):
             atoms.positions[:] = aligned[i]
             w.write(atoms)
+
+    stop_time: float = time.perf_counter()
+    dt: float = stop_time - start_time
+    struct_time: time.struct_time = time.gmtime(dt)
+    if verbose:
+        output: str = time.strftime("%H:%M:%S", struct_time)
+        logger.info(f"Total execution time: {output}")
