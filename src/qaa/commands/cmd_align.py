@@ -22,6 +22,7 @@ import MDAnalysis as mda
 
 from .. import _MASK, create_logging_dict
 from ..libs.align import align_trajectory
+from ..libs.average import AverageStructure
 from ..libs.typing import ArrayType, AtomType, PathLike, UniverseType
 
 
@@ -53,8 +54,8 @@ from ..libs.typing import ArrayType, AtomType, PathLike, UniverseType
     metavar="FILE",
     default=Path.cwd().joinpath("average.pdb"),
     show_default=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
-    help="Structure file",
+    type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
+    help="Average structure of trajectory",
 )
 @click.option(
     "-o",
@@ -149,9 +150,8 @@ def cli(
     atoms: AtomType = universe.select_atoms(_MASK[mask.lower()])
     positions: ArrayType = atoms.positions[start:stop:step, :]
 
-    logger.info("Loading reference positions")
-    reference: UniverseType = mda.Universe(topology, reference)
-    ref_pos: ArrayType = reference.select_atoms(_MASK[mask.lower()]).positions
+    # Calculate average structure
+    ref_pos = AverageStructure(atoms).run().positions
 
     logger.info("Aligning trajectory to average structures")
     aligned: ArrayType = align_trajectory(positions, ref_pos, tol=tol, verbose=verbose)
@@ -161,6 +161,10 @@ def cli(
         for i, ts in enumerate(universe.trajectory[start:stop:step, :]):
             atoms.positions[:] = aligned[i]
             w.write(atoms)
+
+    with mda.Writer(reference, n_atoms=atoms.n_atoms) as w:
+        atoms.positions[:] = ref_pos
+        w.write(atoms)
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time
