@@ -90,7 +90,7 @@ from ..libs.typing import ArrayType, AtomType, PathLike, UniverseType
     metavar="STOP",
     default=-1,
     show_default=True,
-    type=click.IntRange(min=0, clamp=True),
+    type=click.IntRange(min=-1, clamp=True),
     help="Final trajectory frame",
 )
 @click.option(
@@ -144,12 +144,22 @@ def cli(
             "Final frame must be greater than start frame %d <= %d", stop, start
         )
         raise ValueError(msg)
+    if step <= 0:
+        step = None
 
     logger.info("Loading %s and %s", topology, trajectory)
     universe: UniverseType = mda.Universe(topology, trajectory)
     atoms: AtomType = universe.select_atoms(_MASK[mask.lower()])
-    positions: ArrayType = atoms.positions[start:stop:step, :]
+    n_atoms, n_dims = atoms.positions.shape
+    n_frames: int = universe.trajectory.n_frames
 
+    if n_frames * n_atoms * 3 >= 10_000_000:
+        from dask.array import asarray
+    else:
+        from numpy import asarray
+
+    positions: ArrayType = asarray([atoms.positions for _ in universe.trajectory[start:stop:step]])
+    print(positions.shape)
     # Calculate average structure
     ref_pos = AverageStructure(atoms).run().positions
 
@@ -158,7 +168,7 @@ def cli(
 
     logger.info("Saving aligned trajectory to %s}", outfile)
     with mda.Writer(outfile, n_atoms=atoms.n_atoms) as w:
-        for i, ts in enumerate(universe.trajectory[start:stop:step, :]):
+        for i, ts in enumerate(universe.trajectory[start:stop:step]):
             atoms.positions[:] = aligned[i]
             w.write(atoms)
 
