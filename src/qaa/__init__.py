@@ -21,6 +21,14 @@ logger.addHandler(logging.NullHandler())
 
 __version__: str = "1.0.0"
 
+_MASK: Dict = dict(
+    ca="protein and name CA",
+    cab="protein and name CA,CB",
+    back="protein and name N,CA,C",
+    noh="protein and not name H*",
+    all="all",
+)
+
 
 def create_logging_dict(logfile: str) -> Dict:
     """Configure the logger.
