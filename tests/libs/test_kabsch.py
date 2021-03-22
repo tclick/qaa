@@ -13,13 +13,42 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 
+import numpy as np
 import pytest
+from numpy import testing
+from numpy.typing import ArrayLike
+
+from qaa.libs import kabsch
 
 
 class TestCase:
-    def test_something(self):
-        assert True is False
+    @pytest.fixture
+    def data(self):
+        return np.random.random((100, 3))
 
+    def test_kabsch_fit(self, data):
+        """
+        GIVEN an array
+        WHEN aligned to itself using the Kabsch method
+        THEN return the array
+        """
+        actual: ArrayLike = kabsch.kabsch_fit(data, data)
+        testing.assert_allclose(actual, data)
 
-if __name__ == "__main__":
-    pytest.main()
+    def test_kabsch(self, data):
+        """
+        GIVEN an array
+        WHEN aligned to itself using the Kabsch method
+        THEN return the array
+        """
+        actual: ArrayLike = kabsch.kabsch(data, data)
+        testing.assert_allclose(actual, np.eye(3), atol=1e-6)
+
+    def test_kabsch_rotate(self, data):
+        """
+        GIVEN an array
+        WHEN rotated onto itself using the Kabsch method
+        THEN return the 3x3 rotation array
+        """
+        actual: ArrayLike = kabsch.kabsch_rotate(data, data)
+        testing.assert_allclose(actual, data)

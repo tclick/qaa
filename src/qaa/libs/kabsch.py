@@ -21,8 +21,9 @@ https://github.com/charnley/rmsd/blob/master/rmsd/calculate_rmsd.py
 """
 import itertools
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, NoReturn
 
+import dask.array as da
 import numpy as np
 from scipy import linalg
 
@@ -30,88 +31,82 @@ from .typing import ArrayLike
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-
-def kabsch_rotate(P: ArrayLike, Q: ArrayLike, /) -> ArrayLike:
-    """
-    Rotate matrix P unto matrix Q using Kabsch algorithm.
+def kabsch_rotate(arr1: ArrayLike, arr2: ArrayLike, /) -> ArrayLike:
+    """Rotate matrix :math:`arr1` unto matrix :math:`arr2` using Kabsch algorithm.
 
     Parameters
     ----------
-    P : array
-        (N, D) matrix, where N is points and D is dimension.
-    Q : array
+    arr1, arr2 : array_like
         (N, D) matrix, where N is points and D is dimension.
 
     Returns
     -------
-    P : array
-        (N, D) matrix, where N is points and D is dimension,
-        rotated
+    Array
+        arr1 rotated onto arr2
     """
-    U: ArrayLike = kabsch(P, Q)
+    rot_mat: ArrayLike = kabsch(arr1, arr2)
 
-    # Rotate P
-    P: ArrayLike = P @ U
-    return P
+    # Rotate arr1
+    return arr1 @ rot_mat
 
 
 def kabsch_fit(
-    P: ArrayLike, Q: ArrayLike, /, W: Optional[ArrayLike] = None
+    arr1: ArrayLike, arr2: ArrayLike, /, weight: Optional[ArrayLike] = None
 ) -> ArrayLike:
-    """Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
+    """Rotate and translate matrix `P` unto matrix `Q` using Kabsch algorithm.
+
     An optional vector of weights W may be provided.
 
     Parameters
     ----------
-    P : array
-        (N, D) matrix, where N is points and D is dimension.
-    Q : array
-        (N, D) matrix, where N is points and D is dimension.
-    W : array or None
-        (N,) vector, where N is points.
+    arr1, arr2 : Array
+        Arrays with shape (n_points, n_dims)
+    weight : Array or None
+        Vector with shape (n_points,)
 
     Returns
     -------
-    P : array
-        (N, D) matrix, where N is points and D is dimension,
-        rotated and translated.
+    Array
+        Rotated and translated array with shape (n_points, n_dims)
     """
-    if W is not None:
-        P: ArrayLike = kabsch_weighted_fit(P, Q, W, rmsd=False)
+    if weight is not None:
+        arr1: ArrayLike = kabsch_weighted_fit(arr1, arr2, weight, rmsd=False)
     else:
-        QC: ArrayLike = centroid(Q)
-        Q: ArrayLike = Q - QC
-        P: ArrayLike = P - centroid(P)
-        P: ArrayLike = kabsch_rotate(P, Q) + QC
-    return P
+        qc: ArrayLike = centroid(arr2)
+        arr2: ArrayLike = arr2 - qc
+        arr1: ArrayLike = arr1 - centroid(arr1)
+        arr1: ArrayLike = kabsch_rotate(arr1, arr2) + qc
+    return arr1
 
 
-def kabsch(P: ArrayLike, Q: ArrayLike) -> ArrayLike:
-    """
-    Using the Kabsch algorithm with two sets of paired point P and Q, centered
-    around the centroid. Each vector set is represented as an NxD
-    matrix, where D is the the dimension of the space.
-    The algorithm works in three steps:
-    - a centroid translation of P and Q (assumed done before this function
-      call)
-    - the computation of a covariance matrix C
-    - computation of the optimal rotation matrix U
-    For more info see http://en.wikipedia.org/wiki/Kabsch_algorithm
+def kabsch(arr1: ArrayLike, arr2: ArrayLike) -> ArrayLike:
+    """Align `arr1` to `arr2` using the Kabsch algorithm.
+
+    For more info see https://en.wikipedia.org/wiki/Kabsch_algorithm
 
     Parameters
     ----------
-    P : ArrayLike
-        (N, D) array, where N is points and D is dimension.
-    Q : ArrayLike
-        (N, D) array, where N is points and D is dimension.
+    arr1, arr2 : array_like
+        Arrays with shape (n_points, n_dims)
 
     Returns
     -------
-    U : ArrayLike
-        Rotation matrix (D, D)
+    rot_matrix : array_like
+        Rotation matrix of shape (n_dims, n_dims)
+
+    Notes
+    -----
+    Using the Kabsch algorithm with two sets of paired point `arr1` and `arr2`, centered
+    around the centroid. Each vector set is represented with the shape  (n_points,
+    n_dims) where n_dims is the dimension of the space.  The algorithm works in three
+    steps:
+
+    * a centroid translation of `arr1` and `arr2` (completed before this function call)
+    * the computation of a covariance matrix `covar`
+    * computation of the optimal rotation matrix `rot_matrix`
     """
     # Computation of the covariance matrix
-    C: ArrayLike = P.T @ Q
+    covar: ArrayLike = arr1.T @ arr2
 
     # Computation of the optimal rotation matrix
     # This can be done using singular value decomposition (SVD)
@@ -120,66 +115,76 @@ def kabsch(P: ArrayLike, Q: ArrayLike) -> ArrayLike:
     # right-handed coordinate system.
     # And finally calculating the optimal rotation matrix U
     # see http://en.wikipedia.org/wiki/Kabsch_algorithm
-    V, S, W = linalg.svd(C)
-    d: int = (linalg.det(V) * linalg.det(W)) < 0.0
+    u, s, w = linalg.svd(covar)
+    det: int = (linalg.det(u) * linalg.det(w)) < 0.0
 
-    if d:
-        S[-1] = -S[-1]
-        V[:, -1] = -V[:, -1]
+    if det:
+        s[-1] = -s[-1]
+        u[:, -1] = -u[:, -1]
 
     # Create Rotation matrix U
-    U: ArrayLike = V @ W
-
-    return U
+    return u @ w
 
 
 def kabsch_weighted(
-    P: ArrayLike, Q: ArrayLike, /, W: Optional[ArrayLike] = None
+    arr1: ArrayLike, arr2: ArrayLike, /, *, weight: Optional[ArrayLike] = None
 ) -> ArrayLike:
-    """
-    Using the Kabsch algorithm with two sets of paired point P and Q.
-    Each vector set is represented as an NxD matrix, where D is the
-    dimension of the space.
-    An optional vector of weights W may be provided.
-    Note that this algorithm does not require that P and Q have already
-    been overlayed by a centroid translation.
-    The function returns the rotation matrix U, translation vector V,
-    and RMS deviation between Q and P', where P' is:
-        P' = P * U + V
-    For more info see http://en.wikipedia.org/wiki/Kabsch_algorithm
+    """Align `arr1` to `arr2` using a weighted Kabsch method.
+
     Parameters
     ----------
-    P : ArrayLike
-        (N, D) matrix, where N is points and D is dimension.
-    Q : ArrayLike
-        (N, D) matrix, where N is points and D is dimension.
-    W : ArrayLike or None
-        (N, ) vector, where N is points.
+    arr1, arr2 : array_like
+        Arrays with shape (n_points, n_dims)
+    weight : ArrayLike or None
+        Weights vector of shape (n_points)
 
     Returns
     -------
     U : matrix
-           Rotation matrix (D,D)
+           Rotation matrix (D, D)
     V : vector
-           Translation vector (D)
-    RMSD : float
-           Root mean squared deviation between P and Q
+           Translation vector (:math:`D`)
+    rmsd : float
+           Root mean squared deviation between `P` and `Q`
+
+    Notes
+    -----
+    Each vector set is represented with the shape (n_points, n_dims). An optional vector
+    of weights W may be provided. Note that this algorithm does not require that `P` and
+    `Q` have already been overlaid by a centroid translation. The function returns the
+    rotation matrix U, translation vector `V`, and RMS deviation between `Q` and `P'`,
+    where P' is:
+
+    .. math:: P' = P * U + V
+
+    For more info see `http://en.wikipedia.org/wiki/Kabsch_algorithm`_
     """
+    # Determine whether to use dask.array or scipy for linear algebra
+    weights: ArrayLike
+    if isinstance(arr1, da.array) or isinstance(arr2, da.array):
+        from dask.array import linalg
+
+        weight: ArrayLike = da.ones_like(arr1) / len(arr1) if weight is None else da.array([weight, weight, weight]).T
+    else:
+        from scipy import linalg
+
+        weight: ArrayLike = np.ones_like(arr1) / len(arr1) if weight is None else np.array([weight, weight, weight]).T
+
     # Computation of the weighted covariance matrix
-    C: ArrayLike = np.zeros((3, 3))
-    W: ArrayLike = np.ones_like(P) / len(P) if W is None else np.array([W, W, W]).T
+    covar: ArrayLike = np.zeros((3, 3))
 
     # NOTE UNUSED psq = 0.0
     # NOTE UNUSED qsq = 0.0
-    iw: float = 3.0 / W.sum()
-    n: int = len(P)
+    iw: float = 3.0 / weight.sum()
+    n: int = len(arr1)
     for i, j, k in itertools.product(range(3), range(n), range(3)):
-        C[i, k] += P[j, i] * Q[j, k] * W[j, i]
-    CMP: ArrayLike = (P * W).sum(axis=0)
-    CMQ: ArrayLike = (Q * W).sum(axis=0)
-    PSQ: ArrayLike = (P * P * W).sum() - (CMP * CMP).sum() * iw
-    QSQ: ArrayLike = (Q * Q * W).sum() - (CMQ * CMQ).sum() * iw
-    C: ArrayLike = (C - np.outer(CMP, CMQ) * iw) * iw
+        covar[i, k] += arr1[j, i] * arr2[j, k] * weight[j, i]
+
+    cmp: ArrayLike = (arr1 * weight).sum(axis=0)
+    cmq: ArrayLike = (arr2 * weight).sum(axis=0)
+    psq: ArrayLike = (arr1 * arr1 * weight).sum() - (cmp * cmp).sum() * iw
+    qsq: ArrayLike = (arr2 * arr2 * weight).sum() - (cmq * cmq).sum() * iw
+    covar: ArrayLike = (covar - np.outer(cmp, cmq) * iw) * iw
 
     # Computation of the optimal rotation matrix
     # This can be done using singular value decomposition (SVD)
@@ -188,57 +193,55 @@ def kabsch_weighted(
     # right-handed coordinate system.
     # And finally calculating the optimal rotation matrix U
     # see http://en.wikipedia.org/wiki/Kabsch_algorithm
-    V, S, W = linalg.svd(C)
-    d: int = (linalg.det(V) * linalg.det(W)) < 0.0
+    u, s, vt = linalg.svd(covar)
+    d: int = (linalg.det(u) * linalg.det(weight)) < 0.0
 
     if d:
-        S[-1] = -S[-1]
-        V[:, -1] = -V[:, -1]
+        s[-1] = -s[-1]
+        u[:, -1] = -u[:, -1]
 
     # Create Rotation matrix U, translation vector V, and calculate RMSD:
-    U: ArrayLike = V @ W
-    msd: float = (PSQ + QSQ) * iw - 2.0 * S.sum()
+    v: ArrayLike = u @ vt
+    msd: float = (psq + qsq) * iw - 2.0 * s.sum()
     msd = np.clip(msd, 0.0)
     rmsd = np.sqrt(msd)
-    V: ArrayLike = np.zeros(3)
+    u: ArrayLike = np.zeros(3)
     for i in range(3):
-        t: float = (U[i, :] * CMQ).sum()
-        V[i] = CMP[i] - t
-    V: ArrayLike = V * iw
-    return U, V, rmsd
+        t: float = (v[i, :] * cmq).sum()
+        u[i] = cmp[i] - t
+    u: ArrayLike = u * iw
+    return v, u, rmsd
 
 
 def kabsch_weighted_fit(
-    P: ArrayLike, Q: ArrayLike, /, W: Optional[ArrayLike] = None, rmsd: bool = False
+    arr1: ArrayLike, arr2: ArrayLike, /, weight: Optional[ArrayLike] = None, rmsd: bool = False
 ) -> Tuple[ArrayLike, float]:
-    """
-    Fit P to Q with optional weights W.
+    """Fit `arr1` to `arr2` with optional weights `weight`.
+
     Also returns the RMSD of the fit if rmsd=True.
 
     Parameters
     ----------
-    P : ArrayLike
-       (N, D) matrix, where N is points and D is dimension.
-    Q : ArrayLike
-       (N, D) matrix, where N is points and D is dimension.
-    W : ArrayLike
-       (N, ) vector, where N is points
+    arr1, arr2 : array_like
+        Arrays with shape (n_points, n_dims)
+    weight : ArrayLike or None
+        Weights vector of shape (n_points)
     rmsd : bool
-       If True, rmsd is returned as well as the fitted coordinates.
+       If True, rmsd is returned
 
     Returns
     -------
-    P' : ArrayLike
-       (N, D) matrix, where N is points and D is dimension.
-    RMSD : float
-       if the function is called with rmsd=True
+    aligned : ArrayLike
+       Translated and rotated array of shape (n_points, n_dims)
+    rmsd : float
+       Root mean squared deviation between `P` and `Q`
     """
-    R, T, RMSD = kabsch_weighted(Q, P, W)
-    PNEW: ArrayLike = (P @ R.T) + T
+    rotation, translation, rmsd = kabsch_weighted(arr2, arr1, weight=weight)
+    aligned: ArrayLike = (arr1 @ rotation.T) + translation
     if rmsd:
-        return PNEW, RMSD
+        return aligned, rmsd
     else:
-        return PNEW
+        return aligned
 
 
 def kabsch_weighted_rmsd(
