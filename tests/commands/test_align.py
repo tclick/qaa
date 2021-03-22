@@ -12,14 +12,77 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
+import logging
+import sys
+from pathlib import Path
 
+import MDAnalysis as mda
 import pytest
+from click.testing import CliRunner
+
+from qaa.cli import main
+
+from ..datafile import TOPWW, TRJWW
+
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+LOGGER = logging.getLogger(name="ambgen.commands.cmd_align")
+
+if not sys.warnoptions:
+    import os
+    import warnings
+
+    warnings.simplefilter("default")  # Change the filter in this process
+    os.environ["PYTHONWARNINGS"] = "default"  # Also affect subprocesses
 
 
-class TestCase:
-    def test_something(self):
-        assert True is False
+class TestAlign:
+    @pytest.mark.runner_setup
+    def test_help(self, cli_runner: CliRunner, tmp_path: Path):
+        """
+        GIVEN the align subcommand
+        WHEN the help option is invoked
+        THEN the help output should be displayed
+        """
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "align",
+                "-h",
+            ),
+            env=dict(AMBERHOME=tmp_path.as_posix()),
+        )
 
+        assert "Usage:" in result.output
+        assert result.exit_code == 0
 
-if __name__ == '__main__':
-    pytest.main()
+    @pytest.mark.runner_setup
+    def test_align(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+        """
+        GIVEN a trajectory file
+        WHEN invoking the align subcommand
+        THEN an aligned trajectory and average structure file will be written
+        """
+        logfile = tmp_path.joinpath("align.log")
+        patch = mocker.patch.object(mda, "Writer", autospec=True)
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "align",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-r",
+                tmp_path.joinpath("average.pdb"),
+                "-o",
+                tmp_path.joinpath("align.nc"),
+                "-l",
+                logfile,
+                "-m",
+                "ca",
+            ),
+        )
+
+        assert result.exit_code == 0
+        patch.assert_called()
+        assert logfile.exists()
