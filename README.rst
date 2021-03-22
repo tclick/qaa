@@ -14,7 +14,7 @@ Quasi-Anharmonic Analysis
    :target: https://pypi.org/project/qaa
    :alt: Python Version
 .. |License| image:: https://img.shields.io/pypi/l/qaa
-   :target: https://opensource.org/licenses/MIT
+   :target: https://opensource.org/licenses/BSD-3-Clause
    :alt: License
 .. |Read the Docs| image:: https://img.shields.io/readthedocs/qaa/latest.svg?label=Read%20the%20Docs
    :target: https://qaa.readthedocs.io/
