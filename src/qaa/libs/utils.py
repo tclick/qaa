@@ -13,12 +13,14 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Various utilities."""
+import dask.array as da
 import MDAnalysis as mda
+import numpy as np
 
-from .typing import ArrayLike, PathLike, UniverseType
+from .typing import ArrayType, PathLike, UniverseType
 
 
-def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayLike:
+def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayType:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
     Parameters
@@ -36,7 +38,7 @@ def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayLike:
     universe: UniverseType = mda.Universe(topology, trajectory)
     n_atoms = universe.atoms.n_atoms
     n_frames = universe.trajectory.n_frames
-    pos: ArrayLike
+    pos: ArrayType
 
     if n_atoms * n_frames >= 10_000_000:
         import dask.array as da
@@ -50,7 +52,7 @@ def get_positions(topology: PathLike, trajectory: PathLike) -> ArrayLike:
     return pos
 
 
-def reshape_positions(positions: ArrayLike) -> ArrayLike:
+def reshape_positions(positions: ArrayType) -> ArrayType:
     """Reshape a n :math:`\times` m :math:`\times` 3 trajectory to a nx(m*3) 2D matrix.
 
     Parameters
@@ -65,3 +67,29 @@ def reshape_positions(positions: ArrayLike) -> ArrayLike:
     """
     n_frames, n_atoms, n_dims = positions.shape
     return positions.reshape((n_frames, n_atoms * n_dims))
+
+
+def rmse(mobile: ArrayType, reference: ArrayType) -> float:
+    """Calculate the root-mean-square error between two arrays
+
+    Parameters
+    ----------
+    mobile : Array
+        coordinates
+    reference : Array
+        coordinates
+
+    Returns
+    -------
+    error : float
+        The error difference between the two arrays
+    """
+    error: float
+    diff: ArrayType = mobile - reference
+
+    if isinstance(diff, da.Array):
+        error = da.sqrt(da.sum(da.square(diff)))
+    else:
+        error = np.sqrt(np.sum(np.square(diff)))
+
+    return error
