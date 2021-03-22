@@ -28,6 +28,7 @@ PathLike = TypeVar("PathLike", str, Path)
 # MDAnalysis types
 AtomType = NewType("AtomType", mda.AtomGroup)
 UniverseType = NewType("UniverseType", mda.Universe)
-AtomUniv = NewType("AtomUniv", Union[UniverseType, AtomType])
-ArrayType = NewType("ArrayType", Union[ArrayLike, da.array])
-FrameType = NewType("FrameType", Union[FrameOrSeries, df.DataFrame, df.Series])
+AtomUniv = TypeVar("AtomUniv", UniverseType, AtomType)
+ArrayType = TypeVar("ArrayType", ArrayLike, da.array)
+DaskFrameType = TypeVar("DaskFrameType", df.DataFrame, df.Series)
+FrameType = Union[FrameOrSeries, DaskFrameType]
