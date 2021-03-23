@@ -13,42 +13,68 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 
+import MDAnalysis as mda
 import numpy as np
 import pytest
-from numpy import testing
 from numpy.typing import ArrayLike
 
 from qaa.libs import kabsch
 
+from ..datafile import TOPWW, TRJWW
+
 
 class TestCase:
     @pytest.fixture
-    def data(self):
-        return np.random.random((100, 3))
+    def mobile(self) -> ArrayLike:
+        universe = mda.Universe(TOPWW, TRJWW, in_memory=True)
+        sel = universe.select_atoms("protein and name CA")
+        return universe.trajectory.coordinate_array[:, sel.indices]
 
-    def test_kabsch_fit(self, data):
-        """
-        GIVEN an array
-        WHEN aligned to itself using the Kabsch method
-        THEN return the array
-        """
-        actual: ArrayLike = kabsch.kabsch_fit(data, data)
-        testing.assert_allclose(actual, data)
+    @pytest.fixture
+    def centered(self, mobile: ArrayLike) -> ArrayLike:
+        return mobile - mobile.mean(axis=1)[:, np.newaxis]
 
-    def test_kabsch(self, data):
-        """
-        GIVEN an array
-        WHEN aligned to itself using the Kabsch method
-        THEN return the array
-        """
-        actual: ArrayLike = kabsch.kabsch(data, data)
-        testing.assert_allclose(actual, np.eye(3), atol=1e-6)
+    @pytest.fixture
+    def reference(self, mobile: ArrayLike) -> ArrayLike:
+        reference = mobile.mean(axis=0)
+        reference -= reference.mean(axis=0)
+        return reference
 
-    def test_kabsch_rotate(self, data):
+    def test_kabsch_fit(self, centered: ArrayLike, reference: ArrayLike):
         """
-        GIVEN an array
-        WHEN rotated onto itself using the Kabsch method
-        THEN return the 3x3 rotation array
+        GIVEN both mobile and reference arrays
+        WHEN the mobile array is fit to the reference
+        THEN a rotation square matrix is calculated with shape (3, 3)
         """
-        actual: ArrayLike = kabsch.kabsch_rotate(data, data)
-        testing.assert_allclose(actual, data)
+        alignment = kabsch.Kabsch()
+
+        fit = alignment.fit(centered[0], reference)
+        assert isinstance(fit, kabsch.Kabsch)
+        assert fit.rotation_.shape == (3, 3)
+
+    def test_kabsch_transform(self, centered: ArrayLike, reference: ArrayLike):
+        """
+        GIVEN both mobile and reference arrays
+        WHEN the mobile array is fit to the reference
+        THEN an aligned array is returned
+        """
+        pos = centered[0]
+        alignment = kabsch.Kabsch()
+
+        aligned = alignment.fit(pos, reference).transform(pos)
+        assert aligned.shape == pos.shape
+        assert alignment.error <= 1.0
+
+    def test_fit_transform(self, centered: ArrayLike, reference: ArrayLike):
+        """
+        GIVEN both mobile and reference arrays
+        WHEN the mobile array is fit to the reference
+        THEN an aligned array is returned
+        """
+        pos = centered[0]
+        alignment = kabsch.Kabsch()
+
+        aligned = alignment.fit_transform(pos, reference)
+        assert aligned.shape == pos.shape
+        assert alignment.error <= 1.0
+        assert alignment.rotation_.shape == (3, 3)
