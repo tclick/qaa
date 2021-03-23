@@ -21,6 +21,9 @@ from numpy.typing import ArrayLike
 from pandas._typing import FrameOrSeries
 import dask.array as da
 import dask.dataframe as df
+import xarray as xr
+
+
 
 
 PathLike = TypeVar("PathLike", str, Path)
@@ -29,6 +32,6 @@ PathLike = TypeVar("PathLike", str, Path)
 AtomType = NewType("AtomType", mda.AtomGroup)
 UniverseType = NewType("UniverseType", mda.Universe)
 AtomUniv = TypeVar("AtomUniv", UniverseType, AtomType)
-ArrayType = TypeVar("ArrayType", ArrayLike, da.array)
+ArrayType = TypeVar("ArrayType", ArrayLike, da.array, xr.DataArray)
 DaskFrameType = TypeVar("DaskFrameType", df.DataFrame, df.Series)
-FrameType = Union[FrameOrSeries, DaskFrameType]
+FrameType = Union[FrameOrSeries, DaskFrameType, xr.Dataset]
