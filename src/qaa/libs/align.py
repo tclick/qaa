@@ -17,7 +17,7 @@ import logging
 
 import numpy as np
 
-from .kabsch import kabsch_fit
+from .kabsch import Kabsch
 from .typing import ArrayType
 from .utils import rmse
 
@@ -52,22 +52,13 @@ def align_trajectory(
     """
     error: float = np.inf
     iter: int = 0
-    n_frames, n_points, n_dims = mobile.shape
-    new_mobile: ArrayType
-    if n_frames * n_points * n_dims >= 10_000_000:
-        import dask.array as da
-
-        new_mobile: ArrayType = da.empty_like(mobile)
-    else:
-        new_mobile: ArrayType = np.empty_like(mobile)
 
     while error >= tol:
-        for i, xyz in enumerate(mobile):
-            new_mobile[i] = kabsch_fit(mobile[i], reference)
-        new_reference: ArrayType = new_mobile.mean(axis=0)
+        kabsch = Kabsch(verbose=verbose)
+        mobile = np.asarray([kabsch.fit_transform(_, reference) for _ in mobile])
+        new_reference: ArrayType = mobile.mean(axis=0)
         error = rmse(new_reference, reference)
-        mobile[:] = new_mobile
-        reference[:] = new_reference
+        reference = new_reference.copy()
 
         iter += 1
         if verbose:
