@@ -53,11 +53,11 @@ class TestUtils:
         WHEN the get_positions function is called
         THEN return a array of positions with shape (n_frames, n_atoms, 3)
         """
-        selection = "name CA"
-        atoms = universe.select_atoms(selection)
+        mask = "name CA"
+        atoms = universe.select_atoms(mask)
         n_atoms = atoms.n_atoms
 
-        array = utils.get_positions(TOPWW, TRJWW, selection=selection)
+        array = utils.get_positions(TOPWW, TRJWW, mask=mask)
         assert array.shape == (n_frames, n_atoms, 3)
         testing.assert_allclose(array[0], atoms.positions)
         assert isinstance(array, np.ndarray)

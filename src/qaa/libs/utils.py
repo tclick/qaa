@@ -20,7 +20,7 @@ from .typing import ArrayType, AtomType, PathLike, UniverseType
 
 
 def get_positions(
-    topology: PathLike, trajectory: PathLike, /, *, selection: str = "all"
+    topology: PathLike, trajectory: PathLike, /, *, mask: str = "all"
 ) -> ArrayType:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
@@ -30,7 +30,7 @@ def get_positions(
         Topology file
     trajectory : PathLike
         Trajectory file
-    selection : str
+    mask : str
         Selection criterion for coordinates
 
     Returns
@@ -39,7 +39,7 @@ def get_positions(
         The coordinates with shape (n_frames, n_atoms, 3)
     """
     universe: UniverseType = mda.Universe(topology, trajectory)
-    atoms: AtomType = universe.select_atoms(selection)
+    atoms: AtomType = universe.select_atoms(mask)
 
     positions: ArrayType = np.asarray(
         [atoms.positions for _ in universe.trajectory],
