@@ -19,7 +19,6 @@ from pathlib import Path
 
 import click
 import MDAnalysis as mda
-import numpy as np
 
 from .. import _MASK, create_logging_dict
 from ..libs.align import align_trajectory
