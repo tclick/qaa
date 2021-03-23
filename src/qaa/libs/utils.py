@@ -13,17 +13,13 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Various utilities."""
-import dask.array as da
 import MDAnalysis as mda
 import numpy as np
-import xarray as xr
 
 from .typing import ArrayType, PathLike, UniverseType
 
 
-def get_positions(
-    topology: PathLike, trajectory: PathLike, /, *, return_type: str = "xarray"
-) -> ArrayType:
+def get_positions(topology: PathLike, trajectory: PathLike, /) -> ArrayType:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
     Parameters
@@ -32,8 +28,6 @@ def get_positions(
         Topology file
     trajectory : PathLike
         Trajectory file
-    return_type : {"xarray", "array"}
-        Positions either as a labeled array or a NumPy array
 
     Returns
     -------
@@ -41,19 +35,12 @@ def get_positions(
         The coordinates with shape (n_frames, n_atoms, 3)
     """
     universe: UniverseType = mda.Universe(topology, trajectory)
-    frames = list(range(universe.trajectory.n_frames))
-    names = universe.atoms.names
-    dims = "x y z".split()
 
-    positions: ArrayType = xr.DataArray(
+    positions: ArrayType = np.asarray(
         [universe.atoms.positions for _ in universe.trajectory],
-        coords=[frames, names, dims],
-        dims=["frame", "name", "dim"],
+        dtype=universe.atoms.positions.dtype,
     )
-    if return_type == "array":
-        return positions.data
-    else:
-        return positions
+    return positions
 
 
 def reshape_positions(positions: ArrayType) -> ArrayType:
@@ -70,19 +57,7 @@ def reshape_positions(positions: ArrayType) -> ArrayType:
         A 2-D array with shape (n_frames, n_atoms * 3)
     """
     n_frames, n_atoms, n_dims = positions.shape
-    new_positions: ArrayType
-    if isinstance(positions, xr.DataArray):
-        frames = np.arange(n_frames) + 1
-        dims = "x y z".split() * n_atoms
-        new_positions = xr.DataArray(
-            positions.data.reshape((n_frames, n_atoms * n_dims)),
-            coords=[frames, dims],
-            dims=["frame", "coords"],
-        )
-    else:
-        new_positions = positions.reshape((n_frames, n_atoms * n_dims))
-
-    return new_positions
+    return positions.reshape((n_frames, n_atoms * n_dims))
 
 
 def rmse(mobile: ArrayType, reference: ArrayType) -> float:
