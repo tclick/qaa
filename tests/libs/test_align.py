@@ -12,7 +12,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-
+import MDAnalysis as mda
 import numpy as np
 import pytest
 from numpy import testing
@@ -20,19 +20,32 @@ from numpy.typing import ArrayLike
 
 from qaa.libs import align
 
+from ..datafile import TOPWW, TRJWW
+
 
 class TestAlign:
     @pytest.fixture
     def mobile(self) -> ArrayLike:
-        return np.random.random((200, 100, 3))
+        universe = mda.Universe(TOPWW, TRJWW, in_memory=True)
+        sel = universe.select_atoms("protein and name CA")
+        return universe.trajectory.coordinate_array[:, sel.indices]
 
-    def test_align_trajectory(self, mobile):
+    @pytest.fixture
+    def centered(self, mobile: ArrayLike) -> ArrayLike:
+        return mobile - mobile.mean(axis=1)[:, np.newaxis]
+
+    @pytest.fixture
+    def reference(self, mobile: ArrayLike) -> ArrayLike:
+        reference = mobile.mean(axis=0)
+        reference -= reference.mean(axis=0)
+        return reference
+
+    def test_align_trajectory(self, centered: ArrayLike, reference: ArrayLike):
         """
         GIVEN a coordinate trajectory
         WHEN aligned with its average structure
         THEN an aligned trajectory
         """
-        reference: ArrayLike = mobile.mean(axis=0)
-        aligned = align.align_trajectory(mobile, reference)
-        assert mobile.shape == aligned.shape
-        testing.assert_allclose(mobile, aligned)
+        aligned = align.align_trajectory(centered, reference)
+        assert centered.shape == aligned.shape
+        testing.assert_allclose(centered, aligned, rtol=1e-1, atol=1e-1)
