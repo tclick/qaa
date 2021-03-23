@@ -16,10 +16,12 @@
 import MDAnalysis as mda
 import numpy as np
 
-from .typing import ArrayType, PathLike, UniverseType
+from .typing import ArrayType, AtomType, PathLike, UniverseType
 
 
-def get_positions(topology: PathLike, trajectory: PathLike, /) -> ArrayType:
+def get_positions(
+    topology: PathLike, trajectory: PathLike, /, *, selection: str = "all"
+) -> ArrayType:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
     Parameters
@@ -28,6 +30,8 @@ def get_positions(topology: PathLike, trajectory: PathLike, /) -> ArrayType:
         Topology file
     trajectory : PathLike
         Trajectory file
+    selection : str
+        Selection criterion for coordinates
 
     Returns
     -------
@@ -35,10 +39,11 @@ def get_positions(topology: PathLike, trajectory: PathLike, /) -> ArrayType:
         The coordinates with shape (n_frames, n_atoms, 3)
     """
     universe: UniverseType = mda.Universe(topology, trajectory)
+    atoms: AtomType = universe.select_atoms(selection)
 
     positions: ArrayType = np.asarray(
-        [universe.atoms.positions for _ in universe.trajectory],
-        dtype=universe.atoms.positions.dtype,
+        [atoms.positions for _ in universe.trajectory],
+        dtype=atoms.positions.dtype,
     )
     return positions
 
