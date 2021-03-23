@@ -25,6 +25,7 @@ from .. import _MASK, create_logging_dict
 from ..libs.align import align_trajectory
 from ..libs.average import AverageStructure
 from ..libs.typing import ArrayType, AtomType, PathLike, UniverseType
+from ..libs.utils import get_positions
 
 
 @click.command("align", short_help="Align trajectory to a reference")
@@ -151,11 +152,7 @@ def cli(
     logger.info("Loading %s and %s", topology, trajectory)
     universe: UniverseType = mda.Universe(topology, trajectory)
     atoms: AtomType = universe.select_atoms(_MASK[mask.lower()])
-
-    positions: ArrayType = np.asarray(
-        [atoms.positions for _ in universe.trajectory[start:stop:step]],
-        dtype=atoms.positions.dtype,
-    )
+    positions: ArrayType = get_positions(topology, trajectory, mask=_MASK[mask.lower()])
 
     # Calculate average structure
     ref_pos = AverageStructure(atoms).run().positions
