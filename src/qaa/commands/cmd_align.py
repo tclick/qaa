@@ -19,6 +19,7 @@ from pathlib import Path
 
 import click
 import MDAnalysis as mda
+import numpy as np
 
 from .. import _MASK, create_logging_dict
 from ..libs.align import align_trajectory
@@ -150,16 +151,10 @@ def cli(
     logger.info("Loading %s and %s", topology, trajectory)
     universe: UniverseType = mda.Universe(topology, trajectory)
     atoms: AtomType = universe.select_atoms(_MASK[mask.lower()])
-    n_atoms, n_dims = atoms.positions.shape
-    n_frames: int = universe.trajectory.n_frames
 
-    if n_frames * n_atoms * 3 >= 10_000_000:
-        from dask.array import asarray
-    else:
-        from numpy import asarray
-
-    positions: ArrayType = asarray(
-        [atoms.positions for _ in universe.trajectory[start:stop:step]]
+    positions: ArrayType = np.asarray(
+        [atoms.positions for _ in universe.trajectory[start:stop:step]],
+        dtype=atoms.positions.dtype,
     )
 
     # Calculate average structure
