@@ -15,6 +15,7 @@
 """Test the Jade ICA module"""
 import numpy as np
 import pytest
+from numpy import random, typing
 from sklearn.utils._testing import assert_array_almost_equal
 
 from qaa.decomposition import jade
@@ -22,11 +23,11 @@ from qaa.decomposition import jade
 
 class TestJade:
     @pytest.fixture
-    def matrix(self):
-        rng = np.random.RandomState(0)
-        return rng.random_sample((100, 10))
+    def matrix(self) -> typing.ArrayLike:
+        rng = random.default_rng()
+        return rng.standard_normal((100, 10))
 
-    def test_fit_transform(self, matrix):
+    def test_fit_transform(self, matrix: typing.ArrayLike):
         X = matrix
         for n_components in (5, None):
             n_components_ = n_components if n_components is not None else X.shape[1]
