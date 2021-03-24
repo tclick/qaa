@@ -30,7 +30,7 @@ from ..libs.typing import ArrayType, PathLike
 from ..libs.utils import get_positions, reshape_positions, save_fig
 
 
-@click.command("align", short_help="Align trajectory to a reference")
+@click.command("pca", short_help="Perform principal component analysis on a trajectory")
 @click.option(
     "-s",
     "--top",
