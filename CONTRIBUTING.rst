@@ -12,7 +12,7 @@ Here is a list of important resources for contributors:
 - `Issue Tracker`_
 - `Code of Conduct`_
 
-.. _MIT license: https://opensource.org/licenses/MIT
+.. BSD 3-Clause license: https://opensource.org/licenses/BSD-3-Clause
 .. _Source Code: https://github.com/tclick/qaa
 .. _Documentation: https://qaa.readthedocs.io/
 .. _Issue Tracker: https://github.com/tclick/qaa/issues
@@ -43,7 +43,7 @@ Request features on the `Issue Tracker`_.
 How to set up your development environment
 ------------------------------------------
 
-You need Python 3.6+ and the following tools:
+You need Python 3.8+ and the following tools:
 
 - Poetry_
 - Nox_
