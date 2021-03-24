@@ -13,8 +13,14 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Various utilities."""
+import itertools
+from pathlib import Path
+from typing import NoReturn
+
+import matplotlib.pyplot as plt
 import MDAnalysis as mda
 import numpy as np
+import seaborn as sns
 
 from .typing import ArrayType, AtomType, PathLike, UniverseType
 
@@ -83,3 +89,46 @@ def rmse(mobile: ArrayType, reference: ArrayType) -> float:
     diff: ArrayType = mobile - reference
 
     return np.sqrt(np.sum(np.square(diff)))
+
+
+def save_fig(
+    data: ArrayType, /, *, filename: PathLike, data_type: str = "ica", dpi: int = 600
+) -> NoReturn:
+    """Save projection data in a graphical form
+
+    Parameters
+    ----------
+    data : array_like
+        Projection data
+    filename : :class:`pathlib.Path` or str
+        Image file
+    data_type : {'ica', 'pca'}
+        ICA or PCA data
+    dpi : int, default=600
+        Figure resolution
+    """
+    fig = plt.figure(figsize=plt.figaspect(1.0))
+    label = data_type.upper()[:2]
+    for i, (x, y) in enumerate(itertools.combinations(range(3), 2), 1):
+        ax = fig.add_subplot(2, 2, i)
+        sns.scatterplot(x=data[:, x], y=data[:, y], ax=ax, marker=".")
+        ax.set_xlabel(f"${label}_{x + 1:d}$")
+        ax.set_ylabel(f"${label}_{y + 1:d}$")
+
+    # Plot first 3 PCs
+    ax = fig.add_subplot(2, 2, i + 1, projection="3d", proj_type="ortho")
+    ax.scatter3D(
+        data[:, 0],
+        data[:, 1],
+        data[:, 2],
+        marker=".",
+        alpha=0.5,
+    )
+    ax.view_init(azim=120)
+    ax.set_xlabel(f"${label}_1$")
+    ax.set_ylabel(f"${label}_2$")
+    ax.set_zlabel(f"${label}_3$")
+    fig.suptitle(f"{data_type.upper()}")
+
+    with Path(filename).open(mode="w") as w:
+        fig.savefig(w, dpi=dpi)
