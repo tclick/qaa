@@ -83,17 +83,3 @@ class TestUtils:
         positions = universe.select_atoms("name CA").positions
         error = utils.rmse(positions, positions)
         testing.assert_allclose(error, 0.0)
-
-    def test_save_fig(self, mocker, tmp_path):
-        """
-        GIVEN projection data
-        WHEN calling the save_fig function
-        THEN draw the data and save to an image file
-        """
-        data = np.random.random((1_000, 6))
-        patch = mocker.patch("matplotlib.figure.Figure.savefig")
-
-        filename = tmp_path.joinpath("test.png")
-        utils.save_fig(data, filename=filename)
-
-        patch.assert_called()
