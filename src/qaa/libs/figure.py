@@ -14,6 +14,7 @@
 # --------------------------------------------------------------------------------------
 """Draw and save figures for QAA."""
 import itertools
+from pathlib import Path
 from typing import NoReturn, Optional
 
 import matplotlib.pyplot as plt
@@ -97,3 +98,16 @@ class Figure:
         self._axes.set_ylabel(f"${label}_2$")
         self._axes.set_zlabel(f"${label}_3$")
         self._figure.suptitle(f"{data_type}")
+
+    def save(self, filename: PathLike, /, *, dpi: int = 600) -> NoReturn:
+        """Save the image to disk.
+
+        Parameters
+        ----------
+        filename : :class:`Path` or str
+            Image file
+        dpi : int, default=600
+            Image resolution
+        """
+        with Path(filename).open(mode="wb") as w:
+            self._figure.savefig(w, dpi=dpi)
