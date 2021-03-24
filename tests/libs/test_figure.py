@@ -43,3 +43,15 @@ class TestFigure:
 
         assert isinstance(fig.figure, plt.Figure)
         assert isinstance(fig.axes, plt.Axes)
+
+    def test_save(self, data: ArrayLike, fig: figure.Figure, tmp_path: Path, mocker):
+        """
+        GIVEN a filename
+        WHEN the save method method of a `Figure` object is called
+        THEN an image is written to disk
+        """
+        filename: Path = tmp_path.joinpath("test.png")
+        patch = mocker.patch("matplotlib.figure.Figure.savefig")
+        fig.draw(data)
+        fig.save(filename)
+        patch.assert_called_once()
