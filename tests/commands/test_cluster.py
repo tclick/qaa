@@ -12,14 +12,82 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
+"""Test cluster subcommand"""
+import logging
+import sys
+from pathlib import Path
 
+import numpy as np
 import pytest
+from click.testing import CliRunner
+from numpy import random
+from numpy.typing import ArrayLike
+
+from qaa.cli import main
+from ..datafile import PROJ
+
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+LOGGER = logging.getLogger(name="ambgen.commands.cmd_qaa")
+
+if not sys.warnoptions:
+    import os
+    import warnings
+
+    warnings.simplefilter("default")  # Change the filter in this process
+    os.environ["PYTHONWARNINGS"] = "default"  # Also affect subprocesses
 
 
-class TestCase:
-    def test_something(self):
-        assert True is False
+class TestCluster:
+    @pytest.fixture
+    def n_modes(self) -> int:
+        return 5
 
+    @pytest.fixture
+    def data(self, n_modes: int) -> ArrayLike:
+        rng = random.default_rng()
+        return rng.standard_normal((10, n_modes))
 
-if __name__ == "__main__":
-    pytest.main()
+    @pytest.mark.runner_setup
+    def test_help(self, cli_runner: CliRunner):
+        """
+        GIVEN the qaa subcommand
+        WHEN the help option is invoked
+        THEN the help output should be displayed
+        """
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "cluster",
+                "-h",
+            ),
+        )
+
+        assert "Usage:" in result.output
+        assert result.exit_code == 0
+
+    @pytest.mark.runner_setup
+    def test_cluster(self, cli_runner: CliRunner, tmp_path, mocker):
+        """
+        GIVEN a data file
+        WHEN invoking the cluster subcommand
+        THEN saves a cluster image to disk
+        """
+        outfile = tmp_path.joinpath("cluster.png")
+        logfile = outfile.with_suffix(".log")
+        fig = mocker.patch("matplotlib.figure.Figure.savefig")
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "cluster",
+                "-f",
+                PROJ,
+                "-o",
+                outfile,
+                "-l",
+                logfile,
+                "--verbose",
+            ),
+        )
+        assert result.exit_code == 0
+        assert logfile.exists()
+        fig.assert_called_once()
