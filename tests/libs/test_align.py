@@ -46,6 +46,6 @@ class TestAlign:
         WHEN aligned with its average structure
         THEN an aligned trajectory
         """
-        aligned = align.align_trajectory(centered, reference)
+        aligned = align.align_trajectory(centered, reference, verbose=True)
         assert centered.shape == aligned.shape
         testing.assert_allclose(centered, aligned, rtol=1e-1, atol=1e-1)
