@@ -12,14 +12,34 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
+"""Test figure module"""
+from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pytest
+from numpy import random
+from numpy.typing import ArrayLike
+
+from qaa.libs import figure
 
 
-class TestCase:
-    def test_something(self):
-        assert True is False
+class TestFigure:
+    @pytest.fixture
+    def data(self) -> ArrayLike:
+        rng = random.default_rng()
+        return rng.standard_normal((1000, 50))
 
+    @pytest.fixture
+    def fig(self) -> figure.Figure:
+        return figure.Figure(method="ica")
 
-if __name__ == "__main__":
-    pytest.main()
+    def test_draw(self, data: ArrayLike, fig: figure.Figure):
+        """
+        GIVEN a 2D array with shape (n_samples, n_components)
+        WHEN the draw method of a `Figure` object is called
+        THEN a figure with subplots is created
+        """
+        fig.draw(data)
+
+        assert isinstance(fig.figure, plt.Figure)
+        assert isinstance(fig.axes, plt.Axes)
