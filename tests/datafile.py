@@ -18,8 +18,9 @@ from pathlib import Path
 
 from pkg_resources import resource_filename
 
-__all__ = ["TOPWW", "TRJWW"]
+__all__ = ["PROJ", "TOPWW", "TRJWW"]
 
+PROJ = resource_filename(__name__, Path().joinpath("data", "projection.csv").as_posix())
 TOPWW = resource_filename(
     __name__, Path().joinpath("data", "rnase2_nowat.parm7").as_posix()
 )

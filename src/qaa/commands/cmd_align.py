@@ -147,6 +147,7 @@ def cli(
             "Final frame must be greater than start frame (%d <= %d)", stop, start
         )
         sys.exit(1)
+    stop: Optional[int] = stop if stop != -1 else None
 
     logger.info("Loading %s and %s", topology, trajectory)
     universe: UniverseType = mda.Universe(topology, trajectory)

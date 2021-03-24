@@ -182,6 +182,7 @@ def cli(
             "Final frame must be greater than start frame %d <= %d", stop, start
         )
         sys.exit(1)
+    stop: Optional[int] = stop if stop != -1 else None
 
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")
