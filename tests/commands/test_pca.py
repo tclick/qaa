@@ -50,7 +50,6 @@ class TestPCA:
                 "pca",
                 "-h",
             ),
-            env=dict(AMBERHOME=tmp_path.as_posix()),
         )
 
         assert "Usage:" in result.output
@@ -74,11 +73,12 @@ class TestPCA:
                 "-f",
                 TRJWW,
                 "-o",
-                tmp_path.as_posix(),
+                tmp_path,
                 "-l",
                 logfile,
                 "-m",
                 "ca",
+                "--verbose"
             ),
         )
 
@@ -87,6 +87,37 @@ class TestPCA:
         assert logfile.exists()
         assert tmp_path.joinpath("projection.csv").exists()
         assert not tmp_path.joinpath("explained_variance_ratio.png").exists()
+
+    @pytest.mark.runner_setup
+    def test_pca_error(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+        """
+        GIVEN stop < start
+        WHEN invoking the pca subcommand
+        THEN exit code > 0
+        """
+        logfile = tmp_path.joinpath("pca.log")
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "pca",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-o",
+                tmp_path,
+                "-l",
+                logfile,
+                "-b",
+                "3",
+                "-e",
+                "1",
+                "-m",
+                "ca",
+                "--verbose"
+            ),
+        )
+        assert result.exit_code > 0
 
     @pytest.mark.runner_setup
     def test_pca_with_image(self, cli_runner: CliRunner, tmp_path: Path, mocker):
@@ -107,9 +138,11 @@ class TestPCA:
                 "-f",
                 TRJWW,
                 "-o",
-                tmp_path.as_posix(),
+                tmp_path,
                 "-l",
                 logfile,
+                "--bias",
+                "--whiten",
                 "-m",
                 "ca",
                 "--image",

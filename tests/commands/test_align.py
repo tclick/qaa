@@ -49,7 +49,6 @@ class TestAlign:
                 "align",
                 "-h",
             ),
-            env=dict(AMBERHOME=tmp_path.as_posix()),
         )
 
         assert "Usage:" in result.output
@@ -86,3 +85,69 @@ class TestAlign:
         assert result.exit_code == 0
         patch.assert_called()
         assert logfile.exists()
+
+    @pytest.mark.runner_setup
+    def test_align_verbose(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+        """
+        GIVEN a trajectory file
+        WHEN invoking the align subcommand
+        THEN an aligned trajectory and average structure file will be written
+        """
+        logfile = tmp_path.joinpath("align.log")
+        patch = mocker.patch.object(mda, "Writer", autospec=True)
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "align",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-r",
+                tmp_path.joinpath("average.pdb"),
+                "-o",
+                tmp_path.joinpath("align.nc"),
+                "-l",
+                logfile,
+                "-m",
+                "ca",
+                "--verbose"
+            ),
+        )
+
+        assert result.exit_code == 0
+        patch.assert_called()
+        assert logfile.exists()
+
+    @pytest.mark.runner_setup
+    def test_align_error(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+        """
+        GIVEN a stop < start
+        WHEN invoking the align subcommand
+        THEN exit code > 0
+        """
+        logfile = tmp_path.joinpath("align.log")
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "align",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-r",
+                tmp_path.joinpath("average.pdb"),
+                "-o",
+                tmp_path.joinpath("align.nc"),
+                "-l",
+                logfile,
+                "-b",
+                "3",
+                "-e",
+                "1",
+                "-m",
+                "ca",
+                "--verbose",
+            ),
+        )
+        assert result.exit_code > 0

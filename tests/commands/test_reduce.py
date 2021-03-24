@@ -24,7 +24,7 @@ from qaa.cli import main
 from ..datafile import TOPWW, TRJWW
 
 
-class TestCase:
+class TestReduce:
     @pytest.mark.runner_setup
     def test_help(self, cli_runner: CliRunner, tmp_path: Path):
         """
@@ -38,14 +38,13 @@ class TestCase:
                 "reduce",
                 "-h",
             ),
-            env=dict(AMBERHOME=tmp_path.as_posix()),
         )
 
         assert "Usage:" in result.output
         assert result.exit_code == 0
 
     @pytest.mark.runner_setup
-    def test_align(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+    def test_reduce(self, cli_runner: CliRunner, tmp_path: Path, mocker):
         """
         GIVEN a trajectory file
         WHEN invoking the reduce subcommand
@@ -67,9 +66,40 @@ class TestCase:
                 logfile,
                 "-m",
                 "ca",
+                "--verbose"
             ),
         )
 
         assert result.exit_code == 0
         patch.assert_called()
         assert logfile.exists()
+
+    @pytest.mark.runner_setup
+    def test_reduce_error(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+        """
+        GIVEN stop < start
+        WHEN invoking the reduce subcommand
+        THEN exit code > 0
+        """
+        logfile = tmp_path.joinpath("reduce.log")
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "reduce",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-o",
+                tmp_path.joinpath("reduce.nc"),
+                "-l",
+                logfile,
+                "-b",
+                "3",
+                "-e",
+                "1",
+                "-m",
+                "ca",
+            ),
+        )
+        assert result.exit_code > 0
