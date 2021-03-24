@@ -14,8 +14,10 @@
 # --------------------------------------------------------------------------------------
 import logging
 import logging.config
+import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 import click
 import matplotlib.pyplot as plt
@@ -74,7 +76,7 @@ from ..libs.utils import get_positions, reshape_positions, save_fig
     default=0,
     show_default=True,
     type=click.IntRange(min=1, clamp=True),
-    help="Starting trajectory frame",
+    help="Starting trajectory frame (0 = first frame)",
 )
 @click.option(
     "-e",
@@ -83,16 +85,16 @@ from ..libs.utils import get_positions, reshape_positions, save_fig
     default=-1,
     show_default=True,
     type=click.IntRange(min=-1, clamp=True),
-    help="Final trajectory frame",
+    help="Final trajectory frame (-1 = final frame)",
 )
 @click.option(
     "--dt",
     "step",
     metavar="OFFSET",
-    default=1,
+    default=0,
     show_default=True,
-    type=click.IntRange(min=1, clamp=True),
-    help="Trajectory output offset (0 = last frame)",
+    type=click.IntRange(min=0, clamp=True),
+    help="Trajectory output offset (0 = single step)",
 )
 @click.option(
     "-m",
@@ -155,14 +157,12 @@ def cli(
     logger: logging.Logger = logging.getLogger(__name__)
 
     outdir = Path(outdir)
-    if 0 < stop < start:
-        msg: str = f"Final frame must be greater than start frame ({stop} <= {start}"
-        logger.exception(
+    step: Optional[int] = step if step > 0 else None
+    if start > stop != -1:
+        logger.error(
             "Final frame must be greater than start frame %d <= %d", stop, start
         )
-        raise ValueError(msg)
-    if step <= 0:
-        step = None
+        sys.exit(1)
 
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")

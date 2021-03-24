@@ -14,8 +14,10 @@
 # --------------------------------------------------------------------------------------
 import logging
 import logging.config
+import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 import click
 import MDAnalysis as mda
@@ -67,28 +69,28 @@ from ..libs.typing import AtomType, PathLike, UniverseType
     "-b",
     "start",
     metavar="START",
-    default=1,
+    default=0,
     show_default=True,
     type=click.IntRange(min=1, clamp=True),
-    help="Starting trajectory frame",
+    help="Starting trajectory frame (0 = first frame)",
 )
 @click.option(
     "-e",
     "stop",
     metavar="STOP",
-    default=0,
+    default=-1,
     show_default=True,
-    type=click.IntRange(min=0, clamp=True),
-    help="Final trajectory frame",
+    type=click.IntRange(min=-1, clamp=True),
+    help="Final trajectory frame (-1 = final frame)",
 )
 @click.option(
     "--dt",
     "step",
     metavar="OFFSET",
-    default=1,
+    default=0,
     show_default=True,
-    type=click.IntRange(min=1, clamp=True),
-    help="Trajectory output offset (0 = last frame)",
+    type=click.IntRange(min=0, clamp=True),
+    help="Trajectory output offset (0 = single step)",
 )
 @click.option(
     "-m",
@@ -117,14 +119,12 @@ def cli(
     logging.config.dictConfig(create_logging_dict(logfile))
     logger: logging.Logger = logging.getLogger(__name__)
 
-    if 0 < stop < start:
-        msg: str = f"Final frame must be greater than start frame ({stop} <= {start}"
+    step: Optional[int] = step if step > 0 else None
+    if start > stop != -1:
         logger.exception(
             "Final frame must be greater than start frame %d <= %d", stop, start
         )
-        raise ValueError(msg)
-    if step <= 0:
-        step = None
+        sys.exit(1)
 
     logger.info("Loading %s and %s", topology, trajectory)
     universe: UniverseType = mda.Universe(topology, trajectory)
