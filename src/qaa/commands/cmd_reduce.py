@@ -71,7 +71,7 @@ from ..libs.typing import AtomType, PathLike, UniverseType
     metavar="START",
     default=0,
     show_default=True,
-    type=click.IntRange(min=1, clamp=True),
+    type=click.IntRange(min=0, clamp=True),
     help="Starting trajectory frame (0 = first frame)",
 )
 @click.option(
