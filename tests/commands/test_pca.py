@@ -13,13 +13,112 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 
+import logging
+import sys
+from pathlib import Path
+
+import numpy as np
 import pytest
+from click.testing import CliRunner
+
+from qaa.cli import main
+
+from ..datafile import TOPWW, TRJWW
+
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+LOGGER = logging.getLogger(name="ambgen.commands.cmd_pca")
+
+if not sys.warnoptions:
+    import os
+    import warnings
+
+    warnings.simplefilter("default")  # Change the filter in this process
+    os.environ["PYTHONWARNINGS"] = "default"  # Also affect subprocesses
 
 
-class TestCase:
-    def test_something(self):
-        assert True is False
+class TestPCA:
+    @pytest.mark.runner_setup
+    def test_help(self, cli_runner: CliRunner, tmp_path: Path):
+        """
+        GIVEN the pca subcommand
+        WHEN the help option is invoked
+        THEN the help output should be displayed
+        """
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "pca",
+                "-h",
+            ),
+            env=dict(AMBERHOME=tmp_path.as_posix()),
+        )
 
+        assert "Usage:" in result.output
+        assert result.exit_code == 0
 
-if __name__ == "__main__":
-    pytest.main()
+    @pytest.mark.runner_setup
+    def test_pca(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+        """
+        GIVEN a trajectory file
+        WHEN invoking the pca subcommand
+        THEN an several files will be written
+        """
+        logfile = tmp_path.joinpath("pca.log")
+        patch = mocker.patch.object(np, "savetxt", autospec=True)
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "pca",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-o",
+                tmp_path.as_posix(),
+                "-l",
+                logfile,
+                "-m",
+                "ca",
+            ),
+        )
+
+        assert result.exit_code == 0
+        patch.assert_called()
+        assert logfile.exists()
+        assert tmp_path.joinpath("projection.csv").exists()
+        assert not tmp_path.joinpath("explained_variance_ratio.png").exists()
+
+    @pytest.mark.runner_setup
+    def test_pca_with_image(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+        """
+        GIVEN a trajectory file
+        WHEN invoking the pca subcommand with an image option
+        THEN an several files will be written
+        """
+        logfile = tmp_path.joinpath("pca.log")
+        patch = mocker.patch.object(np, "savetxt", autospec=True)
+        fig = mocker.patch("matplotlib.figure.Figure.savefig")
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "pca",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-o",
+                tmp_path.as_posix(),
+                "-l",
+                logfile,
+                "-m",
+                "ca",
+                "--image",
+            ),
+        )
+
+        assert result.exit_code == 0
+        patch.assert_called()
+        fig.assert_called()
+        assert logfile.exists()
+        assert tmp_path.joinpath("projection.csv").exists()
+        assert tmp_path.joinpath("explained_variance_ratio.png").exists()
