@@ -19,6 +19,8 @@ from typing import NoReturn, Optional
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib import cm
+from sklearn.mixture import GaussianMixture
 
 from .typing import ArrayType, PathLike
 
@@ -111,3 +113,80 @@ class Figure:
         """
         with Path(filename).open(mode="wb") as w:
             self._figure.savefig(w, dpi=dpi)
+
+    def cluster(
+        self,
+        data: ArrayType,
+        /,
+        *,
+        tol: float = 1e-3,
+        max_iter: int = 200,
+        n_points: int = 10,
+        n_clusters: int = 4,
+        azim: float = 120.,
+    ) -> NoReturn:
+        """
+
+        Parameters
+        ----------
+        data : array_like
+            Matrix with shape (n_samples, n_components)
+        tol : float, default=1e-3
+            The convergence threshold. EM iterations will stop when the lower bound
+            average gain is below this threshold.
+        max_iter : int, default=200
+            The number of EM iterations to perform
+        n_points : int, default=10
+            The number of points to display
+        n_clusters : int, default=4
+            The number of clusters to locate
+        azim : float, default=120.
+            Azimuth angle for 3D image
+
+        Notes
+        -----
+        Clusters are found using the Gaussian mixture method (GMM).
+        """
+        cmap = cm.viridis
+        data_type: str = self.method.upper()
+        label: str = data_type[:2]
+        self._figure = plt.figure(figsize=plt.figaspect(1.0))
+
+        # Determine cluster centers using Gaussian mixture model
+        gmm = GaussianMixture(
+            n_components=n_clusters,
+            max_iter=max_iter,
+            tol=tol,
+        )
+        labels = gmm.fit_predict(data[:, :3])[::n_points]
+
+        # Plot 2D plots of components
+        for i, (x, y) in enumerate(itertools.combinations(range(3), 2), 1):
+            self._axes = self._figure.add_subplot(2, 2, i)
+            self._axes.scatter(
+                data[::n_points, x],
+                data[::n_points, y],
+                marker=".",
+                cmap=cmap,
+                c=labels,
+            )
+            self._axes.set_xlabel(f"${label}_{x + 1:d}$")
+            self._axes.set_ylabel(f"${label}_{y + 1:d}$")
+
+        # Plot first 3 ICs
+        self._axes = self._figure.add_subplot(
+            2, 2, i + 1, projection="3d", proj_type="ortho"
+        )
+        self._axes.scatter3D(
+            data[::n_points, 0],
+            data[::n_points, 1],
+            data[::n_points, 2],
+            marker=".",
+            cmap=cmap,
+            c=labels,
+            alpha=0.5,
+        )
+        self._axes.view_init(azim=azim)
+        self._axes.set_xlabel(f"${label}_1$")
+        self._axes.set_ylabel(f"${label}_2$")
+        self._axes.set_zlabel(f"${label}_3$")
