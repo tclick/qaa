@@ -15,15 +15,14 @@
 """Test cluster subcommand"""
 import logging
 import sys
-from pathlib import Path
 
-import numpy as np
 import pytest
 from click.testing import CliRunner
 from numpy import random
 from numpy.typing import ArrayLike
 
 from qaa.cli import main
+
 from ..datafile import PROJ
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
