@@ -211,7 +211,8 @@ def cli(
         )
     )
     signals = qaa.fit_transform(positions)
-    with outdir.joinpath("qaa-signals.,csv").open(mode="w") as w:
+    with outdir.joinpath("qaa-signals.csv").open(mode="w") as w:
+        logger.info("Saving QAA data to %s", w.name)
         np.savetxt(w, signals, delimiter=",", fmt="%.6f")
 
     if image:
