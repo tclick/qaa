@@ -12,3 +12,134 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
+import logging
+import logging.config
+import time
+from pathlib import Path
+
+import click
+import numpy as np
+
+from .. import create_logging_dict
+from ..libs.figure import Figure
+from ..libs.typing import ArrayType, PathLike
+
+
+@click.command("cluster", short_help="Plot data from QAA.")
+@click.option(
+    "-f",
+    "--infile",
+    metavar="FILE",
+    default=Path.cwd().joinpath("input.csv"),
+    show_default=True,
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
+    help="Input file",
+)
+@click.option(
+    "-o",
+    "--outfile",
+    metavar="FILE",
+    default=Path.cwd().joinpath("cluster.png"),
+    show_default=True,
+    type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
+    help="Clustered image file",
+)
+@click.option(
+    "-l",
+    "--logfile",
+    metavar="LOG",
+    show_default=True,
+    default=Path.cwd() / "image.log",
+    type=click.Path(exists=False, file_okay=True, resolve_path=True),
+    help="Log file",
+)
+@click.option("--ica / --pca", "method", default=True, help="Type of data")
+@click.option(
+    "--iter",
+    "max_iter",
+    metavar="MAXITER",
+    default=200,
+    show_default=True,
+    type=click.IntRange(min=1, clamp=True),
+    help="Maximum number of iterations for Gaussian cluster analysis",
+)
+@click.option(
+    "--tol",
+    metavar="TOL",
+    default=0.001,
+    show_default=True,
+    type=click.FloatRange(min=0.0, max=1.0, clamp=True),
+    help="Maximum number of iterations for Gaussian cluster analysis",
+)
+@click.option(
+    "-n",
+    "--nclusters",
+    "n_clusters",
+    default=3,
+    show_default=True,
+    type=click.IntRange(min=2, max=4, clamp=True),
+    help="Number of cluster centers to plot",
+)
+@click.option(
+    "--dp",
+    "n_points",
+    default=1,
+    show_default=True,
+    type=click.IntRange(min=1, clamp=True),
+    help="Number of points to skip for plotting",
+)
+@click.option(
+    "--dpi",
+    default=600,
+    type=click.IntRange(min=100, clamp=True),
+    help="Resolution of the figure",
+)
+@click.option(
+    "--azim",
+    default=120.0,
+    type=click.FloatRange(min=0.0, max=359.0, clamp=True),
+    help="Azimuth rotation for 3D plot",
+)
+@click.option("-v", "--verbose", is_flag=True, help="Noisy output")
+def cli(
+    infile: PathLike,
+    outfile: PathLike,
+    logfile: PathLike,
+    method: bool,
+    max_iter: int,
+    tol: float,
+    n_clusters: int,
+    n_points: int,
+    dpi: int,
+    azim: float,
+    verbose: bool,
+):
+    """Perform cluster analysis on the provided data"""
+    start_time: float = time.perf_counter()
+
+    # Setup logging
+    logging.config.dictConfig(create_logging_dict(logfile))
+    logger: logging.Logger = logging.getLogger(__name__)
+
+    # Load data
+    data: ArrayType = np.loadtxt(infile, delimiter=",")
+    data_method = "ica" if method else "pca"
+
+    # Prepare cluster analysis
+    figure = Figure(method=data_method)
+    figure.cluster(
+        data,
+        tol=tol,
+        max_iter=max_iter,
+        n_points=n_points,
+        n_clusters=n_clusters,
+        azim=azim,
+    )
+    figure.save(outfile, dpi=dpi)
+
+    stop_time: float = time.perf_counter()
+    dt: float = stop_time - start_time
+    struct_time: time.struct_time = time.gmtime(dt)
+    if verbose:
+        output: str = time.strftime("%H:%M:%S", struct_time)
+        logger.info(f"Total execution time: {output}")
