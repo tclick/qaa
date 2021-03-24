@@ -111,12 +111,12 @@ from ..libs.utils import get_positions, reshape_positions, save_fig
     metavar="NMODES",
     default=0,
     show_default=True,
-    type=click.IntRange(min=0),
-    help="Number of eigenmodes (-1 = all components)",
+    type=click.IntRange(min=0, clamp=True),
+    help="Number of eigenmodes (0 = all components)",
 )
 @click.option("-w", "--whiten", is_flag=True, help="Whitens the data")
-@click.option("--bias / --no-bias", help="Calculate with population bias")
-@click.option("--image", is_flag=True, help="Save graph of rmsf10 for C-alpha")
+@click.option("--bias / --no-bias", help="Calculate with population bias (N vs N-1")
+@click.option("--image", is_flag=True, help="Save images of PCA projections")
 @click.option(
     "--dpi",
     default=600,
@@ -149,7 +149,7 @@ def cli(
     image_type: str,
     verbose: bool,
 ):
-    """Align a trajectory to average structure using Kabsch fitting"""
+    """Calculate principal components for a trajectory"""
     start_time: float = time.perf_counter()
 
     # Setup logging
