@@ -20,8 +20,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 from click.testing import CliRunner
+from numpy import random
+from numpy.typing import ArrayLike
+from sklearn.decomposition import FastICA
 
 from qaa.cli import main
+from qaa.decomposition.jade import JadeICA
 
 from ..datafile import TOPWW, TRJWW
 
@@ -37,8 +41,17 @@ if not sys.warnoptions:
 
 
 class TestQaa:
+    @pytest.fixture
+    def n_modes(self) -> int:
+        return 5
+
+    @pytest.fixture
+    def data(self, n_modes: int) -> ArrayLike:
+        rng = random.default_rng()
+        return rng.standard_normal((10, n_modes))
+
     @pytest.mark.runner_setup
-    def test_help(self, cli_runner: CliRunner, tmp_path: Path):
+    def test_help(self, cli_runner: CliRunner):
         """
         GIVEN the qaa subcommand
         WHEN the help option is invoked
@@ -56,14 +69,17 @@ class TestQaa:
         assert result.exit_code == 0
 
     @pytest.mark.runner_setup
-    def test_qaa(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+    def test_qaa_jade(
+        self, cli_runner: CliRunner, tmp_path: Path, data: ArrayLike, mocker
+    ):
         """
         GIVEN a trajectory file
-        WHEN invoking the qaa subcommand
-        THEN an several files will be written
+        WHEN invoking the qaa subcommand with the --jade flag
+        THEN output `signal.csv`
         """
         logfile = tmp_path.joinpath("qaa.log")
-        patch = mocker.patch.object(np, "savetxt", autospec=True)
+        ica = mocker.patch.object(JadeICA, "fit_transform", return_value=data)
+        save_txt = mocker.patch.object(np, "savetxt", autospec=True)
         result = cli_runner.invoke(
             main,
             args=(
@@ -78,24 +94,72 @@ class TestQaa:
                 logfile,
                 "-m",
                 "ca",
-                "--verbose"
+                "--jade",
+                "-n",
+                10,
+                "--verbose",
             ),
         )
 
         assert result.exit_code == 0
-        patch.assert_called()
+        ica.assert_called_once()
+        save_txt.assert_called_once()
         assert logfile.exists()
-        assert tmp_path.joinpath("projection.csv").exists()
-        assert not tmp_path.joinpath("explained_variance_ratio.png").exists()
+        assert tmp_path.joinpath("qaa-signals.csv").exists()
+        assert not tmp_path.joinpath("qaa.png").exists()
 
     @pytest.mark.runner_setup
-    def test_qaa_error(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+    def test_qaa_fastica(
+        self, cli_runner: CliRunner, tmp_path: Path, data: ArrayLike, mocker
+    ):
+        """
+        GIVEN a trajectory file
+        WHEN invoking the qaa subcommand with the --jade flag
+        THEN output `signal.csv`
+        """
+        logfile = tmp_path.joinpath("qaa.log")
+        ica = mocker.patch.object(FastICA, "fit_transform", return_value=data)
+        save_txt = mocker.patch.object(np, "savetxt", autospec=True)
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "qaa",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-o",
+                tmp_path,
+                "-l",
+                logfile,
+                "-m",
+                "ca",
+                "--fastica",
+                "-n",
+                10,
+                "--verbose",
+            ),
+        )
+
+        assert result.exit_code == 0
+        ica.assert_called_once()
+        save_txt.assert_called_once()
+        assert logfile.exists()
+        assert tmp_path.joinpath("qaa-signals.csv").exists()
+        assert not tmp_path.joinpath("qaa.png").exists()
+
+    @pytest.mark.runner_setup
+    def test_qaa_error(
+        self, cli_runner: CliRunner, tmp_path: Path, data: ArrayLike, mocker
+    ):
         """
         GIVEN stop < start
         WHEN invoking the qaa subcommand
         THEN exit code > 0
         """
         logfile = tmp_path.joinpath("qaa.log")
+        mocker.patch.object(JadeICA, "fit_transform", return_value=data)
+        mocker.patch.object(np, "savetxt", autospec=True)
         result = cli_runner.invoke(
             main,
             args=(
@@ -114,20 +178,26 @@ class TestQaa:
                 "1",
                 "-m",
                 "ca",
-                "--verbose"
+                "--jade",
+                "-n",
+                10,
+                "--verbose",
             ),
         )
         assert result.exit_code > 0
 
     @pytest.mark.runner_setup
-    def test_qaa_with_image(self, cli_runner: CliRunner, tmp_path: Path, mocker):
+    def test_qaa_with_image(
+        self, cli_runner: CliRunner, tmp_path: Path, data: ArrayLike, mocker
+    ):
         """
         GIVEN a trajectory file
         WHEN invoking the qaa subcommand with an image option
         THEN an several files will be written
         """
         logfile = tmp_path.joinpath("qaa.log")
-        patch = mocker.patch.object(np, "savetxt", autospec=True)
+        ica = mocker.patch.object(JadeICA, "fit_transform", return_value=data)
+        save_txt = mocker.patch.object(np, "savetxt", autospec=True)
         fig = mocker.patch("matplotlib.figure.Figure.savefig")
         result = cli_runner.invoke(
             main,
@@ -141,17 +211,20 @@ class TestQaa:
                 tmp_path,
                 "-l",
                 logfile,
-                "--bias",
-                "--whiten",
                 "-m",
                 "ca",
+                "--jade",
+                "-n",
+                10,
                 "--image",
+                "--verbose",
             ),
         )
 
         assert result.exit_code == 0
-        patch.assert_called()
-        fig.assert_called()
+        ica.assert_called_once()
+        save_txt.assert_called_once()
+        fig.assert_called_once()
         assert logfile.exists()
-        assert tmp_path.joinpath("projection.csv").exists()
-        assert tmp_path.joinpath("explained_variance_ratio.png").exists()
+        assert tmp_path.joinpath("qaa-signals.csv").exists()
+        assert tmp_path.joinpath("qaa.png").exists()
