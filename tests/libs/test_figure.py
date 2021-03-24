@@ -55,3 +55,14 @@ class TestFigure:
         fig.draw(data)
         fig.save(filename)
         patch.assert_called_once()
+
+    def test_cluster(self, data: ArrayLike, fig: figure.Figure):
+        """
+        GIVEN a 2D array with shape (n_samples, n_components)
+        WHEN the cluster method of a `Figure` object is called
+        THEN a figure with subplots is created
+        """
+        fig.cluster(data)
+
+        assert isinstance(fig.figure, plt.Figure)
+        assert isinstance(fig.axes, plt.Axes)
