@@ -131,8 +131,7 @@ class Kabsch(TransformerMixin, BaseEstimator):
         # And finally calculating the optimal rotation matrix U
         # see http://en.wikipedia.org/wiki/Kabsch_algorithm
         u, s, vh = linalg.svd(covar)
-        det: int = (linalg.det(u) * linalg.det(vh)) < 0.0
-        if det:
+        if (linalg.det(u) * linalg.det(vh)) < 0.0:
             s[-1] = -s[-1]
             u[:, -1] = -u[:, -1]
 
