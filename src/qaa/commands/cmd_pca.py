@@ -26,8 +26,9 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 
 from .. import _MASK, create_logging_dict
+from ..libs.figure import Figure
 from ..libs.typing import ArrayType, PathLike
-from ..libs.utils import get_positions, reshape_positions, save_fig
+from ..libs.utils import get_positions, reshape_positions
 
 
 @click.command("pca", short_help="Perform principal component analysis on a trajectory")
@@ -211,7 +212,9 @@ def cli(
         # Plot 2D plots of PCAs
         logger.info("Plotting the PCA")
         filename = outdir.joinpath("pca").with_suffix(f".{image_type}")
-        save_fig(projection, filename=filename, data_type="pca", dpi=dpi)
+        figure = Figure(method="pca")
+        figure.draw(projection)
+        figure.save(filename, dpi=dpi)
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time

@@ -25,8 +25,9 @@ from sklearn.decomposition import FastICA
 
 from .. import _MASK, create_logging_dict
 from ..decomposition.jade import JadeICA
+from ..libs.figure import Figure
 from ..libs.typing import ArrayType, PathLike
-from ..libs.utils import get_positions, reshape_positions, save_fig
+from ..libs.utils import get_positions, reshape_positions
 
 
 @click.command("qaa", short_help="Perform quasi-anharmonic analysis of a trajectory")
@@ -219,7 +220,9 @@ def cli(
         # Plot 2D and 3D plots of ICs
         logger.info("Plotting the ICA")
         filename = outdir.joinpath("qaa").with_suffix(f".{image_type}")
-        save_fig(signals, filename=filename, data_type="ica", dpi=dpi)
+        figure = Figure(method="ica")
+        figure.draw(signals)
+        figure.save(filename, dpi=dpi)
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time
