@@ -36,7 +36,7 @@ if not sys.warnoptions:
     os.environ["PYTHONWARNINGS"] = "default"  # Also affect subprocesses
 
 
-class Testqaa:
+class TestQaa:
     @pytest.mark.runner_setup
     def test_help(self, cli_runner: CliRunner, tmp_path: Path):
         """
