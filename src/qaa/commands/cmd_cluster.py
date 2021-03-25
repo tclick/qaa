@@ -12,6 +12,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
+"""Cluster data into regions."""
 import logging.config
 import time
 from pathlib import Path
@@ -91,12 +92,14 @@ from ..libs.typing import PathLike
 @click.option(
     "--dpi",
     default=600,
+    show_default=True,
     type=click.IntRange(min=100, clamp=True),
     help="Resolution of the figure",
 )
 @click.option(
     "--azim",
     default=120.0,
+    show_default=True,
     type=click.FloatRange(min=0.0, max=359.0, clamp=True),
     help="Azimuth rotation for 3D plot",
 )
@@ -114,7 +117,7 @@ def cli(
     azim: float,
     verbose: bool,
 ):
-    """Perform cluster analysis on the provided data"""
+    """Perform cluster analysis on the provided data."""
     start_time: float = time.perf_counter()
 
     # Setup logging
