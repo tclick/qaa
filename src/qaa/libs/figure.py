@@ -108,7 +108,7 @@ class Figure:
 
         Parameters
         ----------
-        filename : :class:`Path` or str
+        filename : `Path` or str
             Image file
         dpi : int, default=600
             Image resolution
