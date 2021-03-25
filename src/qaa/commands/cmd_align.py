@@ -21,10 +21,14 @@ from typing import Optional
 import click
 import MDAnalysis as mda
 
-from .. import _MASK, create_logging_dict
+from .. import _MASK
+from .. import create_logging_dict
 from ..libs.align import align_trajectory
 from ..libs.average import AverageStructure
-from ..libs.typing import ArrayType, AtomType, PathLike, UniverseType
+from ..libs.typing import ArrayType
+from ..libs.typing import AtomType
+from ..libs.typing import PathLike
+from ..libs.typing import UniverseType
 from ..libs.utils import get_positions
 
 
