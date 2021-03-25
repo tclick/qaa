@@ -13,14 +13,8 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Various utilities."""
-import itertools
-from pathlib import Path
-from typing import NoReturn
-
-import matplotlib.pyplot as plt
 import MDAnalysis as mda
 import numpy as np
-import seaborn as sns
 
 from .typing import ArrayType
 from .typing import AtomType
