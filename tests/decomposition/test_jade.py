@@ -18,8 +18,9 @@ from typing import Optional
 import pytest
 from numpy import random
 from numpy import typing
-from qaa.decomposition import jade
 from sklearn.utils._testing import assert_array_almost_equal
+
+from qaa.decomposition import jade
 
 
 class TestJade:
@@ -46,6 +47,7 @@ class TestJade:
     )
     def test_fit(self, matrix: typing.ArrayLike, n_components: Optional[int]):
         """
+
         GIVEN mixed signal data
         WHEN the fit method is called
         THEN the JadeICA object is returned
@@ -65,6 +67,7 @@ class TestJade:
     )
     def test_transform(self, matrix: typing.ArrayLike, n_components: Optional[int]):
         """
+
         GIVEN mixed signal data
         WHEN the transform method is called
         THEN the JadeICA object is returned
@@ -86,6 +89,7 @@ class TestJade:
     )
     def test_fit_transform(self, matrix: typing.ArrayLike, n_components: Optional[int]):
         """
+
         GIVEN mixed signal data
         WHEN the fit_transform method is called
         THEN a 2D array of signals (n_samples, n_components) is returned
