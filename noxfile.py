@@ -9,7 +9,7 @@ from nox_poetry import Session
 from nox_poetry import session
 
 package = "qaa"
-python_versions = ["3.10", "3.9", "3.8"]
+python_versions = ["3.9", "3.8"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
@@ -81,8 +81,10 @@ def precommit(session: Session) -> None:
         "darglint",
         "flake8",
         "flake8-bandit",
+        "flake8-black",
         "flake8-bugbear",
         "flake8-docstrings",
+        "flake8-import-order",
         "flake8-rst-docstrings",
         "pep8-naming",
         "pre-commit",
