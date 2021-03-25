@@ -12,6 +12,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
+"""Subcommand to find the principal components of a trajectory."""
 import logging.config
 import sys
 import time
@@ -152,7 +153,7 @@ def cli(
     image_type: str,
     verbose: bool,
 ):
-    """Calculate principal components for a trajectory"""
+    """Calculate principal components for a trajectory."""
     start_time: float = time.perf_counter()
 
     # Setup logging
@@ -173,7 +174,7 @@ def cli(
     positions: ArrayType = get_positions(topology, trajectory, mask=_MASK[mask])
     positions = reshape_positions(positions[start:stop:step])
     n_samples, n_features = positions.shape
-    n_components: int = n_modes if n_modes > 0 else min(n_samples, n_features)
+    n_components: int = n_modes if n_modes > 0 else None
 
     logger.info("Calculating PCA")
     logger.warn("Depending upon the size of the trajectory, this could take a while.")
@@ -201,15 +202,15 @@ def cli(
         # Plot explained variance ratio
         fig = plt.figure(figsize=plt.figaspect(0.5))
         ax = fig.add_subplot(1, 1, 1)
-        sns.lineplot(x=np.arange(ratio.size) + 1, y=ratio, markers=".", ax=ax)
+        sns.lineplot(x=np.arange(pca.n_components_) + 1, y=ratio, markers=".", ax=ax)
         ax.set_xlabel("Mode")
         ax.set_ylabel("Explained Variance Ratio")
-        ax.set_xlim(left=1.0, right=n_modes)
+        ax.set_xlim(left=0, right=pca.n_components_)
         ax.set_ylim(bottom=0.0, top=1.1)
 
         fig.suptitle("Explained Variance Ratio from PCA")
         filename = outdir.joinpath("explained_variance_ratio")
-        with filename.with_suffix(f".{image_type}").open(mode="w") as w:
+        with filename.with_suffix(f".{image_type}").open(mode="wb") as w:
             fig.savefig(w, dpi=dpi)
 
         # Plot 2D plots of PCAs
