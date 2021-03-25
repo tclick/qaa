@@ -29,7 +29,7 @@ from .typing import PathLike
 
 class Figure:
     def __init__(self, method: str = "ica"):
-        """Visualize data via a graphical image
+        """Visualize data via a graphical image.
 
         Parameters
         ----------
@@ -126,8 +126,8 @@ class Figure:
         n_points: int = 10,
         n_clusters: int = 4,
         azim: float = 120.0,
-    ) -> NoReturn:
-        """
+    ) -> ArrayType:
+        """Cluster the data and visualize it.
 
         Parameters
         ----------
@@ -145,6 +145,11 @@ class Figure:
         azim : float, default=120.
             Azimuth angle for 3D image
 
+        Returns
+        -------
+        labels: array_like
+            Classification labels from GMM
+
         Notes
         -----
         Clusters are found using the Gaussian mixture method (GMM).
@@ -160,7 +165,7 @@ class Figure:
             max_iter=max_iter,
             tol=tol,
         )
-        labels = gmm.fit_predict(data[:, :3])[::n_points]
+        labels: ArrayType = gmm.fit_predict(data[:, :3])[::n_points]
 
         # Plot 2D plots of components
         for i, (x, y) in enumerate(itertools.combinations(range(3), 2), 1):
@@ -192,3 +197,5 @@ class Figure:
         self._axes.set_xlabel(f"${label}_1$")
         self._axes.set_ylabel(f"${label}_2$")
         self._axes.set_zlabel(f"${label}_3$")
+
+        return labels
