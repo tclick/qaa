@@ -12,7 +12,9 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-"""Test the Jade ICA module"""
+"""Test the Jade ICA module."""
+from typing import Optional
+
 import pytest
 from numpy import random
 from numpy import typing
@@ -21,28 +23,91 @@ from sklearn.utils._testing import assert_array_almost_equal
 
 
 class TestJade:
+    """Test JadeICA class."""
+
     @pytest.fixture
     def matrix(self) -> typing.ArrayLike:
+        """Mixed signal data.
+
+        Returns
+        -------
+        array_like
+            Matrix generated through random number generator
+        """
         rng = random.default_rng()
         return rng.standard_normal((100, 10))
 
-    def test_fit_transform(self, matrix: typing.ArrayLike):
-        X = matrix
-        for n_components in (5, None):
-            n_components_ = n_components if n_components is not None else X.shape[1]
+    @pytest.mark.parametrize(
+        "n_components",
+        random.randint(1, 9, 5).tolist()
+        + [
+            None,
+        ],
+    )
+    def test_fit(self, matrix: typing.ArrayLike, n_components: Optional[int]):
+        """
+        GIVEN mixed signal data
+        WHEN the fit method is called
+        THEN the JadeICA object is returned
+        """
+        n_components_ = n_components if n_components is not None else matrix.shape[1]
 
-            ica = jade.JadeICA(n_components=n_components)
-            Xt = ica.fit_transform(X)
-            assert ica.components_.shape == (n_components_, 10)
-            assert Xt.shape == (100, n_components_)
+        ica = jade.JadeICA(n_components=n_components)
+        assert isinstance(ica.fit(matrix), jade.JadeICA)
+        assert ica.components_.shape == (n_components_, matrix.shape[1])
 
-            ica.fit(X)
-            assert ica.components_.shape == (n_components_, 10)
-            Xt2 = ica.transform(X)
+    @pytest.mark.parametrize(
+        "n_components",
+        random.randint(1, 9, 5).tolist()
+        + [
+            None,
+        ],
+    )
+    def test_transform(self, matrix: typing.ArrayLike, n_components: Optional[int]):
+        """
+        GIVEN mixed signal data
+        WHEN the transform method is called
+        THEN the JadeICA object is returned
+        """
+        n_components_ = n_components if n_components is not None else matrix.shape[1]
 
-            assert_array_almost_equal(Xt, Xt2)
+        ica = jade.JadeICA(n_components=n_components)
+        signal = ica.fit(matrix).transform(matrix)
+
+        assert ica.components_.shape == (n_components_, 10)
+        assert signal.shape == (100, n_components_)
+
+    @pytest.mark.parametrize(
+        "n_components",
+        random.randint(1, 9, 5).tolist()
+        + [
+            None,
+        ],
+    )
+    def test_fit_transform(self, matrix: typing.ArrayLike, n_components: Optional[int]):
+        """
+        GIVEN mixed signal data
+        WHEN the fit_transform method is called
+        THEN a 2D array of signals (n_samples, n_components) is returned
+        """
+        n_components_ = n_components if n_components is not None else matrix.shape[1]
+
+        ica = jade.JadeICA(n_components=n_components)
+        signal = ica.fit_transform(matrix)
+        assert ica.components_.shape == (n_components_, 10)
+        assert signal.shape == (100, n_components_)
+
+        ica2 = jade.JadeICA(n_components=n_components)
+        signal2 = ica2.fit(matrix).transform(matrix)
+        assert_array_almost_equal(ica.components_, ica2.components_)
+        assert_array_almost_equal(signal, signal2)
 
     def test_inverse_transform(self, matrix):
+        """
+        GIVEN an unmixed signal matrix
+        WHEN the inverse_transform method is called
+        THEN an exception is raised
+        """
         ica = jade.JadeICA(n_components=5)
         with pytest.raises(NotImplementedError):
             ica.inverse_transform(matrix)
