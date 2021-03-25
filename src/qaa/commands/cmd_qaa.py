@@ -12,7 +12,6 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-import logging
 import logging.config
 import sys
 import time
@@ -23,11 +22,14 @@ import click
 import numpy as np
 from sklearn.decomposition import FastICA
 
-from .. import _MASK, create_logging_dict
+from .. import _MASK
+from .. import create_logging_dict
 from ..decomposition.jade import JadeICA
 from ..libs.figure import Figure
-from ..libs.typing import ArrayType, PathLike
-from ..libs.utils import get_positions, reshape_positions
+from ..libs.typing import ArrayType
+from ..libs.typing import PathLike
+from ..libs.utils import get_positions
+from ..libs.utils import reshape_positions
 
 
 @click.command("qaa", short_help="Perform quasi-anharmonic analysis of a trajectory")

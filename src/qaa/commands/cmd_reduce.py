@@ -12,7 +12,6 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-import logging
 import logging.config
 import sys
 import time
@@ -22,8 +21,11 @@ from typing import Optional
 import click
 import MDAnalysis as mda
 
-from .. import _MASK, create_logging_dict
-from ..libs.typing import AtomType, PathLike, UniverseType
+from .. import _MASK
+from .. import create_logging_dict
+from ..libs.typing import AtomType
+from ..libs.typing import PathLike
+from ..libs.typing import UniverseType
 
 
 @click.command("reduce", short_help="Reduce trajectory and topology to selected atoms")

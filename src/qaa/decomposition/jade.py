@@ -19,28 +19,27 @@ signals. Hopefully more ICA algorithms will be added in the future.
 """
 from typing import Optional
 
-from numpy import (
-    abs,
-    append,
-    arange,
-    arctan2,
-    argsort,
-    array,
-    concatenate,
-    cos,
-    diag,
-    dot,
-    eye,
-    float64,
-    matrix,
-    multiply,
-    ndarray,
-    sign,
-    sin,
-    sqrt,
-    zeros,
-)
-from numpy.linalg import eig, pinv
+from numpy import abs
+from numpy import append
+from numpy import arange
+from numpy import arctan2
+from numpy import argsort
+from numpy import array
+from numpy import concatenate
+from numpy import cos
+from numpy import diag
+from numpy import dot
+from numpy import eye
+from numpy import float64
+from numpy import matrix
+from numpy import multiply
+from numpy import ndarray
+from numpy import sign
+from numpy import sin
+from numpy import sqrt
+from numpy import zeros
+from numpy.linalg import eig
+from numpy.linalg import pinv
 from sklearn.decomposition import _base
 from sklearn.utils.validation import check_is_fitted
 

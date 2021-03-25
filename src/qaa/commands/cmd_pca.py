@@ -12,7 +12,6 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-import logging
 import logging.config
 import sys
 import time
@@ -25,10 +24,13 @@ import numpy as np
 import seaborn as sns
 from sklearn.decomposition import PCA
 
-from .. import _MASK, create_logging_dict
+from .. import _MASK
+from .. import create_logging_dict
 from ..libs.figure import Figure
-from ..libs.typing import ArrayType, PathLike
-from ..libs.utils import get_positions, reshape_positions
+from ..libs.typing import ArrayType
+from ..libs.typing import PathLike
+from ..libs.utils import get_positions
+from ..libs.utils import reshape_positions
 
 
 @click.command("pca", short_help="Perform principal component analysis on a trajectory")

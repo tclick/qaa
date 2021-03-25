@@ -16,7 +16,8 @@
 import numpy as np
 from MDAnalysis.analysis.base import AnalysisBase
 
-from .typing import ArrayType, AtomType
+from .typing import ArrayType
+from .typing import AtomType
 
 
 class AverageStructure(AnalysisBase):

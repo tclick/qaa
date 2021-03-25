@@ -15,14 +15,16 @@
 """Draw and save figures for QAA."""
 import itertools
 from pathlib import Path
-from typing import NoReturn, Optional
+from typing import NoReturn
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib import cm
 from sklearn.mixture import GaussianMixture
 
-from .typing import ArrayType, PathLike
+from .typing import ArrayType
+from .typing import PathLike
 
 
 class Figure:
@@ -123,7 +125,7 @@ class Figure:
         max_iter: int = 200,
         n_points: int = 10,
         n_clusters: int = 4,
-        azim: float = 120.,
+        azim: float = 120.0,
     ) -> NoReturn:
         """
 

@@ -22,12 +22,16 @@ https://github.com/charnley/rmsd/blob/master/rmsd/calculate_rmsd.py
 from __future__ import annotations
 
 import logging
-from typing import NoReturn, Optional, Tuple
+from typing import NoReturn
+from typing import Optional
+from typing import Tuple
 
 from scipy import linalg
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils.validation import check_array, check_is_fitted
+from sklearn.utils.validation import check_array
+from sklearn.utils.validation import check_is_fitted
 
 from .typing import ArrayType
 from .utils import rmse

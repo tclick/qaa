@@ -12,7 +12,6 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-import logging
 import logging.config
 import time
 from pathlib import Path
@@ -22,7 +21,8 @@ import numpy as np
 
 from .. import create_logging_dict
 from ..libs.figure import Figure
-from ..libs.typing import ArrayType, PathLike
+from ..libs.typing import ArrayType
+from ..libs.typing import PathLike
 
 
 @click.command("cluster", short_help="Plot data from QAA.")

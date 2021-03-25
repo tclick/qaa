@@ -31,7 +31,10 @@ Why does this file exist, and why not put this in __main__?
 import logging
 import sys
 from pathlib import Path
-from typing import List, NoReturn, Tuple, Union
+from typing import List
+from typing import NoReturn
+from typing import Tuple
+from typing import Union
 
 import click
 from click import core

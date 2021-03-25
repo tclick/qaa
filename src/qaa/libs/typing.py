@@ -14,7 +14,9 @@
 # --------------------------------------------------------------------------------------
 """Annotation type definitions."""
 from pathlib import Path
-from typing import NewType, TypeVar, Union
+from typing import NewType
+from typing import TypeVar
+from typing import Union
 
 import MDAnalysis as mda
 from numpy.typing import ArrayLike

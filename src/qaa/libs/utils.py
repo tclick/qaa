@@ -22,7 +22,10 @@ import MDAnalysis as mda
 import numpy as np
 import seaborn as sns
 
-from .typing import ArrayType, AtomType, PathLike, UniverseType
+from .typing import ArrayType
+from .typing import AtomType
+from .typing import PathLike
+from .typing import UniverseType
 
 
 def get_positions(
