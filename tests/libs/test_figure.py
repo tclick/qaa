@@ -12,10 +12,11 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-"""Test figure module"""
+"""Test figure module."""
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 from numpy import random
 from numpy.typing import ArrayLike
@@ -34,7 +35,8 @@ class TestFigure:
         return figure.Figure(method="ica")
 
     def test_draw(self, data: ArrayLike, fig: figure.Figure):
-        """
+        """Test draw method.
+
         GIVEN a 2D array with shape (n_samples, n_components)
         WHEN the draw method of a `Figure` object is called
         THEN a figure with subplots is created
@@ -45,7 +47,8 @@ class TestFigure:
         assert isinstance(fig.axes, plt.Axes)
 
     def test_save(self, data: ArrayLike, fig: figure.Figure, tmp_path: Path, mocker):
-        """
+        """Test save method.
+
         GIVEN a filename
         WHEN the save method method of a `Figure` object is called
         THEN an image is written to disk
@@ -57,12 +60,14 @@ class TestFigure:
         patch.assert_called_once()
 
     def test_cluster(self, data: ArrayLike, fig: figure.Figure):
-        """
+        """Test cluster method.
+
         GIVEN a 2D array with shape (n_samples, n_components)
         WHEN the cluster method of a `Figure` object is called
         THEN a figure with subplots is created
         """
-        fig.cluster(data)
+        labels: ArrayLike = fig.cluster(data)
 
+        assert isinstance(labels, np.ndarray)
         assert isinstance(fig.figure, plt.Figure)
         assert isinstance(fig.axes, plt.Axes)
