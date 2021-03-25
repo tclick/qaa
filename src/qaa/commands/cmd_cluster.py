@@ -119,6 +119,7 @@ def cli(
 ):
     """Perform cluster analysis on the provided data."""
     start_time: float = time.perf_counter()
+    outfile = Path(outfile)
 
     # Setup logging
     logging.config.dictConfig(create_logging_dict(logfile))
@@ -130,7 +131,7 @@ def cli(
 
     # Prepare cluster analysis
     figure = Figure(method=data_method)
-    figure.cluster(
+    labels: ArrayType = figure.cluster(
         data,
         tol=tol,
         max_iter=max_iter,
@@ -138,7 +139,12 @@ def cli(
         n_clusters=n_clusters,
         azim=azim,
     )
+    logger.info("Saving cluster data to %s", outfile)
     figure.save(outfile, dpi=dpi)
+
+    with outfile.with_suffix(".csv").open(mode="w") as w:
+        logger.info("Saving cluster labels to %s", w.name)
+        np.savetxt(w, labels, delimiter=",")
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time
