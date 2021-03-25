@@ -428,7 +428,7 @@ restructuredtext_lint = "*"
 
 [[package]]
 name = "gitdb"
-version = "4.0.5"
+version = "4.0.6"
 description = "Git Object Database"
 category = "dev"
 optional = false
@@ -475,7 +475,7 @@ numpy = ">=1.9.3,<2"
 
 [[package]]
 name = "identify"
-version = "2.2.0"
+version = "2.2.1"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -1031,7 +1031,7 @@ snowballstemmer = "*"
 
 [[package]]
 name = "pyflakes"
-version = "2.3.0"
+version = "2.3.1"
 description = "passive checker of Python programs"
 category = "dev"
 optional = false
@@ -1207,17 +1207,6 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 
 [package.dependencies]
 six = ">=1.5"
-
-[[package]]
-name = "pytraj"
-version = "2.0.5"
-description = "Python API for cpptraj: a data analysis package for biomolecular simulation"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-numpy = "*"
 
 [[package]]
 name = "pytz"
@@ -1707,7 +1696,7 @@ tests = ["pytest", "pytest-cov", "codecov", "scikit-build", "cmake", "ninja", "p
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "70698b6c5a98649d60b06a5656f9a6a7907a60a6058d39d5229e17194d289202"
+content-hash = "d3fecce45337765ebb583569f8259ebb1d8bd06533a74701c3926da1f94ea94d"
 
 [metadata.files]
 alabaster = [
@@ -1995,8 +1984,8 @@ flake8-rst-docstrings = [
     {file = "flake8-rst-docstrings-0.0.14.tar.gz", hash = "sha256:8f8bcb18f1408b506dd8ba2c99af3eac6128f6911d4bf6ff874b94caa70182a2"},
 ]
 gitdb = [
-    {file = "gitdb-4.0.5-py3-none-any.whl", hash = "sha256:91f36bfb1ab7949b3b40e23736db18231bf7593edada2ba5c3a174a7b23657ac"},
-    {file = "gitdb-4.0.5.tar.gz", hash = "sha256:c9e1f2d0db7ddb9a704c2a0217be31214e91a4fe1dea1efad19ae42ba0c285c9"},
+    {file = "gitdb-4.0.6-py3-none-any.whl", hash = "sha256:27dea6c52fbcf768530e1af47f2e34afd24a52e53fa310c8279a5589bd7c85bd"},
+    {file = "gitdb-4.0.6.tar.gz", hash = "sha256:42535bb16b5db8983e2c4f6a714d29a8feba7165a12addc63e08fc672dfeccb9"},
 ]
 gitpython = [
     {file = "GitPython-3.1.14-py3-none-any.whl", hash = "sha256:3283ae2fba31c913d857e12e5ba5f9a7772bbc064ae2bb09efafa71b0dd4939b"},
@@ -2018,8 +2007,8 @@ gsd = [
     {file = "gsd-2.4.1.tar.gz", hash = "sha256:ba64f1573a4d83672d19736b718b61ba94a275165d6cbb406d2abb07b386f636"},
 ]
 identify = [
-    {file = "identify-2.2.0-py2.py3-none-any.whl", hash = "sha256:39c0b110c9d0cd2391b6c38cd0ff679ee4b4e98f8db8b06c5d9d9e502711a1e1"},
-    {file = "identify-2.2.0.tar.gz", hash = "sha256:efbf090a619255bc31c4fbba709e2805f7d30913fd4854ad84ace52bd276e2f6"},
+    {file = "identify-2.2.1-py2.py3-none-any.whl", hash = "sha256:9cc5f58996cd359b7b72f0a5917d8639de5323917e6952a3bfbf36301b576f40"},
+    {file = "identify-2.2.1.tar.gz", hash = "sha256:1cfb05b578de996677836d5a2dde14b3dffde313cf7d2b3e793a0787a36e26dd"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -2437,8 +2426,8 @@ pydocstyle = [
     {file = "pydocstyle-6.0.0.tar.gz", hash = "sha256:164befb520d851dbcf0e029681b91f4f599c62c5cd8933fd54b1bfbd50e89e1f"},
 ]
 pyflakes = [
-    {file = "pyflakes-2.3.0-py2.py3-none-any.whl", hash = "sha256:910208209dcea632721cb58363d0f72913d9e8cf64dc6f8ae2e02a3609aba40d"},
-    {file = "pyflakes-2.3.0.tar.gz", hash = "sha256:e59fd8e750e588358f1b8885e5a4751203a0516e0ee6d34811089ac294c8806f"},
+    {file = "pyflakes-2.3.1-py2.py3-none-any.whl", hash = "sha256:7893783d01b8a89811dd72d7dfd4d84ff098e5eed95cfa8905b22bbffe52efc3"},
+    {file = "pyflakes-2.3.1.tar.gz", hash = "sha256:f5bc8ecabc05bb9d291eb5203d6810b49040f6ff446a756326104746cc00c1db"},
 ]
 pygments = [
     {file = "Pygments-2.8.1-py3-none-any.whl", hash = "sha256:534ef71d539ae97d4c3a4cf7d6f110f214b0e687e92f9cb9d2a3b0d3101289c8"},
@@ -2492,16 +2481,6 @@ pytest-randomly = [
 python-dateutil = [
     {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
     {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
-]
-pytraj = [
-    {file = "pytraj-2.0.5-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:33ed3f1a1ce3b113c0b33fa0c1fc443225eca98bb4389efa27289675b64444db"},
-    {file = "pytraj-2.0.5-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:59f748031249926312eb855ea923c552db1592a143d33049eb31ecb1a01b6581"},
-    {file = "pytraj-2.0.5-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:6d15d263c87b88dada01c9c7b9cba24ed421f79e3694f7bdf4784d50189582d0"},
-    {file = "pytraj-2.0.5-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:dd324f6b2cb2aee9ad045c950910b9f68ff954f28c5d152d01234a279fd11180"},
-    {file = "pytraj-2.0.5-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:dae562b4930bca6a0fc7d374cb4fb263e2eef7d1d513d9ec398497db5b1c808a"},
-    {file = "pytraj-2.0.5-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:ed9f804bcca160764b7fac4e4f6c77af3fb6a83a5462e5963fb35158cb98ab7f"},
-    {file = "pytraj-2.0.5-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:822f975fd8fe1c5e207913c7d4e8088327ebeab60e462eac6c88f17b6cdacbbd"},
-    {file = "pytraj-2.0.5.tar.gz", hash = "sha256:4326dde78ef2c85c145d130fda27bce302c3d2e7862ceeb0911b76d7cdee3385"},
 ]
 pytz = [
     {file = "pytz-2021.1-py2.py3-none-any.whl", hash = "sha256:eb10ce3e7736052ed3623d49975ce333bcd712c7bb19a58b9e2089d4057d0798"},
