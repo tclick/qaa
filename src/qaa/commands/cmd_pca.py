@@ -183,7 +183,23 @@ def cli(
     if bias and whiten:
         projection *= np.sqrt(n_samples / (n_samples - 1))
         pca.explained_variance_ *= (n_samples - 1) / n_samples
+
     ratio = pca.explained_variance_.cumsum() / pca.explained_variance_.sum()
+    for percentage in np.arange(0.8, 1.0, 0.05):
+        components: int = np.where(ratio <= percentage)[0].size
+        logger.info(
+            "%d components cover %.1f%% of the explained variance",
+            components,
+            percentage * 100,
+        )
+    components = [50, 100]
+    for component in components:
+        percentage: float = ratio[:component][-1] * 100
+        logger.info(
+            "%d components cover %.1f%% of the explained variance",
+            component,
+            percentage,
+        )
 
     # Save data
     data = dict(
