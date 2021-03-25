@@ -17,6 +17,8 @@
 This module contains the function, _jade, which does blind source separation of real
 signals. Hopefully more ICA algorithms will be added in the future.
 """
+from __future__ import annotations
+
 from typing import Optional
 
 from numpy import abs
@@ -41,12 +43,12 @@ from numpy import zeros
 from numpy.linalg import eig
 from numpy.linalg import pinv
 from sklearn.decomposition import _base
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_is_fitted, check_array
 
 from ..libs.typing import ArrayType
 
 
-def _jade(X: ArrayType, m: Optional[int] = None, verbose: bool = True):
+def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
     """Blind separation of real signals with JADE.
 
     jadeR implements JADE, an Independent Component Analysis (ICA) algorithm developed
@@ -58,7 +60,7 @@ def _jade(X: ArrayType, m: Optional[int] = None, verbose: bool = True):
 
     Parameters
     ----------
-    X : array_like
+    arr : array_like
         a data matrix (n_features, n_samples)
     m : int, default=None
         output matrix B has size mxn so that only m sources are extracted.  This is done
@@ -76,6 +78,11 @@ def _jade(X: ArrayType, m: Optional[int] = None, verbose: bool = True):
             columns of pinv(B) are in order of decreasing norm; this has the effect that
             the `most energetically significant` components appear first in the rows of
             :math:`Y = B * X`.
+
+    Raises
+    -------
+    IndexError
+        if `m` >= n_features
 
     Notes
     -----
@@ -110,34 +117,28 @@ def _jade(X: ArrayType, m: Optional[int] = None, verbose: bool = True):
     # GB: we do some checking of the input arguments and copy data to new variables to
     # avoid messing with the original input. We also require double precision (float64)
     # and a numpy matrix type for X.
-    assert isinstance(
-        X, ndarray
-    ), "X (input data matrix) is of the wrong type (%s)" % type(X)
-    origtype = X.dtype  # remember to return matrix B of the same type
-    X = matrix(X.astype(float64))
-    assert X.ndim == 2, "X has %d dimensions, should be 2" % X.ndim
-    assert isinstance(verbose, bool), "verbose parameter should be either True or False"
+    arr: ArrayType = check_array(arr)
+    origtype = arr.dtype  # remember to return matrix B of the same type
+    arr = matrix(arr.astype(float64))
 
-    n, T = X.shape  # GB: n is number of input signals, T is number of samples
+    n, T = arr.shape  # GB: n is number of input signals, T is number of samples
 
     if m is None:
         m = n  # Number of sources defaults to # of sensors
-    assert m <= n, "jade -> Do not ask more sources (%d) than sensors (%d )here!!!" % (
-        m,
-        n,
-    )
+    if m >= n:
+        raise IndexError(f"More sources ({m}) than sensors ({n})")
 
     if verbose:
         print("jade -> Looking for %d sources" % m)
         print("jade -> Removing the mean value")
-    X -= X.mean(axis=1)
+    arr -= arr.mean(axis=1)
 
     # whitening & projection onto signal subspace
     # ===========================================
     if verbose:
         print("jade -> Whitening the data")
     # An eigen basis for the sample covariance matrix
-    D, U = eig((X * X.T) / T)
+    D, U = eig((arr * arr.T) / T)
     k = D.argsort()
     Ds = D[k]  # Sort by increasing variances
     PCs = arange(
@@ -152,7 +153,7 @@ def _jade(X: ArrayType, m: Optional[int] = None, verbose: bool = True):
     B = diag(1.0 / scales) * B  # Now, B does PCA followed by a rescaling = sphering
     # B[-1,:] = -B[-1,:] # GB: to make it compatible with octave
     # --- Sphering ------------------------------------------------------
-    X = B * X  # %% We have done the easy part: B is a whitening matrix and X is white.
+    arr = B * arr  # %% We have done the easy part: B is a whitening matrix and X is white.
 
     del U, D, Ds, k, PCs, scales
 
@@ -175,7 +176,7 @@ def _jade(X: ArrayType, m: Optional[int] = None, verbose: bool = True):
         print("jade -> Estimating cumulant matrices")
 
     # Reshaping of the data, hoping to speed up things a little bit...
-    X = X.T
+    arr = arr.T
     dimsymm = int((m * (m + 1)) / 2)  # Dim. of the space of real symm matrices
     nbcm = dimsymm  # number of cumulant matrices
     CM = matrix(zeros([m, m * nbcm], dtype=float64))  # Storage for cumulant matrices
@@ -191,19 +192,19 @@ def _jade(X: ArrayType, m: Optional[int] = None, verbose: bool = True):
     Range = arange(m)  # will index the columns of CM where to store the cum. mats.
 
     for im in range(m):
-        Xim = X[:, im]
+        Xim = arr[:, im]
         Xijm = multiply(Xim, Xim)
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
-        Qij = multiply(Xijm, X).T * X / float(T) - R - 2 * dot(R[:, im], R[:, im].T)
+        Qij = multiply(Xijm, arr).T * arr / float(T) - R - 2 * dot(R[:, im], R[:, im].T)
         CM[:, Range] = Qij
         Range = Range + m
         for jm in range(im):
-            Xijm = multiply(Xim, X[:, jm])
+            Xijm = multiply(Xim, arr[:, jm])
             Qij = (
-                sqrt(2) * multiply(Xijm, X).T * X / float(T)
-                - R[:, im] * R[:, jm].T
-                - R[:, jm] * R[:, im].T
+                    sqrt(2) * multiply(Xijm, arr).T * arr / float(T)
+                    - R[:, im] * R[:, jm].T
+                    - R[:, jm] * R[:, im].T
             )
             CM[:, Range] = Qij
             Range = Range + m
@@ -440,6 +441,15 @@ def _jade(X: ArrayType, m: Optional[int] = None, verbose: bool = True):
 
 class JadeICA(_base._BasePCA):
     def __init__(self, *, n_components=None, verbose=True):
+        """Perform a blind signal separation using joint diagonalization.
+
+        Parameters
+        ----------
+        n_components : int, default=None
+            Number of signals to extract. `None` assumes all components
+        verbose : bool, default=True
+            Display information during the calculation
+        """
         super().__init__()
 
         self.n_components = n_components
@@ -447,26 +457,85 @@ class JadeICA(_base._BasePCA):
         self.mean_ = None
         self.components_ = None
 
-    def fit(self, X, y=None):
-        self.mean_ = X.mean(axis=0)
-        self.components_ = _jade(X.T, m=self.n_components, verbose=self.verbose)
+    def fit(self, arr: ArrayType, y: Optional[ArrayType] = None) -> JadeICA:
+        """Calculate the unmixing matrix.
 
-    def transform(self, X):
+        Parameters
+        ----------
+        arr : array_like
+            mixed signal array
+        y : array_like, optional
+            unused
+
+        Returns
+        -------
+        self
+        """
+        self.mean_ = arr.mean(axis=0)
+        self.components_ = _jade(arr.T, m=self.n_components, verbose=self.verbose)
+        return self
+
+    def transform(self, arr: ArrayType) -> ArrayType:
+        """Project the unmixing matrix onto `arr` to give independent signals.
+
+        Parameters
+        ----------
+        arr : array_like
+
+        Returns
+        -------
+        signals : array_like
+            Unmixed signal array
+        """
         check_is_fitted(self)
 
-        X -= self.mean_
-        signal = self.components_ @ X.T
+        arr -= self.mean_
+        signal = self.components_ @ arr.T
         return signal.T
 
-    def fit_transform(self, X, y=None, **fit_params):
-        self.mean_ = X.mean(axis=0)
-        self.components_ = _jade(X.T, m=self.n_components, verbose=self.verbose)
+    def fit_transform(
+        self, arr: ArrayType, y: Optional[ArrayType] = None, **fit_params
+    ) -> ArrayType:
+        """Determine the independent signals using joint diagonalization
 
-        X -= self.mean_
-        signal = self.components_ @ X.T
+        Parameters
+        ----------
+        arr : array_like
+            Mixed signal array
+        y : array_like, optional
+            unused
+        fit_params : dict
+            unused
+
+        Returns
+        -------
+        signals : array_like
+            Unmixed signal array
+        """
+        self.mean_ = arr.mean(axis=0)
+        self.components_ = _jade(arr.T, m=self.n_components, verbose=self.verbose)
+
+        arr -= self.mean_
+        signal = self.components_ @ arr.T
         return signal.T
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, arr: ArrayType) -> ArrayType:
+        """Find the original mixed signals.
+
+        Parameters
+        ----------
+        arr : array_like
+            Unmixed signal array
+
+        Returns
+        -------
+        array_like
+            Original source
+
+        Raises
+        -------
+        NotImplementedError
+        """
         raise NotImplementedError(
             "Inverse transformation is currently not implemented."
         )
