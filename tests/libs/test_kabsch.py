@@ -12,15 +12,14 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-
 import MDAnalysis as mda
 import numpy as np
 import pytest
 from numpy.typing import ArrayLike
 
+from ..datafile import TOPWW
+from ..datafile import TRJWW
 from qaa.libs import kabsch
-
-from ..datafile import TOPWW, TRJWW
 
 
 class TestCase:

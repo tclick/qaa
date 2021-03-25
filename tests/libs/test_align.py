@@ -18,9 +18,9 @@ import pytest
 from numpy import testing
 from numpy.typing import ArrayLike
 
+from ..datafile import TOPWW
+from ..datafile import TRJWW
 from qaa.libs import align
-
-from ..datafile import TOPWW, TRJWW
 
 
 class TestAlign:

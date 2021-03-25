@@ -17,9 +17,9 @@ import numpy as np
 import pytest
 from numpy import testing
 
+from ..datafile import TOPWW
+from ..datafile import TRJWW
 from qaa.libs import utils
-
-from ..datafile import TOPWW, TRJWW
 
 
 class TestUtils:

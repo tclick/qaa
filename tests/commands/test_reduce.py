@@ -12,16 +12,15 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-
 from pathlib import Path
 
 import MDAnalysis as mda
 import pytest
 from click.testing import CliRunner
 
+from ..datafile import TOPWW
+from ..datafile import TRJWW
 from qaa.cli import main
-
-from ..datafile import TOPWW, TRJWW
 
 
 class TestReduce:
@@ -66,7 +65,7 @@ class TestReduce:
                 logfile,
                 "-m",
                 "ca",
-                "--verbose"
+                "--verbose",
             ),
         )
 

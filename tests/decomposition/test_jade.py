@@ -15,7 +15,8 @@
 """Test the Jade ICA module"""
 import numpy as np
 import pytest
-from numpy import random, typing
+from numpy import random
+from numpy import typing
 from sklearn.utils._testing import assert_array_almost_equal
 
 from qaa.decomposition import jade

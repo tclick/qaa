@@ -13,7 +13,6 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Various data files for testing."""
-
 from pathlib import Path
 
 from pkg_resources import resource_filename

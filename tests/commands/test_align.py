@@ -20,9 +20,9 @@ import MDAnalysis as mda
 import pytest
 from click.testing import CliRunner
 
+from ..datafile import TOPWW
+from ..datafile import TRJWW
 from qaa.cli import main
-
-from ..datafile import TOPWW, TRJWW
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 LOGGER = logging.getLogger(name="ambgen.commands.cmd_align")
@@ -111,7 +111,7 @@ class TestAlign:
                 logfile,
                 "-m",
                 "ca",
-                "--verbose"
+                "--verbose",
             ),
         )
 

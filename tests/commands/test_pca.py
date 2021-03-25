@@ -12,7 +12,6 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-
 import logging
 import sys
 from pathlib import Path
@@ -21,9 +20,9 @@ import numpy as np
 import pytest
 from click.testing import CliRunner
 
+from ..datafile import TOPWW
+from ..datafile import TRJWW
 from qaa.cli import main
-
-from ..datafile import TOPWW, TRJWW
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 LOGGER = logging.getLogger(name="ambgen.commands.cmd_pca")
@@ -78,7 +77,7 @@ class TestPCA:
                 logfile,
                 "-m",
                 "ca",
-                "--verbose"
+                "--verbose",
             ),
         )
 
@@ -114,7 +113,7 @@ class TestPCA:
                 "1",
                 "-m",
                 "ca",
-                "--verbose"
+                "--verbose",
             ),
         )
         assert result.exit_code > 0

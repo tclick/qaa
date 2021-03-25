@@ -24,10 +24,10 @@ from numpy import random
 from numpy.typing import ArrayLike
 from sklearn.decomposition import FastICA
 
+from ..datafile import TOPWW
+from ..datafile import TRJWW
 from qaa.cli import main
 from qaa.decomposition.jade import JadeICA
-
-from ..datafile import TOPWW, TRJWW
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 LOGGER = logging.getLogger(name="ambgen.commands.cmd_qaa")

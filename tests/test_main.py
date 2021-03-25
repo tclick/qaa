@@ -17,7 +17,6 @@ import runpy
 
 import pytest
 
-import qaa
 import qaa.__main__
 import qaa.cli
 from qaa import create_logging_dict

@@ -21,9 +21,8 @@ from click.testing import CliRunner
 from numpy import random
 from numpy.typing import ArrayLike
 
-from qaa.cli import main
-
 from ..datafile import PROJ
+from qaa.cli import main
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 LOGGER = logging.getLogger(name="ambgen.commands.cmd_qaa")
