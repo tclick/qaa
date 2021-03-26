@@ -216,6 +216,9 @@ def cli(
         with outdir.joinpath(f"{key}.csv").open(mode="w") as w:
             logger.info("Saving %s to %s", key, w.name)
             np.savetxt(w, value, delimiter=",", fmt="%.6f")
+        with outdir.joinpath(f"{key}.npy").open(mode="wb") as w:
+            logger.info("Saving %s to %s", key, w.name)
+            np.save(w, value)
 
     if image:
         # Plot explained variance ratio

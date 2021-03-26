@@ -144,7 +144,10 @@ def cli(
 
     with outfile.with_suffix(".csv").open(mode="w") as w:
         logger.info("Saving cluster labels to %s", w.name)
-        np.savetxt(w, labels, delimiter=",")
+        np.savetxt(w, labels, delimiter=",", fmt="%d")
+    with outfile.with_suffix(".npy").open(mode="wb") as w:
+        logger.info("Saving cluster labels to %s", w.name)
+        np.save(w, labels)
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time

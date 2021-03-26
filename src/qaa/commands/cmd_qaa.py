@@ -221,6 +221,9 @@ def cli(
     with outdir.joinpath("qaa-signals.csv").open(mode="w") as w:
         logger.info("Saving QAA data to %s", w.name)
         np.savetxt(w, signals, delimiter=",", fmt="%.6f")
+    with outdir.joinpath("qaa-signals.npy").open(mode="wb") as w:
+        logger.info("Saving QAA data to %s", w.name)
+        np.save(w, signals)
 
     if image:
         # Plot 2D and 3D plots of ICs
