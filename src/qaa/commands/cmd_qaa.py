@@ -48,8 +48,11 @@ from ..libs.utils import reshape_positions
     "--traj",
     "trajectory",
     metavar="FILE",
-    default=Path.cwd().joinpath("input.nc"),
+    default=[
+        Path.cwd().joinpath("input.nc"),
+    ],
     show_default=True,
+    multiple=True,
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
     help="Trajectory",
 )
