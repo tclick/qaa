@@ -16,17 +16,15 @@
 from pathlib import Path
 from typing import NewType
 from typing import TypeVar
-from typing import Union
 
-import MDAnalysis as mda
+import mdtraj as md
 from numpy.typing import ArrayLike
 from pandas._typing import FrameOrSeries
 
 PathLike = TypeVar("PathLike", str, Path)
 
 # MDAnalysis types
-AtomType = NewType("AtomType", mda.AtomGroup)
-UniverseType = NewType("UniverseType", mda.Universe)
-AtomUniv = TypeVar("AtomUniv", UniverseType, AtomType)
+Topology = NewType("Topology", md.Topology)
+Trajectory = NewType("Trajectory", md.Trajectory)
 ArrayType = NewType("ArrayType", ArrayLike)
 DaskFrameType = NewType("DataFrameType", FrameOrSeries)
