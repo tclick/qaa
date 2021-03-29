@@ -13,15 +13,15 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Test utilities module."""
+import dask.array as da
 import mdtraj as md
 import numpy as np
-import dask.array as da
 import pytest
 from numpy import testing
-from qaa.libs import utils
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
+from qaa.libs import utils
 
 
 class TestUtils:
