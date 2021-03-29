@@ -23,9 +23,10 @@ __version__: str = "1.0.0"
 
 _MASK: Dict = dict(
     ca="protein and name CA",
-    cab="protein and name CA,CB",
-    back="protein and name N,CA,C",
-    noh="protein and not name H*",
+    cab="protein and name =~ 'C[AB]'",
+    back="protein and backbone",
+    side="protein and not backbone and not (element =~ 'H')",
+    noh="protein and not (element =~ 'H')",
     all="all",
 )
 
@@ -44,7 +45,7 @@ def create_logging_dict(logfile: str) -> Dict:
         Configuration data for logging.
 
     Raises
-    -------
+    ------
     ValueError
         If a filename is not defined.
     """
