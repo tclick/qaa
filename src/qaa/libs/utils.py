@@ -13,13 +13,14 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Various utilities."""
-import MDAnalysis as mda
+import glob
+
+import dask.array as da
+import mdtraj as md
 import numpy as np
 
 from .typing import ArrayType
-from .typing import AtomType
 from .typing import PathLike
-from .typing import UniverseType
 
 
 def get_positions(
@@ -38,15 +39,18 @@ def get_positions(
 
     Returns
     -------
-    array_like
+    ArrayType
         The coordinates with shape (n_frames, n_atoms, 3)
     """
-    universe: UniverseType = mda.Universe(topology, trajectory)
-    atoms: AtomType = universe.select_atoms(mask)
-
-    positions: ArrayType = np.asarray(
-        [atoms.positions for _ in universe.trajectory],
-        dtype=atoms.positions.dtype,
+    top: md.Topology = md.load_topology(topology)
+    selection: ArrayType = top.select(mask)
+    positions: ArrayType = da.concatenate(
+        [
+            frame.xyz
+            for filename in glob.iglob(trajectory)
+            for frame in md.iterload(filename, top=top, atom_indices=selection)
+        ],
+        axis=0,
     )
     return positions
 
@@ -56,12 +60,12 @@ def reshape_positions(positions: ArrayType) -> ArrayType:
 
     Parameters
     ----------
-    positions : array_like
+    positions : ArrayType
         A 3-D matrix with shape (n_frames, n_atoms, 3)
 
-    Return
-    ------
-    array_like
+    Returns
+    -------
+    ArrayType
         A 2-D array with shape (n_frames, n_atoms * 3)
     """
     n_frames, n_atoms, n_dims = positions.shape
@@ -69,18 +73,18 @@ def reshape_positions(positions: ArrayType) -> ArrayType:
 
 
 def rmse(mobile: ArrayType, reference: ArrayType) -> float:
-    """Calculate the root-mean-square error between two arrays
+    """Calculate the root-mean-square error between two arrays.
 
     Parameters
     ----------
-    mobile : array_like
+    mobile : ArrayType
         coordinates
-    reference : array_like
+    reference : ArrayType
         coordinates
 
     Returns
     -------
-    error : float
+    float
         The error difference between the two arrays
     """
     diff: ArrayType = mobile - reference
