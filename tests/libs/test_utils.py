@@ -12,30 +12,32 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-import MDAnalysis as mda
+"""Test utilities module."""
+import mdtraj as md
 import numpy as np
+import dask.array as da
 import pytest
 from numpy import testing
+from qaa.libs import utils
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
-from qaa.libs import utils
 
 
 class TestUtils:
     @pytest.fixture
-    def universe(self) -> mda.Universe:
-        return mda.Universe(TOPWW, TRJWW)
+    def universe(self) -> md.Trajectory:
+        return md.load(TRJWW, top=TOPWW)
 
     @pytest.fixture
-    def n_atoms(self, universe: mda.Universe) -> int:
-        return universe.atoms.n_atoms
+    def n_atoms(self, universe: md.Trajectory) -> int:
+        return universe.topology.n_atoms
 
     @pytest.fixture
-    def n_frames(self, universe: mda.Universe) -> int:
-        return universe.trajectory.n_frames
+    def n_frames(self, universe: md.Trajectory) -> int:
+        return universe.n_frames
 
-    def test_positions(self, universe: mda.Universe, n_atoms: int, n_frames: int):
+    def test_positions(self, universe: md.Trajectory, n_atoms: int, n_frames: int):
         """
         GIVEN topology and trajectory filenames
         WHEN the get_positions function is called
@@ -43,33 +45,32 @@ class TestUtils:
         """
         array = utils.get_positions(TOPWW, TRJWW)
         assert array.shape == (n_frames, n_atoms, 3)
-        testing.assert_allclose(array[0], universe.atoms.positions)
-        assert isinstance(array, np.ndarray)
-        testing.assert_allclose(array[-1], universe.trajectory[-1].positions)
+        testing.assert_allclose(array[0], universe.xyz[0])
+        assert isinstance(array, da.Array)
+        testing.assert_allclose(array[-1], universe.xyz[-1])
 
-    def test_select_positions(self, universe: mda.Universe, n_frames: int):
+    def test_select_positions(self, universe: md.Trajectory, n_frames: int):
         """
         GIVEN topology and trajectory filenames and an atom selection
         WHEN the get_positions function is called
         THEN return a array of positions with shape (n_frames, n_atoms, 3)
         """
-        mask = "name CA"
-        atoms = universe.select_atoms(mask)
-        n_atoms = atoms.n_atoms
+        mask = "protein and name CA"
+        atoms = universe.topology.select(mask)
+        n_atoms = atoms.size
 
         array = utils.get_positions(TOPWW, TRJWW, mask=mask)
         assert array.shape == (n_frames, n_atoms, 3)
-        testing.assert_allclose(array[0], atoms.positions)
-        assert isinstance(array, np.ndarray)
+        testing.assert_allclose(array[0], universe.xyz[0, atoms])
+        assert isinstance(array, da.Array)
 
-    def test_reshape_array(self, universe: mda.Universe, n_atoms: int, n_frames: int):
+    def test_reshape_array(self, universe: md.Trajectory, n_atoms: int, n_frames: int):
         """
         GIVEN a coordinate matrix of shape (n_frames, n_points, 3)
         WHEN calling the reshape_position function
         THEN a 2D-array of shape (n_frames, n_points * 3) will be returned
         """
-        positions = np.array([universe.atoms.positions for _ in universe.trajectory])
-        new_positions = utils.reshape_positions(positions)
+        new_positions = utils.reshape_positions(universe.xyz)
 
         assert new_positions.shape == (n_frames, n_atoms * 3)
         assert isinstance(new_positions, np.ndarray)
@@ -80,6 +81,7 @@ class TestUtils:
         WHEN rmse is called
         THEN a value of 0.0 should be returned
         """
-        positions = universe.select_atoms("name CA").positions
+        selection = universe.top.select("protein and name CA")
+        positions = universe.xyz[:, selection]
         error = utils.rmse(positions, positions)
         testing.assert_allclose(error, 0.0)
