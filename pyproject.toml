@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "qaa"
-version = "0.1.0"
+version = "1.0.0"
 description = "Quasi-Anharmonic Analysis"
 authors = ["Timothy H. Click <tclick@okstate.edu>"]
 license = "BSD-3-Clause"
@@ -29,6 +29,8 @@ scikit-learn = "^0.24.1"
 pandas = "^1.2.3"
 netCDF4 = "^1.5.6"
 mdtraj = "^1.9.5"
+dask = "^2021.3.1"
+click-pathlib = "^2020.3.13"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
