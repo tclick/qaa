@@ -31,7 +31,7 @@ def get_average_structure(
     *,
     mask: str = "all",
     stride: Optional[int] = None,
-    skip: Optional[int] = None,
+    skip: int = 0,
 ) -> md.Trajectory:
     """Compute the average structure of a trajectory.
 
@@ -45,7 +45,7 @@ def get_average_structure(
         Atom selection
     stride : int, optional
         Number of steps to read
-    skip : int, optional
+    skip : int
         Number of frames to skip
 
     Returns
@@ -78,7 +78,7 @@ def get_positions(
     *,
     mask: str = "all",
     stride: Optional[int] = None,
-    skip: Optional[int] = None,
+    skip: int = 0,
 ) -> ArrayType:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
@@ -92,7 +92,7 @@ def get_positions(
         Selection criterion for coordinates
     stride : int, optional
         Number of steps to read
-    skip : int, optional
+    skip : int
         Number of frames to skip
 
     Returns
