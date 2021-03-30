@@ -25,7 +25,7 @@ from .typing import PathLike
 
 
 def get_average_structure(
-    topology: PathLike, trajectory: List[PathLike], mask: str = "all"
+    topology: PathLike, trajectory: List[PathLike], /, *, mask: str = "all"
 ) -> md.Trajectory:
     """Compute the average structure of a trajectory.
 
