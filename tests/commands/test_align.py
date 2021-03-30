@@ -16,7 +16,7 @@ import logging
 import sys
 from pathlib import Path
 
-import MDAnalysis as mda
+import mdtraj as md
 import pytest
 from click.testing import CliRunner
 
@@ -62,7 +62,7 @@ class TestAlign:
         THEN an aligned trajectory and average structure file will be written
         """
         logfile = tmp_path.joinpath("align.log")
-        patch = mocker.patch.object(mda, "Writer", autospec=True)
+        patch = mocker.patch.object(md.Trajectory, "save", autospec=True)
         result = cli_runner.invoke(
             main,
             args=(
@@ -94,7 +94,7 @@ class TestAlign:
         THEN an aligned trajectory and average structure file will be written
         """
         logfile = tmp_path.joinpath("align.log")
-        patch = mocker.patch.object(mda, "Writer", autospec=True)
+        patch = mocker.patch.object(md.Trajectory, "save", autospec=True)
         result = cli_runner.invoke(
             main,
             args=(
