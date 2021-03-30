@@ -14,9 +14,9 @@
 # --------------------------------------------------------------------------------------
 """Subcommand to find the principal components of a trajectory."""
 import logging.config
-import sys
 import time
 from pathlib import Path
+from typing import List
 from typing import Optional
 
 import click
@@ -29,7 +29,6 @@ from .. import _MASK
 from .. import create_logging_dict
 from ..libs.figure import Figure
 from ..libs.typing import ArrayType
-from ..libs.typing import PathLike
 from ..libs.utils import get_positions
 from ..libs.utils import reshape_positions
 
@@ -86,15 +85,6 @@ from ..libs.utils import reshape_positions
     help="Starting trajectory frame (0 = first frame)",
 )
 @click.option(
-    "-e",
-    "stop",
-    metavar="STOP",
-    default=-1,
-    show_default=True,
-    type=click.IntRange(min=-1, clamp=True),
-    help="Final trajectory frame (-1 = final frame)",
-)
-@click.option(
     "--dt",
     "step",
     metavar="OFFSET",
@@ -140,12 +130,11 @@ from ..libs.utils import reshape_positions
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: PathLike,
-    trajectory: PathLike,
-    outdir: PathLike,
-    logfile: PathLike,
+    topology: str,
+    trajectory: str,
+    outdir: str,
+    logfile: str,
     start: int,
-    stop: int,
     step: int,
     mask: str,
     n_modes: int,
@@ -165,17 +154,13 @@ def cli(
 
     outdir = Path(outdir)
     step: Optional[int] = step if step > 0 else None
-    if start > stop != -1:
-        logger.error(
-            "Final frame must be greater than start frame %d <= %d", stop, start
-        )
-        sys.exit(1)
-    stop: Optional[int] = stop if stop != -1 else None
 
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")
-    positions: ArrayType = get_positions(topology, trajectory, mask=_MASK[mask])
-    positions = reshape_positions(positions[start:stop:step])
+    positions: ArrayType = get_positions(
+        topology, trajectory, mask=_MASK[mask], stride=step, skip=start
+    )
+    positions = reshape_positions(positions)
     n_samples, n_features = positions.shape
     n_components: int = n_modes if n_modes > 0 else None
 
@@ -195,7 +180,8 @@ def cli(
             components,
             percentage * 100,
         )
-    components = [50, 100]
+
+    components: List[int] = [50, 100]
     for component in components:
         percentage: float = ratio[:component][-1] * 100
         logger.info(
