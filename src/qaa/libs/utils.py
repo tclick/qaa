@@ -60,7 +60,7 @@ def get_average_structure(
 
 
 def get_positions(
-    topology: PathLike, trajectory: PathLike, /, *, mask: str = "all"
+    topology: PathLike, trajectory: List[PathLike], /, *, mask: str = "all"
 ) -> ArrayType:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
@@ -68,7 +68,7 @@ def get_positions(
     ----------
     topology : PathLike
         Topology file
-    trajectory : PathLike
+    trajectory : list of PathLike
         Trajectory file
     mask : str
         Selection criterion for coordinates
@@ -83,7 +83,7 @@ def get_positions(
     positions: ArrayType = np.concatenate(
         [
             frames.xyz
-            for filename in glob.iglob(trajectory)
+            for filename in glob.iglob(*trajectory)
             for frames in md.iterload(filename, top=top, atom_indices=selection)
         ],
         axis=0,
