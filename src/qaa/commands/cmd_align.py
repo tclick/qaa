@@ -12,23 +12,22 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
+"""Align trajectories to their average structure."""
 import logging.config
-import sys
 import time
 from pathlib import Path
+from typing import List
 from typing import Optional
 
 import click
-import MDAnalysis as mda
+import mdtraj as md
+import numpy as np
 
 from .. import _MASK
 from .. import create_logging_dict
 from ..libs.align import align_trajectory
-from ..libs.average import AverageStructure
 from ..libs.typing import ArrayType
-from ..libs.typing import AtomType
-from ..libs.typing import PathLike
-from ..libs.typing import UniverseType
+from ..libs.utils import get_average_structure
 from ..libs.utils import get_positions
 
 
@@ -38,7 +37,7 @@ from ..libs.utils import get_positions
     "--top",
     "topology",
     metavar="FILE",
-    default=Path.cwd().joinpath("input.top"),
+    default=Path.cwd().joinpath("input.top").as_posix(),
     show_default=True,
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
     help="Topology",
@@ -49,7 +48,7 @@ from ..libs.utils import get_positions
     "trajectory",
     metavar="FILE",
     default=[
-        Path.cwd().joinpath("input.nc"),
+        Path.cwd().joinpath("input.nc").as_posix(),
     ],
     show_default=True,
     multiple=True,
@@ -61,7 +60,7 @@ from ..libs.utils import get_positions
     "--ref",
     "reference",
     metavar="FILE",
-    default=Path.cwd().joinpath("average.pdb"),
+    default=Path.cwd().joinpath("average.pdb").as_posix(),
     show_default=True,
     type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
     help="Average structure of trajectory",
@@ -70,7 +69,7 @@ from ..libs.utils import get_positions
     "-o",
     "--outfile",
     metavar="FILE",
-    default=Path.cwd().joinpath("aligned.nc"),
+    default=Path.cwd().joinpath("aligned.nc").as_posix(),
     show_default=True,
     type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
     help="Aligned trajectory",
@@ -80,7 +79,7 @@ from ..libs.utils import get_positions
     "--logfile",
     metavar="LOG",
     show_default=True,
-    default=Path.cwd().joinpath("align_traj.log"),
+    default=Path.cwd().joinpath("align_traj.log").as_posix(),
     type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
     help="Log file",
 )
@@ -92,15 +91,6 @@ from ..libs.utils import get_positions
     show_default=True,
     type=click.IntRange(min=0, clamp=True),
     help="Starting trajectory frame (0 = first frame)",
-)
-@click.option(
-    "-e",
-    "stop",
-    metavar="STOP",
-    default=-1,
-    show_default=True,
-    type=click.IntRange(min=-1, clamp=True),
-    help="Final trajectory frame (-1 = final frame)",
 )
 @click.option(
     "--dt",
@@ -128,19 +118,18 @@ from ..libs.utils import get_positions
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: PathLike,
-    trajectory: PathLike,
-    reference: PathLike,
-    outfile: PathLike,
-    logfile: PathLike,
+    topology: str,
+    trajectory: List[str],
+    reference: str,
+    outfile: str,
+    logfile: str,
     start: int,
-    stop: int,
     step: int,
     mask: str,
     tol: float,
     verbose: bool,
 ):
-    """Align a trajectory to average structure using Kabsch fitting"""
+    """Align a trajectory to average structure using Kabsch fitting."""
     start_time: float = time.perf_counter()
 
     # Setup logging
@@ -148,36 +137,34 @@ def cli(
     logger: logging.Logger = logging.getLogger(__name__)
 
     step: Optional[int] = step if step > 0 else None
-    if start > stop != -1:
-        logger.exception(
-            "Final frame must be greater than start frame (%d <= %d)", stop, start
-        )
-        sys.exit(1)
-    stop: Optional[int] = stop if stop != -1 else None
 
     logger.info("Loading %s and %s", topology, trajectory)
-    universe: UniverseType = mda.Universe(topology, trajectory)
-    atoms: AtomType = universe.select_atoms(_MASK[mask.lower()])
-    positions: ArrayType = get_positions(topology, trajectory, mask=_MASK[mask.lower()])
+    positions: ArrayType = get_positions(
+        topology, trajectory, mask=_MASK[mask], stride=step, skip=start
+    )
 
     # Calculate average structure
-    ref_pos = AverageStructure(atoms).run().positions
+    ref_traj: md.Trajectory = get_average_structure(
+        topology, trajectory, mask=_MASK[mask], stride=step, skip=start
+    )
+    logger.info("Saving average structure to %s", reference)
+    ref_traj.save(reference)
+    unitcell_angles: ArrayType = ref_traj.unitcell_angles.copy()
+    unitcell_lengths: ArrayType = ref_traj.unitcell_lengths.copy()
+    unitcell_vectors: ArrayType = ref_traj.unitcell_vectors.copy()
 
     logger.info("Aligning trajectory to average structures")
-    aligned: ArrayType = align_trajectory(positions, ref_pos, tol=tol, verbose=verbose)
+    ref_traj.xyz = align_trajectory(
+        positions, ref_traj.xyz[0], tol=tol, verbose=verbose
+    )
+    n_frames = ref_traj.n_frames
+    ref_traj.time = np.arange(n_frames)
+    ref_traj.unitcell_angles = np.repeat(unitcell_angles, n_frames, axis=0)
+    ref_traj.unitcell_lengths = np.repeat(unitcell_lengths, n_frames, axis=0)
+    ref_traj.unitcell_vectors = np.repeat(unitcell_vectors, n_frames, axis=0)
 
-    outfile = Path(outfile)
-    logger.info("Saving aligned trajectory to %s}", outfile.as_posix())
-    format: str = "NCDF" if outfile.suffix == ".nc" else outfile.suffix[1:].upper()
-
-    with mda.Writer(outfile.as_posix(), n_atoms=atoms.n_atoms, format=format) as w:
-        for i, ts in enumerate(universe.trajectory[start:stop:step]):
-            atoms.positions[:] = aligned[i]
-            w.write(atoms)
-
-    with mda.Writer(reference, n_atoms=atoms.n_atoms) as w:
-        atoms.positions[:] = ref_pos
-        w.write(atoms)
+    logger.info("Saving aligned trajectory to %s}", outfile)
+    ref_traj.save(outfile)
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time
