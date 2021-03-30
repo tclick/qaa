@@ -13,24 +13,47 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Determine the average structure of a trajectory."""
+from typing import List
+from typing import Optional
+
+import dask
+import mdtraj as md
 import numpy as np
-from MDAnalysis.analysis.base import AnalysisBase
 
 from .typing import ArrayType
-from .typing import AtomType
+from .typing import PathLike
 
 
-class AverageStructure(AnalysisBase):
-    def __init__(self, atomgroup, **kwargs):
-        super().__init__(atomgroup.universe.trajectory, **kwargs)
-        self._ag: AtomType = atomgroup
-        self.n_frames_: int = atomgroup.universe.trajectory.n_frames
+def average_structure(
+    topology: PathLike, trajectory: List[PathLike], mask: str = "all"
+) -> ArrayType:
+    """Compute the average structure of a trajectory.
 
-    def _prepare(self):
-        self.positions: ArrayType = np.zeros_like(self._ag.positions)
+    Parameters
+    ----------
+    topology : PathLike
+        Topology file
+    trajectory : list of PathLike
+        List of trajectory files
+    mask : str
+        Atom selection
 
-    def _single_frame(self):
-        self.positions += self._ag.positions
+    Returns
+    -------
+    ArrayType
+        The average positions
+    """
+    n_frames: int = 0
+    positions: List[dask.delayed.Delayed] = []
+    indices: Optional[ArrayType] = (
+        md.load_topology(topology).select(mask) if mask != "all" else None
+    )
 
-    def _conclude(self):
-        self.positions /= self.n_frames_
+    for filename in trajectory:
+        for frames in md.iterload(filename, top=topology, atom_indices=indices):
+            n_frames += frames.n_frames
+            coordinates = dask.delayed(sum)(frames.xyz)
+            positions.append(coordinates)
+
+    average: ArrayType = np.sum(dask.compute(*positions), axis=0) / n_frames
+    return average
