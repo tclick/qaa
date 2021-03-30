@@ -22,11 +22,12 @@ import numpy as np
 
 from .typing import ArrayType
 from .typing import PathLike
+from .typing import Trajectory
 
 
 def average_structure(
     topology: PathLike, trajectory: List[PathLike], mask: str = "all"
-) -> ArrayType:
+) -> Trajectory:
     """Compute the average structure of a trajectory.
 
     Parameters
@@ -40,7 +41,7 @@ def average_structure(
 
     Returns
     -------
-    ArrayType
+    Trajectory
         The average positions
     """
     n_frames: int = 0
@@ -56,4 +57,4 @@ def average_structure(
             positions.append(coordinates)
 
     average: ArrayType = np.sum(dask.compute(*positions), axis=0) / n_frames
-    return average
+    return md.Trajectory(average, frames.topology)
