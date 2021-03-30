@@ -25,7 +25,13 @@ from .typing import PathLike
 
 
 def get_average_structure(
-    topology: PathLike, trajectory: List[PathLike], /, *, mask: str = "all"
+    topology: PathLike,
+    trajectory: List[PathLike],
+    /,
+    *,
+    mask: str = "all",
+    stride: Optional[int] = None,
+    skip: Optional[int] = None,
 ) -> md.Trajectory:
     """Compute the average structure of a trajectory.
 
@@ -37,6 +43,10 @@ def get_average_structure(
         List of trajectory files
     mask : str
         Atom selection
+    stride : int, optional
+        Number of steps to read
+    skip : int, optional
+        Number of frames to skip
 
     Returns
     -------
@@ -50,7 +60,9 @@ def get_average_structure(
     )
 
     for filename in trajectory:
-        for frames in md.iterload(filename, top=topology, atom_indices=indices):
+        for frames in md.iterload(
+            filename, top=topology, atom_indices=indices, stride=stride, skip=skip
+        ):
             n_frames += frames.n_frames
             coordinates = frames.xyz.sum(axis=0)
             positions.append(coordinates)
@@ -60,7 +72,13 @@ def get_average_structure(
 
 
 def get_positions(
-    topology: PathLike, trajectory: List[PathLike], /, *, mask: str = "all"
+    topology: PathLike,
+    trajectory: List[PathLike],
+    /,
+    *,
+    mask: str = "all",
+    stride: Optional[int] = None,
+    skip: Optional[int] = None,
 ) -> ArrayType:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
@@ -72,11 +90,15 @@ def get_positions(
         Trajectory file
     mask : str
         Selection criterion for coordinates
+    stride : int, optional
+        Number of steps to read
+    skip : int, optional
+        Number of frames to skip
 
     Returns
     -------
     ArrayType
-        The coordinates with shape (n_frames, n_atoms, 3)
+        The coordinates with shape (n_frames / step, n_atoms, 3)
     """
     top: md.Topology = md.load_topology(topology)
     selection: Optional[ArrayType] = top.select(mask) if mask != "all" else None
@@ -84,7 +106,9 @@ def get_positions(
         [
             frames.xyz
             for filename in glob.iglob(*trajectory)
-            for frames in md.iterload(filename, top=top, atom_indices=selection)
+            for frames in md.iterload(
+                filename, top=top, atom_indices=selection, stride=stride, skip=skip
+            )
         ],
         axis=0,
     )
