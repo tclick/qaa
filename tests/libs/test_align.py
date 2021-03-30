@@ -12,23 +12,25 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-import MDAnalysis as mda
+"""Test align module."""
+import mdtraj as md
 import numpy as np
 import pytest
 from numpy import testing
 from numpy.typing import ArrayLike
+from qaa.libs import align
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
-from qaa.libs import align
 
 
 class TestAlign:
     @pytest.fixture
     def mobile(self) -> ArrayLike:
-        universe = mda.Universe(TOPWW, TRJWW, in_memory=True)
-        sel = universe.select_atoms("protein and name CA")
-        return universe.trajectory.coordinate_array[:, sel.indices]
+        topology = md.load_topology(TOPWW)
+        indices = topology.select("protein and name CA")
+        universe = md.load(TRJWW, top=topology).atom_slice(indices)
+        return universe.xyz
 
     @pytest.fixture
     def centered(self, mobile: ArrayLike) -> ArrayLike:
