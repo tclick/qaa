@@ -13,15 +13,14 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Test utilities module."""
-import dask.array as da
 import mdtraj as md
 import numpy as np
 import pytest
 from numpy import testing
+from qaa.libs import utils
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
-from qaa.libs import utils
 
 
 class TestUtils:
@@ -37,16 +36,58 @@ class TestUtils:
     def n_frames(self, universe: md.Trajectory) -> int:
         return universe.n_frames
 
+    def test_average(self, universe: md.Trajectory, n_atoms: int):
+        """
+        GIVEN topology and trajectory filenames
+        WHEN the get_average_structure function is called
+        THEN the average coordinates are computed
+        """
+        average = utils.get_average_structure(
+            TOPWW,
+            [
+                TRJWW,
+            ],
+        )
+        assert average.xyz.shape == (1, n_atoms, 3)
+        universe_average = universe.xyz.mean(axis=0)
+        testing.assert_allclose(average.xyz[0], universe_average)
+
+    def test_select_average(self, universe: md.Trajectory):
+        """
+        GIVEN topology and trajectory filenames and an atom selection
+        WHEN the get_average_structure function is called
+        THEN the average coordinates are computed
+        """
+        mask = "protein and name CA"
+        atoms = universe.topology.select(mask)
+        n_atoms = atoms.size
+
+        average = utils.get_average_structure(
+            TOPWW,
+            [
+                TRJWW,
+            ],
+            mask=mask,
+        )
+        assert average.xyz.shape == (1, n_atoms, 3)
+        universe_average = universe.atom_slice(atoms).xyz.mean(axis=0)
+        testing.assert_allclose(average.xyz[0], universe_average)
+
     def test_positions(self, universe: md.Trajectory, n_atoms: int, n_frames: int):
         """
         GIVEN topology and trajectory filenames
         WHEN the get_positions function is called
         THEN return a array of positions with shape (n_frames, n_atoms, 3)
         """
-        array = utils.get_positions(TOPWW, TRJWW)
+        array = utils.get_positions(
+            TOPWW,
+            [
+                TRJWW,
+            ],
+        )
         assert array.shape == (n_frames, n_atoms, 3)
         testing.assert_allclose(array[0], universe.xyz[0])
-        assert isinstance(array, da.Array)
+        assert isinstance(array, np.ndarray)
         testing.assert_allclose(array[-1], universe.xyz[-1])
 
     def test_select_positions(self, universe: md.Trajectory, n_frames: int):
@@ -59,10 +100,16 @@ class TestUtils:
         atoms = universe.topology.select(mask)
         n_atoms = atoms.size
 
-        array = utils.get_positions(TOPWW, TRJWW, mask=mask)
+        array = utils.get_positions(
+            TOPWW,
+            [
+                TRJWW,
+            ],
+            mask=mask,
+        )
         assert array.shape == (n_frames, n_atoms, 3)
-        testing.assert_allclose(array[0], universe.xyz[0, atoms])
-        assert isinstance(array, da.Array)
+        testing.assert_allclose(array[0], universe.atom_slice(atoms).xyz[0])
+        assert isinstance(array, np.ndarray)
 
     def test_reshape_array(self, universe: md.Trajectory, n_atoms: int, n_frames: int):
         """
