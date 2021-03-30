@@ -14,6 +14,8 @@
 # --------------------------------------------------------------------------------------
 """Various utilities."""
 import glob
+from typing import List
+from typing import Optional
 
 import dask.array as da
 import mdtraj as md
@@ -21,6 +23,41 @@ import numpy as np
 
 from .typing import ArrayType
 from .typing import PathLike
+
+
+def get_average_structure(
+    topology: PathLike, trajectory: List[PathLike], mask: str = "all"
+) -> md.Trajectory:
+    """Compute the average structure of a trajectory.
+
+    Parameters
+    ----------
+    topology : PathLike
+        Topology file
+    trajectory : list of PathLike
+        List of trajectory files
+    mask : str
+        Atom selection
+
+    Returns
+    -------
+    Trajectory
+        The average positions
+    """
+    n_frames: int = 0
+    positions: List[ArrayType] = []
+    indices: Optional[ArrayType] = (
+        md.load_topology(topology).select(mask) if mask != "all" else None
+    )
+
+    for filename in trajectory:
+        for frames in md.iterload(filename, top=topology, atom_indices=indices):
+            n_frames += frames.n_frames
+            coordinates = frames.xyz.sum(axis=0)
+            positions.append(coordinates)
+
+    average: ArrayType = np.sum(positions, axis=0) / n_frames
+    return md.Trajectory(average, topology=frames.topology)
 
 
 def get_positions(
