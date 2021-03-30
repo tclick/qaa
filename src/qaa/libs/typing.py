@@ -19,7 +19,6 @@ from typing import TypeVar
 
 import mdtraj as md
 from numpy.typing import ArrayLike
-from pandas._typing import FrameOrSeries
 
 PathLike = TypeVar("PathLike", str, Path)
 
@@ -27,4 +26,3 @@ PathLike = TypeVar("PathLike", str, Path)
 Topology = NewType("Topology", md.Topology)
 Trajectory = NewType("Trajectory", md.Trajectory)
 ArrayType = NewType("ArrayType", ArrayLike)
-DaskFrameType = NewType("DataFrameType", FrameOrSeries)
