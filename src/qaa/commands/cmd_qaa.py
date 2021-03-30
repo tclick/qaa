@@ -27,7 +27,6 @@ from .. import create_logging_dict
 from ..decomposition.jade import JadeICA
 from ..libs.figure import Figure
 from ..libs.typing import ArrayType
-from ..libs.typing import PathLike
 from ..libs.utils import get_positions
 from ..libs.utils import reshape_positions
 
@@ -146,10 +145,10 @@ from ..libs.utils import reshape_positions
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: PathLike,
-    trajectory: PathLike,
-    outdir: PathLike,
-    logfile: PathLike,
+    topology: str,
+    trajectory: str,
+    outdir: str,
+    logfile: str,
     start: int,
     step: int,
     mask: str,
@@ -175,7 +174,9 @@ def cli(
 
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")
-    positions: ArrayType = get_positions(topology, trajectory, mask=_MASK[mask])
+    positions: ArrayType = get_positions(
+        topology, trajectory, mask=_MASK[mask], stride=step, skip=start
+    )
     positions = reshape_positions(positions)
     n_samples, n_features = positions.shape
     n_components: int = n_modes if n_modes > 0 else min(n_samples, n_features)
