@@ -14,6 +14,7 @@
 # --------------------------------------------------------------------------------------
 """Various utilities."""
 import glob
+from pathlib import Path
 from typing import List
 from typing import Optional
 
@@ -58,8 +59,10 @@ def get_average_structure(
     indices: Optional[ArrayType] = (
         md.load_topology(topology).select(mask) if mask != "all" else None
     )
+    if isinstance(topology, Path):
+        topology: str = topology.as_posix()
 
-    for filename in trajectory:
+    for filename in glob.iglob(*trajectory):
         for frames in md.iterload(
             filename, top=topology, atom_indices=indices, stride=stride, skip=skip
         ):
@@ -67,8 +70,10 @@ def get_average_structure(
             coordinates = frames.xyz.sum(axis=0)
             positions.append(coordinates)
 
-    average: ArrayType = np.sum(positions, axis=0) / n_frames
-    return md.Trajectory(average, topology=frames.topology)
+    frames.xyz = np.sum(positions, axis=0) / n_frames
+    frames.unitcell_angles = frames.unitcell_angles[0, :]
+    frames.unitcell_lengths = frames.unitcell_lengths[0, :]
+    return frames
 
 
 def get_positions(
@@ -100,6 +105,8 @@ def get_positions(
     ArrayType
         The coordinates with shape (n_frames / step, n_atoms, 3)
     """
+    if isinstance(topology, Path):
+        topology: str = topology.as_posix()
     top: md.Topology = md.load_topology(topology)
     selection: Optional[ArrayType] = top.select(mask) if mask != "all" else None
     positions: ArrayType = np.concatenate(
