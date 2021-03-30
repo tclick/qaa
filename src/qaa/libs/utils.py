@@ -17,7 +17,6 @@ import glob
 from typing import List
 from typing import Optional
 
-import dask.array as da
 import mdtraj as md
 import numpy as np
 
@@ -80,12 +79,12 @@ def get_positions(
         The coordinates with shape (n_frames, n_atoms, 3)
     """
     top: md.Topology = md.load_topology(topology)
-    selection: ArrayType = top.select(mask)
-    positions: ArrayType = da.concatenate(
+    selection: Optional[ArrayType] = top.select(mask) if mask != "all" else None
+    positions: ArrayType = np.concatenate(
         [
-            frame.xyz
+            frames.xyz
             for filename in glob.iglob(trajectory)
-            for frame in md.iterload(filename, top=top, atom_indices=selection)
+            for frames in md.iterload(filename, top=top, atom_indices=selection)
         ],
         axis=0,
     )
