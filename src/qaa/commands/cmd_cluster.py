@@ -77,6 +77,7 @@ from ..libs.typing import ArrayType
     help="Log file",
 )
 @click.option("--ica / --pca", "method", default=True, help="Type of data")
+@click.option("--gmm / --kmeans", "cluster", default=True, help="Clustering method")
 @click.option(
     "--iter",
     "max_iter",
@@ -84,7 +85,7 @@ from ..libs.typing import ArrayType
     default=200,
     show_default=True,
     type=click.IntRange(min=1, clamp=True),
-    help="Maximum number of iterations for Gaussian cluster analysis",
+    help="Maximum number of iterations for clustering",
 )
 @click.option(
     "--tol",
@@ -92,7 +93,7 @@ from ..libs.typing import ArrayType
     default=0.001,
     show_default=True,
     type=click.FloatRange(min=0.0, max=1.0, clamp=True),
-    help="Maximum number of iterations for Gaussian cluster analysis",
+    help="Maximum tolerance for clustering",
 )
 @click.option(
     "-n",
@@ -136,6 +137,7 @@ def cli(
     outfile: str,
     logfile: str,
     method: bool,
+    cluster: bool,
     max_iter: int,
     tol: float,
     n_clusters: int,
