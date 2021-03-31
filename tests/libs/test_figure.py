@@ -20,7 +20,6 @@ import numpy as np
 import pytest
 from numpy import random
 from numpy.typing import ArrayLike
-
 from qaa.libs import figure
 
 
@@ -58,16 +57,3 @@ class TestFigure:
         fig.draw(data)
         fig.save(filename)
         patch.assert_called_once()
-
-    def test_cluster(self, data: ArrayLike, fig: figure.Figure):
-        """Test cluster method.
-
-        GIVEN a 2D array with shape (n_samples, n_components)
-        WHEN the cluster method of a `Figure` object is called
-        THEN a figure with subplots is created
-        """
-        labels: ArrayLike = fig.cluster(data)
-
-        assert isinstance(labels, np.ndarray)
-        assert isinstance(fig.figure, plt.Figure)
-        assert isinstance(fig.axes, plt.Axes)
