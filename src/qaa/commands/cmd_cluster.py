@@ -23,18 +23,40 @@ import numpy as np
 from .. import create_logging_dict
 from ..libs.figure import Figure
 from ..libs.typing import ArrayType
-from ..libs.typing import PathLike
 
 
 @click.command("cluster", short_help="Plot data from QAA.")
 @click.option(
+    "-s",
+    "--top",
+    "topology",
+    metavar="FILE",
+    default=Path.cwd().joinpath("input.top"),
+    show_default=True,
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
+    help="Topology",
+)
+@click.option(
     "-f",
+    "--traj",
+    "trajectory",
+    metavar="FILE",
+    default=[
+        Path.cwd().joinpath("input.nc"),
+    ],
+    show_default=True,
+    multiple=True,
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
+    help="Trajectory",
+)
+@click.option(
+    "-i",
     "--infile",
     metavar="FILE",
     default=Path.cwd().joinpath("input.csv"),
     show_default=True,
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
-    help="Input file",
+    help="Data file for analysis",
 )
 @click.option(
     "-o",
@@ -105,9 +127,11 @@ from ..libs.typing import PathLike
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    infile: PathLike,
-    outfile: PathLike,
-    logfile: PathLike,
+    topology: str,
+    trajectory: str,
+    infile: str,
+    outfile: str,
+    logfile: str,
     method: bool,
     max_iter: int,
     tol: float,
