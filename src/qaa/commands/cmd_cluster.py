@@ -125,6 +125,9 @@ from ..libs.typing import ArrayType
     type=click.FloatRange(min=0.0, max=359.0, clamp=True),
     help="Azimuth rotation for 3D plot",
 )
+@click.option(
+    "--save", is_flag=True, help="Save structures from corresponding cluster center"
+)
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
     topology: str,
@@ -139,6 +142,7 @@ def cli(
     n_points: int,
     dpi: int,
     azim: float,
+    save: bool,
     verbose: bool,
 ):
     """Perform cluster analysis on the provided data."""
