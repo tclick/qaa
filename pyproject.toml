@@ -9,7 +9,6 @@ homepage = "https://github.com/tclick/qaa"
 repository = "https://github.com/tclick/qaa"
 documentation = "https://qaa.readthedocs.io"
 classifiers = [
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -27,6 +26,9 @@ matplotlib = "^3.3.4"
 seaborn = "^0.11.1"
 scikit-learn = "^0.24.1"
 mdtraj = "^1.9.5"
+bokeh = "^2.3.0"
+holoviews = "^1.14.2"
+datashader = "^0.12.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
