@@ -32,7 +32,6 @@ def get_average_structure(
     *,
     mask: str = "all",
     stride: Optional[int] = None,
-    skip: int = 0,
 ) -> md.Trajectory:
     """Compute the average structure of a trajectory.
 
@@ -46,8 +45,6 @@ def get_average_structure(
         Atom selection
     stride : int, optional
         Number of steps to read
-    skip : int
-        Number of frames to skip
 
     Returns
     -------
@@ -64,7 +61,7 @@ def get_average_structure(
 
     for filename in glob.iglob(*trajectory):
         for frames in md.iterload(
-            filename, top=topology, atom_indices=indices, stride=stride, skip=skip
+            filename, top=topology, atom_indices=indices, stride=stride
         ):
             n_frames += frames.n_frames
             coordinates = frames.xyz.sum(axis=0)
@@ -83,7 +80,6 @@ def get_positions(
     *,
     mask: str = "all",
     stride: Optional[int] = None,
-    skip: int = 0,
 ) -> ArrayType:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
@@ -97,8 +93,6 @@ def get_positions(
         Selection criterion for coordinates
     stride : int, optional
         Number of steps to read
-    skip : int
-        Number of frames to skip
 
     Returns
     -------
@@ -114,7 +108,7 @@ def get_positions(
             frames.xyz
             for filename in glob.iglob(*trajectory)
             for frames in md.iterload(
-                filename, top=top, atom_indices=selection, stride=stride, skip=skip
+                filename, top=top, atom_indices=selection, stride=stride
             )
         ],
         axis=0,

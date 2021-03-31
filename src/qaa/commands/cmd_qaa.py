@@ -74,15 +74,6 @@ from ..libs.utils import reshape_positions
     help="Log file",
 )
 @click.option(
-    "-b",
-    "start",
-    metavar="START",
-    default=0,
-    show_default=True,
-    type=click.IntRange(min=0, clamp=True),
-    help="Starting trajectory frame (0 = first frame)",
-)
-@click.option(
     "--dt",
     "step",
     metavar="OFFSET",
@@ -149,7 +140,6 @@ def cli(
     trajectory: str,
     outdir: str,
     logfile: str,
-    start: int,
     step: int,
     mask: str,
     n_modes: int,
@@ -175,7 +165,7 @@ def cli(
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")
     positions: ArrayType = get_positions(
-        topology, trajectory, mask=_MASK[mask], stride=step, skip=start
+        topology, trajectory, mask=_MASK[mask], stride=step
     )
     positions = reshape_positions(positions)
     n_samples, n_features = positions.shape
