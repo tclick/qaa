@@ -204,3 +204,24 @@ def cli(
     if verbose:
         output: str = time.strftime("%H:%M:%S", struct_time)
         logger.info(f"Total execution time: {output}")
+
+
+def find_closest_point(point: ArrayType, data: ArrayType) -> int:
+    """Locate a oint in the `data` closest to the `point`.
+
+    Parameters
+    ----------
+    point : ArrayType
+        Point of interest with size (n_features, )
+    data : ArrayType
+        Data to search with shape (n_samples, n_features)
+
+    Returns
+    -------
+    int
+        Index of value closes to `point`
+    """
+    distance: ArrayType = np.fromiter(
+        [[np.linalg.norm(_ - point) for _ in data]], dtype=point.dtype
+    )
+    return np.where(distance == distance.min())[0]
