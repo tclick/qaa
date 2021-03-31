@@ -21,24 +21,38 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib import cm
-from sklearn.mixture import GaussianMixture
 
 from .typing import ArrayType
 from .typing import PathLike
 
 
 class Figure:
-    def __init__(self, method: str = "ica"):
+    """Create a plot of 2D and 3D plots."""
+
+    def __init__(
+        self,
+        *,
+        method: str = "ica",
+        labels: Optional[ArrayType] = None,
+        azim: float = 120.0,
+    ):
         """Visualize data via a graphical image.
 
         Parameters
         ----------
-        method : {'ica', 'pca'}
+        method : str
             Type of data
+        labels : ArrayType
+            Vector of cluster labels
+        azim : float
+            Azimuth rotation for 3D plot
         """
         self.method = method
+        self.labels = labels
+        self._cmap = cm.viridis if labels is not None else None
         self._figure: Optional[plt.Figure] = None
         self._axes: Optional[plt.Axes] = None
+        self._azim: float = azim
 
     @property
     def figure(self) -> plt.Figure:
@@ -65,7 +79,7 @@ class Figure:
 
         Parameters
         ----------
-        data : array_like
+        data : ArrayType
             Matrix with shape (n_samples, n_components)
 
         Notes
@@ -82,7 +96,14 @@ class Figure:
 
         for i, (x, y) in enumerate(itertools.combinations(range(3), 2), 1):
             self._axes = self._figure.add_subplot(2, 2, i)
-            sns.scatterplot(x=data[:, x], y=data[:, y], ax=self._axes, marker=".")
+            sns.scatterplot(
+                x=data[:, x],
+                y=data[:, y],
+                ax=self._axes,
+                marker=".",
+                cmap=self._cmap,
+                c=self.labels,
+            )
             self._axes.set_xlabel(f"${label}_{x + 1:d}$")
             self._axes.set_ylabel(f"${label}_{y + 1:d}$")
 
@@ -95,9 +116,11 @@ class Figure:
             data[:, 1],
             data[:, 2],
             marker=".",
+            cmap=self._cmap,
+            c=self.labels,
             alpha=0.5,
         )
-        self._axes.view_init(azim=120)
+        self._axes.view_init(azim=self._azim)
         self._axes.set_xlabel(f"${label}_1$")
         self._axes.set_ylabel(f"${label}_2$")
         self._axes.set_zlabel(f"${label}_3$")
@@ -108,94 +131,10 @@ class Figure:
 
         Parameters
         ----------
-        filename : `Path` or str
+        filename : PathLike
             Image file
-        dpi : int, default=600
+        dpi : int
             Image resolution
         """
         with Path(filename).open(mode="wb") as w:
             self._figure.savefig(w, dpi=dpi)
-
-    def cluster(
-        self,
-        data: ArrayType,
-        /,
-        *,
-        tol: float = 1e-3,
-        max_iter: int = 200,
-        n_points: int = 10,
-        n_clusters: int = 4,
-        azim: float = 120.0,
-    ) -> ArrayType:
-        """Cluster the data and visualize it.
-
-        Parameters
-        ----------
-        data : array_like
-            Matrix with shape (n_samples, n_components)
-        tol : float, default=1e-3
-            The convergence threshold. EM iterations will stop when the lower bound
-            average gain is below this threshold.
-        max_iter : int, default=200
-            The number of EM iterations to perform
-        n_points : int, default=10
-            The number of points to display
-        n_clusters : int, default=4
-            The number of clusters to locate
-        azim : float, default=120.
-            Azimuth angle for 3D image
-
-        Returns
-        -------
-        labels: array_like
-            Classification labels from GMM
-
-        Notes
-        -----
-        Clusters are found using the Gaussian mixture method (GMM).
-        """
-        cmap = cm.viridis
-        data_type: str = self.method.upper()
-        label: str = data_type[:2]
-        self._figure = plt.figure(figsize=plt.figaspect(1.0))
-
-        # Determine cluster centers using Gaussian mixture model
-        gmm = GaussianMixture(
-            n_components=n_clusters,
-            max_iter=max_iter,
-            tol=tol,
-        )
-        labels: ArrayType = gmm.fit_predict(data[:, :3])[::n_points]
-
-        # Plot 2D plots of components
-        for i, (x, y) in enumerate(itertools.combinations(range(3), 2), 1):
-            self._axes = self._figure.add_subplot(2, 2, i)
-            self._axes.scatter(
-                data[::n_points, x],
-                data[::n_points, y],
-                marker=".",
-                cmap=cmap,
-                c=labels,
-            )
-            self._axes.set_xlabel(f"${label}_{x + 1:d}$")
-            self._axes.set_ylabel(f"${label}_{y + 1:d}$")
-
-        # Plot first 3 ICs
-        self._axes = self._figure.add_subplot(
-            2, 2, i + 1, projection="3d", proj_type="ortho"
-        )
-        self._axes.scatter3D(
-            data[::n_points, 0],
-            data[::n_points, 1],
-            data[::n_points, 2],
-            marker=".",
-            cmap=cmap,
-            c=labels,
-            alpha=0.5,
-        )
-        self._axes.view_init(azim=azim)
-        self._axes.set_xlabel(f"${label}_1$")
-        self._axes.set_ylabel(f"${label}_2$")
-        self._axes.set_zlabel(f"${label}_3$")
-
-        return labels
