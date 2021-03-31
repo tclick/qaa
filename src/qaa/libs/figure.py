@@ -102,7 +102,7 @@ class Figure:
                 ax=self._axes,
                 marker=".",
                 cmap=self._cmap,
-                color=self.labels,
+                c=self.labels,
             )
             self._axes.set_xlabel(f"${label}_{x + 1:d}$")
             self._axes.set_ylabel(f"${label}_{y + 1:d}$")
