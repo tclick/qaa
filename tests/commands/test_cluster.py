@@ -21,7 +21,7 @@ from click.testing import CliRunner
 from numpy import random
 from numpy.typing import ArrayLike
 
-from ..datafile import PROJ
+from ..datafile import PROJ, TOPWW, TRJWW
 from qaa.cli import main
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -77,7 +77,11 @@ class TestCluster:
             main,
             args=(
                 "cluster",
+                "-s",
+                TOPWW,
                 "-f",
+                TRJWW,
+                "-i",
                 PROJ,
                 "-o",
                 outfile,
