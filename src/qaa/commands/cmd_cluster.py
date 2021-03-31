@@ -16,9 +16,12 @@
 import logging.config
 import time
 from pathlib import Path
+from typing import Tuple
 
 import click
 import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 
 from .. import create_logging_dict
 from ..libs.figure import Figure
@@ -75,6 +78,9 @@ from ..libs.typing import ArrayType
     default=Path.cwd() / "image.log",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
     help="Log file",
+)
+@click.option(
+    "--axes", nargs=3, default=(0, 1, 2), type=click.IntRange(min=0, clamp=True)
 )
 @click.option("--ica / --pca", "method", default=True, help="Type of data")
 @click.option("--gmm / --kmeans", "cluster", default=True, help="Clustering method")
@@ -136,6 +142,7 @@ def cli(
     infile: str,
     outfile: str,
     logfile: str,
+    axes: Tuple[int],
     method: bool,
     cluster: bool,
     max_iter: int,
@@ -155,9 +162,28 @@ def cli(
     logging.config.dictConfig(create_logging_dict(logfile))
     logger: logging.Logger = logging.getLogger(__name__)
 
+    if axes[2] <= axes[1] <= axes[0]:
+        raise IndexError("Axes must be in increasing order")
+
     # Load data
     data: ArrayType = np.loadtxt(infile, delimiter=",")
     data_method = "ica" if method else "pca"
+
+    # Select clustering method and cluster data
+    clustering = (
+        GaussianMixture(
+            n_components=n_clusters,
+            max_iter=max_iter,
+            tol=tol,
+        )
+        if cluster
+        else KMeans(
+            n_clusters=n_clusters,
+            max_iter=max_iter,
+            tol=tol,
+        )
+    )
+    labels: ArrayType = clustering.fit_predict(data[:, axes])[::n_points]
 
     # Prepare cluster analysis
     figure = Figure(method=data_method)
