@@ -186,15 +186,8 @@ def cli(
     labels: ArrayType = clustering.fit_predict(data[:, axes])[::n_points]
 
     # Prepare cluster analysis
-    figure = Figure(method=data_method)
-    labels: ArrayType = figure.cluster(
-        data,
-        tol=tol,
-        max_iter=max_iter,
-        n_points=n_points,
-        n_clusters=n_clusters,
-        azim=azim,
-    )
+    figure = Figure(method=data_method, labels=labels, azim=azim)
+    figure.draw(data)
     logger.info("Saving cluster data to %s", outfile)
     figure.save(outfile, dpi=dpi)
 
