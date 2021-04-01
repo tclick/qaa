@@ -15,10 +15,12 @@
 """Module to find signals using the Jade ICA method.
 
 This module contains the function, _jade, which does blind source separation of real
-signals. Hopefully more ICA algorithms will be added in the future.
+signals. The original Python code can be found at
+https://github.com/gvacaliuc/jade_c/blob/master/jade.py
 """
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from numpy import abs
@@ -35,7 +37,6 @@ from numpy import eye
 from numpy import float64
 from numpy import matrix
 from numpy import multiply
-from numpy import ndarray
 from numpy import sign
 from numpy import sin
 from numpy import sqrt
@@ -43,9 +44,12 @@ from numpy import zeros
 from numpy.linalg import eig
 from numpy.linalg import pinv
 from sklearn.decomposition import _base
-from sklearn.utils.validation import check_is_fitted, check_array
+from sklearn.utils.validation import check_array
+from sklearn.utils.validation import check_is_fitted
 
 from ..libs.typing import ArrayType
+
+logger = logging.getLogger(__name__)
 
 
 def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
@@ -60,7 +64,7 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
 
     Parameters
     ----------
-    arr : array_like
+    arr : ArrayType
         a data matrix (n_features, n_samples)
     m : int, default=None
         output matrix B has size mxn so that only m sources are extracted.  This is done
@@ -71,18 +75,18 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
 
     Returns
     -------
-        array_like
-            An m*n matrix B (NumPy matrix type), such that Y=B*X are separated sources
-            extracted from the n*T data matrix X. If m is omitted, B is a square n*n
-            matrix (as many sources as sensors). The rows of B are ordered such that the
-            columns of pinv(B) are in order of decreasing norm; this has the effect that
-            the `most energetically significant` components appear first in the rows of
-            :math:`Y = B * X`.
+    ArrayType
+        An m*n matrix B (NumPy matrix type), such that Y=B*X are separated sources
+        extracted from the n*T data matrix X. If m is omitted, B is a square n*n matrix
+        (as many sources as sensors). The rows of B are ordered such that the columns of
+        :math:`pinv(B)` are in order of decreasing norm; this has the effect that the
+        `most energetically significant` components appear first in the rows of
+        :math:`Y = B * X`.
 
     Raises
-    -------
+    ------
     IndexError
-        if `m` >= n_features
+        if :math:`m > n_features`
 
     Notes
     -----
@@ -121,41 +125,45 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
     origtype = arr.dtype  # remember to return matrix B of the same type
     arr = matrix(arr.astype(float64))
 
-    n, T = arr.shape  # GB: n is number of input signals, T is number of samples
+    # GB: n_features is number of input signals, n_samples is number of samples
+    n_features, n_samples = arr.shape
 
     if m is None:
-        m = n  # Number of sources defaults to # of sensors
-    if m >= n:
-        raise IndexError(f"More sources ({m}) than sensors ({n})")
+        m = n_features  # Number of sources defaults to # of sensors
+    if m > n_features:
+        raise IndexError(f"More sources ({m}) than sensors ({n_features})")
 
-    if verbose:
-        print("jade -> Looking for %d sources" % m)
-        print("jade -> Removing the mean value")
+    logger.info("jade -> Looking for %d sources", m)
+    logger.info("jade -> Removing the mean value")
     arr -= arr.mean(axis=1)
 
     # whitening & projection onto signal subspace
     # ===========================================
-    if verbose:
-        print("jade -> Whitening the data")
+    logger.info("jade -> Whitening the data")
     # An eigen basis for the sample covariance matrix
-    D, U = eig((arr * arr.T) / T)
-    k = D.argsort()
-    Ds = D[k]  # Sort by increasing variances
-    PCs = arange(
-        n - 1, n - m - 1, -1
+    eigenval, eigenvec = eig((arr * arr.T) / n_samples)
+    k = eigenval.argsort()
+    sorted_eval = eigenval[k]  # Sort by increasing variances
+    pcs = arange(
+        n_features - 1, n_features - m - 1, -1
     )  # The m most significant princip. comp. by decreasing variance
 
     # --- PCA  ----------------------------------------------------------
-    B = U[:, k[PCs]].T  # % At this stage, B does the PCA on m components
+    components = eigenvec[
+        :, k[pcs]
+    ].T  # % At this stage, B does the PCA on m components
 
     # --- Scaling  ------------------------------------------------------
-    scales = sqrt(Ds[PCs])  # The scales of the principal components .
-    B = diag(1.0 / scales) * B  # Now, B does PCA followed by a rescaling = sphering
+    scales = sqrt(sorted_eval[pcs])  # The scales of the principal components .
+    # Now, B does PCA followed by a rescaling = sphering
+    components = diag(1.0 / scales) * components
     # B[-1,:] = -B[-1,:] # GB: to make it compatible with octave
     # --- Sphering ------------------------------------------------------
-    arr = B * arr  # %% We have done the easy part: B is a whitening matrix and X is white.
+    arr = (
+        components * arr
+    )  # %% We have done the easy part: B is a whitening matrix and X is white.
 
-    del U, D, Ds, k, PCs, scales
+    del eigenvec, eigenval, sorted_eval, k, pcs, scales
 
     # NOTE: At this stage, X is a PCA analysis in m components of the real data, except
     # that all its entries now have unit variance.  Any further rotation of X will
@@ -172,80 +180,81 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
 
     # Estimation of the cumulant matrices.
     # ====================================
-    if verbose:
-        print("jade -> Estimating cumulant matrices")
+    logger.info("jade -> Estimating cumulant matrices")
 
     # Reshaping of the data, hoping to speed up things a little bit...
     arr = arr.T
     dimsymm = int((m * (m + 1)) / 2)  # Dim. of the space of real symm matrices
     nbcm = dimsymm  # number of cumulant matrices
-    CM = matrix(zeros([m, m * nbcm], dtype=float64))  # Storage for cumulant matrices
-    R = matrix(eye(m, dtype=float64))
-    Qij = matrix(zeros([m, m], dtype=float64))  # Temp for a cum. matrix
-    Xim = zeros(m, dtype=float64)  # Temp
-    Xijm = zeros(m, dtype=float64)  # Temp
+    cm = matrix(zeros([m, m * nbcm], dtype=float64))  # Storage for cumulant matrices
+    r = matrix(eye(m, dtype=float64))
+    q_ij = matrix(zeros([m, m], dtype=float64))  # Temp for a cum. matrix
+    xim = zeros(m, dtype=float64)  # Temp
+    xijm = zeros(m, dtype=float64)  # Temp
     # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
     # GB: we don't translate that one because NumPy doesn't need Tony's rule
 
     # I am using a symmetry trick to save storage.  I should write a short note one of
     # these days explaining what is going on here.
-    Range = arange(m)  # will index the columns of CM where to store the cum. mats.
+    range_ = arange(m)  # will index the columns of CM where to store the cum. mats.
 
     for im in range(m):
-        Xim = arr[:, im]
-        Xijm = multiply(Xim, Xim)
+        xim = arr[:, im]
+        xijm = multiply(xim, xim)
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
-        Qij = multiply(Xijm, arr).T * arr / float(T) - R - 2 * dot(R[:, im], R[:, im].T)
-        CM[:, Range] = Qij
-        Range = Range + m
+        q_ij = (
+            multiply(xijm, arr).T * arr / float(n_samples)
+            - r
+            - 2 * dot(r[:, im], r[:, im].T)
+        )
+        cm[:, range_] = q_ij
+        range_ = range_ + m
         for jm in range(im):
-            Xijm = multiply(Xim, arr[:, jm])
-            Qij = (
-                    sqrt(2) * multiply(Xijm, arr).T * arr / float(T)
-                    - R[:, im] * R[:, jm].T
-                    - R[:, jm] * R[:, im].T
+            xijm = multiply(xim, arr[:, jm])
+            q_ij = (
+                sqrt(2) * multiply(xijm, arr).T * arr / float(n_samples)
+                - r[:, im] * r[:, jm].T
+                - r[:, jm] * r[:, im].T
             )
-            CM[:, Range] = Qij
-            Range = Range + m
+            cm[:, range_] = q_ij
+            range_ = range_ + m
 
     # Now we have nbcm = m(m+1)/2 cumulants matrices stored in a big m x m*nbcm array.
+    vec_ = matrix(eye(m, dtype=float64))
 
-    V = matrix(eye(m, dtype=float64))
+    diag_ = zeros(m, dtype=float64)
+    on = 0.0
+    range_ = arange(m)
+    for _ in range(nbcm):
+        diag_ = diag(cm[:, range_])
+        on = on + (diag_ * diag_).sum(axis=0)
+        range_ = range_ + m
+    off = (multiply(cm, cm).sum(axis=0)).sum(axis=0) - on
 
-    Diag = zeros(m, dtype=float64)
-    On = 0.0
-    Range = arange(m)
-    for im in range(nbcm):
-        Diag = diag(CM[:, Range])
-        On = On + (Diag * Diag).sum(axis=0)
-        Range = Range + m
-    Off = (multiply(CM, CM).sum(axis=0)).sum(axis=0) - On
-
-    seuil = 1.0e-6 / sqrt(T)  # % A statistically scaled threshold on `small" angles
+    seuil = 1.0e-6 / sqrt(
+        n_samples
+    )  # % A statistically scaled threshold on `small" angles
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
     upds = 0  # % Number of rotations in a given seep
     g = zeros([2, nbcm], dtype=float64)
     gg = zeros([2, 2], dtype=float64)
-    G = zeros([2, 2], dtype=float64)
+    g = zeros([2, 2], dtype=float64)
     c = 0
     s = 0
     ton = 0
     toff = 0
     theta = 0
-    Gain = 0
+    gain = 0
 
     # Joint diagonalization proper
-
-    if verbose:
-        print("jade -> Contrast optimization by joint diagonalization")
+    logger.info("jade -> Contrast optimization by joint diagonalization")
 
     while encore:
         encore = False
-        if verbose:
-            print("jade -> Sweep #%3d" % sweep)
+        logger.info("jade -> Sweep #%3d", sweep)
         sweep = sweep + 1
         upds = 0
         # Vkeep = V
@@ -253,16 +262,16 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
         for p in range(m - 1):
             for q in range(p + 1, m):
 
-                Ip = arange(p, m * nbcm, m)
-                Iq = arange(q, m * nbcm, m)
+                ip = arange(p, m * nbcm, m)
+                iq = arange(q, m * nbcm, m)
 
                 # computation of Givens angle
-                g = concatenate([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
+                g = concatenate([cm[p, ip] - cm[q, iq], cm[p, iq] + cm[q, ip]])
                 gg = dot(g, g.T)
                 ton = gg[0, 0] - gg[1, 1]
                 toff = gg[0, 1] + gg[1, 0]
                 theta = 0.5 * arctan2(toff, ton + sqrt(ton * ton + toff * toff))
-                Gain = (sqrt(ton * ton + toff * toff) - ton) / 4.0
+                gain = (sqrt(ton * ton + toff * toff) - ton) / 4.0
 
                 # Givens update
                 if abs(theta) > seuil:
@@ -270,48 +279,44 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
                     upds = upds + 1
                     c = cos(theta)
                     s = sin(theta)
-                    G = matrix([[c, -s], [s, c]])
+                    g = matrix([[c, -s], [s, c]])
                     pair = array([p, q])
-                    V[:, pair] = V[:, pair] * G
-                    CM[pair, :] = G.T * CM[pair, :]
-                    CM[:, concatenate([Ip, Iq])] = append(
-                        c * CM[:, Ip] + s * CM[:, Iq],
-                        -s * CM[:, Ip] + c * CM[:, Iq],
+                    vec_[:, pair] = vec_[:, pair] * g
+                    cm[pair, :] = g.T * cm[pair, :]
+                    cm[:, concatenate([ip, iq])] = append(
+                        c * cm[:, ip] + s * cm[:, iq],
+                        -s * cm[:, ip] + c * cm[:, iq],
                         axis=1,
                     )
-                    On = On + Gain
-                    Off = Off - Gain
+                    on = on + gain
+                    off = off - gain
 
-        if verbose:
-            print("completed in %d rotations" % upds)
+        logger.info("completed in %d rotations", upds)
         updates = updates + upds
-    if verbose:
-        print("jade -> Total of %d Givens rotations" % updates)
+    logger.info("jade -> Total of %d Givens rotations", updates)
 
     # A separating matrix
     # ===================
 
-    B = V.T * B
+    components = vec_.T * components
 
     # Permute the rows of the separating matrix B to get the most energetic components
     # first. Here the **signals** are normalized to unit variance.  Therefore, the sort
     # is according to the norm of the columns of A = pinv(B)
 
-    if verbose:
-        print("jade -> Sorting the components")
+    logger.info("jade -> Sorting the components")
 
-    A = pinv(B)
-    keys = array(argsort(multiply(A, A).sum(axis=0)[0]))[0]
-    B = B[keys, :]
-    B = B[::-1, :]  # % Is this smart ?
+    unmixing = pinv(components)
+    keys = array(argsort(multiply(unmixing, unmixing).sum(axis=0)[0]))[0]
+    components = components[keys, :]
+    components = components[::-1, :]  # % Is this smart ?
 
-    if verbose:
-        print("jade -> Fixing the signs")
-    b = B[:, 0]
+    logger.info("jade -> Fixing the signs")
+    b = components[:, 0]
     signs = array(sign(sign(b) + 0.1).T)[0]  # just a trick to deal with sign=0
-    B = diag(signs) * B
+    components = diag(signs) * components
 
-    return array(B.astype(origtype))
+    return array(components.astype(origtype))
 
     # Revision history of MATLAB code:
     #
@@ -440,6 +445,8 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
 
 
 class JadeICA(_base._BasePCA):
+    """Perform blind source separation using joint diagonalization."""
+
     def __init__(self, *, n_components=None, verbose=True):
         """Perform a blind signal separation using joint diagonalization.
 
@@ -462,9 +469,9 @@ class JadeICA(_base._BasePCA):
 
         Parameters
         ----------
-        arr : array_like
+        arr : ArrayType
             mixed signal array
-        y : array_like, optional
+        y : ArrayType
             unused
 
         Returns
@@ -480,11 +487,12 @@ class JadeICA(_base._BasePCA):
 
         Parameters
         ----------
-        arr : array_like
+        arr : ArrayType
+            Unmixed signals
 
         Returns
         -------
-        signals : array_like
+        ArrayType
             Unmixed signal array
         """
         check_is_fitted(self)
@@ -496,20 +504,20 @@ class JadeICA(_base._BasePCA):
     def fit_transform(
         self, arr: ArrayType, y: Optional[ArrayType] = None, **fit_params
     ) -> ArrayType:
-        """Determine the independent signals using joint diagonalization
+        """Determine the independent signals using joint diagonalization.
 
         Parameters
         ----------
-        arr : array_like
+        arr : ArrayType
             Mixed signal array
-        y : array_like, optional
+        y : ArrayType
             unused
         fit_params : dict
             unused
 
         Returns
         -------
-        signals : array_like
+        ArrayType
             Unmixed signal array
         """
         self.mean_ = arr.mean(axis=0)
@@ -524,17 +532,13 @@ class JadeICA(_base._BasePCA):
 
         Parameters
         ----------
-        arr : array_like
+        arr : ArrayType
             Unmixed signal array
 
-        Returns
-        -------
-        array_like
-            Original source
-
         Raises
-        -------
+        ------
         NotImplementedError
+            If called because Jade does not provide inversion
         """
         raise NotImplementedError(
             "Inverse transformation is currently not implemented."
