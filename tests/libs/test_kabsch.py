@@ -12,22 +12,23 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-import MDAnalysis as mda
+import mdtraj as md
 import numpy as np
 import pytest
 from numpy.typing import ArrayLike
+from qaa.libs import kabsch
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
-from qaa.libs import kabsch
 
 
 class TestCase:
     @pytest.fixture
     def mobile(self) -> ArrayLike:
-        universe = mda.Universe(TOPWW, TRJWW, in_memory=True)
-        sel = universe.select_atoms("protein and name CA")
-        return universe.trajectory.coordinate_array[:, sel.indices]
+        top = md.load_topology(TOPWW)
+        sel = top.select("protein and name CA")
+        traj = md.load(TRJWW, top=top, atom_indices=sel)
+        return traj.xyz
 
     @pytest.fixture
     def centered(self, mobile: ArrayLike) -> ArrayLike:
