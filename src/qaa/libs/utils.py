@@ -58,8 +58,13 @@ def get_average_structure(
     )
     if isinstance(topology, Path):
         topology: str = topology.as_posix()
+    filenames = (
+        glob.iglob(*trajectory)
+        if len(trajectory) == 1 and "*" in "".join(trajectory)
+        else trajectory
+    )
 
-    for filename in glob.iglob(*trajectory):
+    for filename in filenames:
         for frames in md.iterload(
             filename, top=topology, atom_indices=indices, stride=stride
         ):
@@ -103,10 +108,16 @@ def get_positions(
         topology: str = topology.as_posix()
     top: md.Topology = md.load_topology(topology)
     selection: Optional[ArrayType] = top.select(mask) if mask != "all" else None
+    filenames = (
+        glob.iglob(*trajectory)
+        if len(trajectory) == 1 and "*" in "".join(trajectory)
+        else trajectory
+    )
+
     positions: ArrayType = np.concatenate(
         [
             frames.xyz
-            for filename in glob.iglob(*trajectory)
+            for filename in filenames
             for frames in md.iterload(
                 filename, top=top, atom_indices=selection, stride=stride
             )
