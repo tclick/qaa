@@ -32,10 +32,10 @@ class Figure:
     def __init__(
         self,
         *,
-        n_points: int = 10,
+        n_points: Optional[int] = None,
         method: str = "ica",
         labels: Optional[ArrayType] = None,
-        azim: float = 120.0,
+        azim: Optional[float] = None,
     ):
         """Visualize data via a graphical image.
 
