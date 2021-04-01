@@ -13,12 +13,14 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Cluster data into regions."""
+import glob
 import logging.config
 import time
 from pathlib import Path
 from typing import Tuple
 
 import click
+import mdtraj as md
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
@@ -127,9 +129,9 @@ from ..libs.typing import ArrayType
 )
 @click.option(
     "--azim",
-    default=120.0,
+    default=-1.0,
     show_default=True,
-    type=click.FloatRange(min=0.0, max=359.0, clamp=True),
+    type=click.FloatRange(min=-1.0, max=359.0, clamp=True),
     help="Azimuth rotation for 3D plot",
 )
 @click.option(
@@ -183,20 +185,46 @@ def cli(
             tol=tol,
         )
     )
-    labels: ArrayType = clustering.fit_predict(data[:, axes])[::n_points]
+    labels: ArrayType = clustering.fit_predict(data[:, axes])
+    centers = clustering.means_ if cluster else clustering.cluster_centers_
 
     # Prepare cluster analysis
-    figure = Figure(method=data_method, labels=labels, azim=azim)
-    figure.draw(data)
+    azim = azim if azim >= 0.0 else None
+    figure = Figure(n_points=n_points, method=data_method, labels=labels, azim=azim)
+    figure.draw(data[:, axes], centers=centers)
+
     logger.info("Saving cluster data to %s", outfile)
     figure.save(outfile, dpi=dpi)
 
     with outfile.with_suffix(".csv").open(mode="w") as w:
         logger.info("Saving cluster labels to %s", w.name)
         np.savetxt(w, labels, delimiter=",", fmt="%d")
+
     with outfile.with_suffix(".npy").open(mode="wb") as w:
         logger.info("Saving cluster labels to %s", w.name)
         np.save(w, labels)
+
+    if save:
+        # Find all trajectories and determine total frames per trajectory
+        filenames = (
+            glob.glob(*trajectory)
+            if len(trajectory) == 1 and "*" in "".join(trajectory)
+            else trajectory
+        )
+        frames = [
+            sum([_.n_frames for _ in md.iterload(filename, top=topology)])
+            for filename in filenames
+        ]
+        frames = np.cumsum(frames)
+
+        for i, center in enumerate(centers):
+            idx: int = find_closest_point(center, data[:, axes])[0]
+            file_no = np.searchsorted(frames, idx)
+            traj: md.Trajectory = md.load_frame(filenames[file_no], idx, top=topology)
+
+            filename = outfile.parent.joinpath(f"cluster{i}_frame{idx}.pdb")
+            logger.info("Saving frame %d of cluster %d to %s", idx, i, filename)
+            traj.save(filename.as_posix())
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time
@@ -222,6 +250,6 @@ def find_closest_point(point: ArrayType, data: ArrayType) -> int:
         Index of value closes to `point`
     """
     distance: ArrayType = np.fromiter(
-        [[np.linalg.norm(_ - point) for _ in data]], dtype=point.dtype
+        [np.linalg.norm(_ - point) for _ in data], dtype=point.dtype
     )
     return np.where(distance == distance.min())[0]
