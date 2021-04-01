@@ -142,7 +142,7 @@ class Figure:
             data[:: self.n_points, 2],
             marker=".",
             cmap=self._cmap,
-            c=self.labels[:: self.n_points],
+            c=self.labels[:: self.n_points] if self.labels is not None else self.labels,
             alpha=0.5,
         )
         if centers is not None:
