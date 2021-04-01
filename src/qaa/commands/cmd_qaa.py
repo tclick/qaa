@@ -181,7 +181,7 @@ def cli(
         "this could take a while..."
     )
     qaa = (
-        JadeICA(n_components=n_components, verbose=verbose)
+        JadeICA(n_components=n_components)
         if method
         else FastICA(
             n_components=n_components,
