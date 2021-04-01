@@ -52,7 +52,7 @@ from ..libs.typing import ArrayType
 logger = logging.getLogger(__name__)
 
 
-def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
+def _jade(arr: ArrayType, m: Optional[int] = None):
     """Blind separation of real signals with JADE.
 
     jadeR implements JADE, an Independent Component Analysis (ICA) algorithm developed
@@ -70,8 +70,6 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
         output matrix B has size mxn so that only m sources are extracted.  This is done
         by restricting the operation of jadeR to the m first principal components.
         Defaults to None, in which case :math:`m = n`.
-    verbose : bool
-        print info on progress. Default is True.
 
     Returns
     -------
@@ -447,20 +445,17 @@ def _jade(arr: ArrayType, m: Optional[int] = None, verbose: bool = True):
 class JadeICA(_base._BasePCA):
     """Perform blind source separation using joint diagonalization."""
 
-    def __init__(self, *, n_components=None, verbose=True):
+    def __init__(self, *, n_components=None):
         """Perform a blind signal separation using joint diagonalization.
 
         Parameters
         ----------
         n_components : int, default=None
             Number of signals to extract. `None` assumes all components
-        verbose : bool, default=True
-            Display information during the calculation
         """
         super().__init__()
 
         self.n_components = n_components
-        self.verbose = verbose
         self.mean_ = None
         self.components_ = None
 
@@ -479,7 +474,7 @@ class JadeICA(_base._BasePCA):
         self
         """
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr.T, m=self.n_components, verbose=self.verbose)
+        self.components_ = _jade(arr.T, m=self.n_components)
         return self
 
     def transform(self, arr: ArrayType) -> ArrayType:
@@ -521,7 +516,7 @@ class JadeICA(_base._BasePCA):
             Unmixed signal array
         """
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr.T, m=self.n_components, verbose=self.verbose)
+        self.components_ = _jade(arr.T, m=self.n_components)
 
         arr -= self.mean_
         signal = self.components_ @ arr.T
