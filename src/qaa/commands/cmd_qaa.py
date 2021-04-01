@@ -148,7 +148,7 @@ def cli(
     max_iter: int,
     tol: float,
     image: bool,
-    dpi: float,
+    dpi: int,
     image_type: str,
     verbose: bool,
 ):
