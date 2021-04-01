@@ -18,9 +18,8 @@ from typing import Optional
 import pytest
 from numpy import random
 from numpy import typing
-from sklearn.utils._testing import assert_array_almost_equal
-
 from qaa.decomposition import jade
+from sklearn.utils._testing import assert_array_almost_equal
 
 
 class TestJade:
