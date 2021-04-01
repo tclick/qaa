@@ -95,3 +95,37 @@ class TestCluster:
         assert result.exit_code == 0
         assert logfile.exists()
         fig.assert_called_once()
+
+    @pytest.mark.runner_setup
+    def test_cluster_save(self, cli_runner: CliRunner, tmp_path, mocker):
+        """
+        GIVEN trajectory, topology and data files
+        WHEN the '--save' option is provided
+        THEN PDB files will be saved
+        """
+        outfile = tmp_path.joinpath("cluster.png")
+        logfile = outfile.with_suffix(".log")
+        fig = mocker.patch("matplotlib.figure.Figure.savefig")
+        pdb = mocker.patch("mdtraj.Trajectory.save")
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "cluster",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-i",
+                PROJ,
+                "-o",
+                outfile,
+                "-l",
+                logfile,
+                "--save",
+                "--verbose",
+            ),
+        )
+        assert result.exit_code == 0
+        assert logfile.exists()
+        fig.assert_called_once()
+        pdb.assert_called()
