@@ -106,13 +106,12 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     origtype = arr.dtype  # remember to return matrix B of the same type
     arr = np.matrix(arr.astype(float64))
 
-    # GB: n_features is number of input signals, n_samples is number of samples
-    n_features, n_samples = arr.shape
+    n, T = arr.shape  # GB: n is number of input signals, T is number of samples
 
     if m is None:
-        m = n_features  # Number of sources defaults to # of sensors
-    if m > n_features:
-        raise IndexError(f"More sources ({m}) than sensors ({n_features})")
+        m = n  # Number of sources defaults to # of sensors
+    if m > n:
+        raise IndexError(f"More sources ({m}) than sensors ({n})")
 
     logger.info("jade -> Looking for %d sources", m)
     logger.info("jade -> Removing the mean value")
@@ -122,29 +121,26 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     # ===========================================
     logger.info("jade -> Whitening the data")
     # An eigen basis for the sample covariance matrix
-    eigenval, eigenvec = linalg.eig((arr * arr.T) / n_samples)
-    k = eigenval.argsort()
-    sorted_eval = eigenval[k]  # Sort by increasing variances
-    pcs = np.arange(
-        n_features - 1, n_features - m - 1, -1
+    D, U = linalg.eig((arr * arr.T) / T)
+    k = D.argsort()
+    Ds = D[k]  # Sort by increasing variances
+    PCs = np.arange(
+        n - 1, n - m - 1, -1
     )  # The m most significant princip. comp. by decreasing variance
 
     # --- PCA  ----------------------------------------------------------
-    components = eigenvec[
-        :, k[pcs]
-    ].T  # % At this stage, B does the PCA on m components
+    B = U[:, k[PCs]].T  # % At this stage, B does the PCA on m components
 
     # --- Scaling  ------------------------------------------------------
-    scales = np.sqrt(sorted_eval[pcs])  # The scales of the principal components .
-    # Now, B does PCA followed by a rescaling = sphering
-    components = np.diag(1.0 / scales) * components
+    scales = np.sqrt(Ds[PCs])  # The scales of the principal components .
+    B = np.diag(1.0 / scales) * B  # Now, B does PCA followed by a rescaling = sphering
     # B[-1,:] = -B[-1,:] # GB: to make it compatible with octave
     # --- Sphering ------------------------------------------------------
     arr = (
-        components * arr
+        B * arr
     )  # %% We have done the easy part: B is a whitening matrix and X is white.
 
-    del eigenvec, eigenval, sorted_eval, k, pcs, scales
+    del U, D, Ds, k, PCs, scales
 
     # NOTE: At this stage, X is a PCA analysis in m components of the real data, except
     # that all its entries now have unit variance.  Any further rotation of X will
@@ -167,72 +163,71 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     arr = arr.T
     dimsymm = int((m * (m + 1)) / 2)  # Dim. of the space of real symm matrices
     nbcm = dimsymm  # number of cumulant matrices
-    cm = np.matrix(
-        np.zeros([m, m * nbcm], dtype=np.float64)
-    )  # Storage for cumulant matrices
-    r = np.matrix(np.eye(m, dtype=np.float64))
-    q_ij = np.matrix(np.zeros([m, m], dtype=np.float64))  # Temp for a cum. matrix
-    xim = np.zeros(m, dtype=np.float64)  # Temp
-    xijm = np.zeros(m, dtype=np.float64)  # Temp
+    # Storage for cumulant matrices
+    CM = np.matrix(np.zeros([m, m * nbcm], dtype=np.float64))
+    R = np.matrix(np.eye(m, dtype=np.float64))
+    Qij = np.matrix(np.zeros([m, m], dtype=np.float64))  # Temp for a cum. matrix
+    Xim = np.zeros(m, dtype=np.float64)  # Temp
+    Xijm = np.zeros(m, dtype=np.float64)  # Temp
     # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
     # GB: we don't translate that one because NumPy doesn't need Tony's rule
 
     # I am using a symmetry trick to save storage.  I should write a short note one of
     # these days explaining what is going on here.
-    range_ = np.arange(m)  # will index the columns of CM where to store the cum. mats.
+    Range = np.arange(m)  # will index the columns of CM where to store the cum. mats.
 
     for im in range(m):
-        xim = arr[:, im]
-        xijm = np.multiply(xim, xim)
+        Xim = arr[:, im]
+        Xijm = np.multiply(Xim, Xim)
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
-        q_ij = (
-            np.multiply(xijm, arr).T * arr / float(n_samples)
-            - r
-            - 2 * np.dot(r[:, im], r[:, im].T)
+        Qij = (
+            np.multiply(Xijm, arr).T * arr / float(T)
+            - R
+            - 2 * np.dot(R[:, im], R[:, im].T)
         )
-        cm[:, range_] = q_ij
-        range_ = range_ + m
+        CM[:, Range] = Qij
+        Range = Range + m
         for jm in range(im):
-            xijm = np.multiply(xim, arr[:, jm])
-            q_ij = (
-                np.sqrt(2) * np.multiply(xijm, arr).T * arr / float(n_samples)
-                - r[:, im] * r[:, jm].T
-                - r[:, jm] * r[:, im].T
+            Xijm = np.multiply(Xim, arr[:, jm])
+            Qij = (
+                np.sqrt(2) * np.multiply(Xijm, arr).T * arr / float(T)
+                - R[:, im] * R[:, jm].T
+                - R[:, jm] * R[:, im].T
             )
-            cm[:, range_] = q_ij
-            range_ = range_ + m
+            CM[:, Range] = Qij
+            Range = Range + m
 
     # Now we have nbcm = m(m+1)/2 cumulants matrices stored in a big m x m*nbcm array.
-    vec_ = np.matrix(np.eye(m, dtype=np.float64))
 
-    diag_ = np.zeros(m, dtype=np.float64)
-    on = 0.0
-    range_ = np.arange(m)
+    V = np.matrix(np.eye(m, dtype=np.float64))
+
+    Diag = np.zeros(m, dtype=np.float64)
+    On = 0.0
+    Range = np.arange(m)
     for _ in range(nbcm):
-        diag_ = np.diag(cm[:, range_])
-        on = on + (diag_ * diag_).sum(axis=0)
-        range_ = range_ + m
-    off = (np.multiply(cm, cm).sum(axis=0)).sum(axis=0) - on
+        Diag = np.diag(CM[:, Range])
+        On = On + (Diag * Diag).sum(axis=0)
+        Range = Range + m
+    Off = (np.multiply(CM, CM).sum(axis=0)).sum(axis=0) - On
 
-    seuil = 1.0e-6 / np.sqrt(
-        n_samples
-    )  # % A statistically scaled threshold on `small" angles
+    seuil = 1.0e-6 / np.sqrt(T)  # % A statistically scaled threshold on `small" angles
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
     upds = 0  # % Number of rotations in a given seep
     g = np.zeros([2, nbcm], dtype=np.float64)
     gg = np.zeros([2, 2], dtype=np.float64)
-    g = np.zeros([2, 2], dtype=np.float64)
+    G = np.zeros([2, 2], dtype=np.float64)
     c = 0
     s = 0
     ton = 0
     toff = 0
     theta = 0
-    gain = 0
+    Gain = 0
 
     # Joint diagonalization proper
+
     logger.info("jade -> Contrast optimization by joint diagonalization")
 
     while encore:
@@ -245,34 +240,34 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
         for p in range(m - 1):
             for q in range(p + 1, m):
 
-                ip = np.arange(p, m * nbcm, m)
-                iq = np.arange(q, m * nbcm, m)
+                Ip = np.arange(p, m * nbcm, m)
+                Iq = np.arange(q, m * nbcm, m)
 
                 # computation of Givens angle
-                g = np.concatenate([cm[p, ip] - cm[q, iq], cm[p, iq] + cm[q, ip]])
+                g = np.concatenate([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
                 gg = np.dot(g, g.T)
                 ton = gg[0, 0] - gg[1, 1]
                 toff = gg[0, 1] + gg[1, 0]
                 theta = 0.5 * np.arctan2(toff, ton + np.sqrt(ton * ton + toff * toff))
-                gain = (np.sqrt(ton * ton + toff * toff) - ton) / 4.0
+                Gain = (np.sqrt(ton * ton + toff * toff) - ton) / 4.0
 
                 # Givens update
-                if np.abs(theta) > seuil:
+                if abs(theta) > seuil:
                     encore = True
                     upds = upds + 1
                     c = np.cos(theta)
                     s = np.sin(theta)
-                    g = np.matrix([[c, -s], [s, c]])
+                    G = np.matrix([[c, -s], [s, c]])
                     pair = np.array([p, q])
-                    vec_[:, pair] = vec_[:, pair] * g
-                    cm[pair, :] = g.T * cm[pair, :]
-                    cm[:, np.concatenate([ip, iq])] = np.append(
-                        c * cm[:, ip] + s * cm[:, iq],
-                        -s * cm[:, ip] + c * cm[:, iq],
+                    V[:, pair] = V[:, pair] * G
+                    CM[pair, :] = G.T * CM[pair, :]
+                    CM[:, np.concatenate([Ip, Iq])] = np.append(
+                        c * CM[:, Ip] + s * CM[:, Iq],
+                        -s * CM[:, Ip] + c * CM[:, Iq],
                         axis=1,
                     )
-                    on = on + gain
-                    off = off - gain
+                    On = On + Gain
+                    Off = Off - Gain
 
         logger.info("completed in %d rotations", upds)
         updates = updates + upds
@@ -281,25 +276,25 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     # A separating matrix
     # ===================
 
-    components = vec_.T * components
+    B = V.T * B
 
     # Permute the rows of the separating matrix B to get the most energetic components
     # first. Here the **signals** are normalized to unit variance.  Therefore, the sort
-    # is according to the norm of the columns of A = linalg.pinv(B)
+    # is according to the norm of the columns of A = pinv(B)
 
     logger.info("jade -> Sorting the components")
 
-    unmixing = linalg.pinv(components)
-    keys = np.array(np.argsort(np.multiply(unmixing, unmixing).sum(axis=0)[0]))[0]
-    components = components[keys, :]
-    components = components[::-1, :]  # % Is this smart ?
+    A = linalg.pinv(B)
+    keys = np.array(np.argsort(np.multiply(A, A).sum(axis=0)[0]))[0]
+    B = B[keys, :]
+    B = B[::-1, :]  # % Is this smart ?
 
     logger.info("jade -> Fixing the signs")
-    b = components[:, 0]
+    b = B[:, 0]
     signs = np.array(np.sign(np.sign(b) + 0.1).T)[0]  # just a trick to deal with sign=0
-    components = np.diag(signs) * components
+    B = np.diag(signs) * B
 
-    return np.array(components.astype(origtype))
+    return np.array(B.astype(origtype))
 
     # Revision history of MATLAB code:
     #
