@@ -22,12 +22,12 @@ import pytest
 from click.testing import CliRunner
 from numpy import random
 from numpy.typing import ArrayLike
+from qaa.cli import main
+from qaa.decomposition.jade import JadeICA
 from sklearn.decomposition import FastICA
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
-from qaa.cli import main
-from qaa.decomposition.jade import JadeICA
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 LOGGER = logging.getLogger(name="ambgen.commands.cmd_qaa")
@@ -70,7 +70,12 @@ class TestQaa:
 
     @pytest.mark.runner_setup
     def test_qaa_jade(
-        self, cli_runner: CliRunner, tmp_path: Path, data: ArrayLike, mocker
+        self,
+        cli_runner: CliRunner,
+        tmp_path: Path,
+        data: ArrayLike,
+        n_modes: int,
+        mocker,
     ):
         """
         GIVEN a trajectory file
@@ -80,6 +85,7 @@ class TestQaa:
         logfile = tmp_path.joinpath("qaa.log")
         ica = mocker.patch.object(JadeICA, "fit_transform", return_value=data)
         save_txt = mocker.patch.object(np, "savetxt", autospec=True)
+        save = mocker.patch.object(np, "save", autospec=True)
         result = cli_runner.invoke(
             main,
             args=(
@@ -96,21 +102,27 @@ class TestQaa:
                 "ca",
                 "--jade",
                 "-n",
-                10,
+                n_modes,
                 "--verbose",
             ),
         )
 
         assert result.exit_code == 0
         ica.assert_called_once()
-        save_txt.assert_called_once()
+        save_txt.assert_called()
+        save.assert_called()
         assert logfile.exists()
         assert tmp_path.joinpath("qaa-signals.csv").exists()
         assert not tmp_path.joinpath("qaa.png").exists()
 
     @pytest.mark.runner_setup
     def test_qaa_fastica(
-        self, cli_runner: CliRunner, tmp_path: Path, data: ArrayLike, mocker
+        self,
+        cli_runner: CliRunner,
+        tmp_path: Path,
+        data: ArrayLike,
+        n_modes: int,
+        mocker,
     ):
         """
         GIVEN a trajectory file
@@ -120,6 +132,7 @@ class TestQaa:
         logfile = tmp_path.joinpath("qaa.log")
         ica = mocker.patch.object(FastICA, "fit_transform", return_value=data)
         save_txt = mocker.patch.object(np, "savetxt", autospec=True)
+        save = mocker.patch.object(np, "save", autospec=True)
         result = cli_runner.invoke(
             main,
             args=(
@@ -136,21 +149,31 @@ class TestQaa:
                 "ca",
                 "--fastica",
                 "-n",
-                10,
+                n_modes,
+                "-w",
+                "--iter",
+                1000,
+                "--tol",
+                0.01,
                 "--verbose",
             ),
         )
 
-        assert result.exit_code == 0
         ica.assert_called_once()
-        save_txt.assert_called_once()
+        save_txt.assert_called()
+        save.assert_called()
         assert logfile.exists()
         assert tmp_path.joinpath("qaa-signals.csv").exists()
         assert not tmp_path.joinpath("qaa.png").exists()
 
     @pytest.mark.runner_setup
     def test_qaa_error(
-        self, cli_runner: CliRunner, tmp_path: Path, data: ArrayLike, mocker
+        self,
+        cli_runner: CliRunner,
+        tmp_path: Path,
+        data: ArrayLike,
+        n_modes: int,
+        mocker,
     ):
         """
         GIVEN stop < start
@@ -180,7 +203,7 @@ class TestQaa:
                 "ca",
                 "--jade",
                 "-n",
-                10,
+                n_modes,
                 "--verbose",
             ),
         )
@@ -188,7 +211,12 @@ class TestQaa:
 
     @pytest.mark.runner_setup
     def test_qaa_with_image(
-        self, cli_runner: CliRunner, tmp_path: Path, data: ArrayLike, mocker
+        self,
+        cli_runner: CliRunner,
+        tmp_path: Path,
+        data: ArrayLike,
+        n_modes: int,
+        mocker,
     ):
         """
         GIVEN a trajectory file
@@ -198,6 +226,7 @@ class TestQaa:
         logfile = tmp_path.joinpath("qaa.log")
         ica = mocker.patch.object(JadeICA, "fit_transform", return_value=data)
         save_txt = mocker.patch.object(np, "savetxt", autospec=True)
+        save = mocker.patch.object(np, "save", autospec=True)
         fig = mocker.patch("matplotlib.figure.Figure.savefig")
         result = cli_runner.invoke(
             main,
@@ -215,7 +244,7 @@ class TestQaa:
                 "ca",
                 "--jade",
                 "-n",
-                10,
+                n_modes,
                 "--image",
                 "--verbose",
             ),
@@ -223,7 +252,8 @@ class TestQaa:
 
         assert result.exit_code == 0
         ica.assert_called_once()
-        save_txt.assert_called_once()
+        save_txt.assert_called()
+        save.assert_called()
         fig.assert_called_once()
         assert logfile.exists()
         assert tmp_path.joinpath("qaa-signals.csv").exists()
