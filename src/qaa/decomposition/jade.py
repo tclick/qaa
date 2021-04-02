@@ -23,26 +23,9 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from numpy import abs
-from numpy import append
-from numpy import arange
-from numpy import arctan2
-from numpy import argsort
-from numpy import array
-from numpy import concatenate
-from numpy import cos
-from numpy import diag
-from numpy import dot
-from numpy import eye
+import numpy as np
 from numpy import float64
-from numpy import matrix
-from numpy import multiply
-from numpy import sign
-from numpy import sin
-from numpy import sqrt
-from numpy import zeros
-from numpy.linalg import eig
-from numpy.linalg import pinv
+from numpy import linalg
 from sklearn.decomposition import _base
 from sklearn.utils.validation import check_array
 from sklearn.utils.validation import check_is_fitted
@@ -121,7 +104,7 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     # and a numpy matrix type for X.
     arr: ArrayType = check_array(arr)
     origtype = arr.dtype  # remember to return matrix B of the same type
-    arr = matrix(arr.astype(float64))
+    arr = np.matrix(arr.astype(float64))
 
     # GB: n_features is number of input signals, n_samples is number of samples
     n_features, n_samples = arr.shape
@@ -139,10 +122,10 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     # ===========================================
     logger.info("jade -> Whitening the data")
     # An eigen basis for the sample covariance matrix
-    eigenval, eigenvec = eig((arr * arr.T) / n_samples)
+    eigenval, eigenvec = linalg.eig((arr * arr.T) / n_samples)
     k = eigenval.argsort()
     sorted_eval = eigenval[k]  # Sort by increasing variances
-    pcs = arange(
+    pcs = np.arange(
         n_features - 1, n_features - m - 1, -1
     )  # The m most significant princip. comp. by decreasing variance
 
@@ -152,9 +135,9 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     ].T  # % At this stage, B does the PCA on m components
 
     # --- Scaling  ------------------------------------------------------
-    scales = sqrt(sorted_eval[pcs])  # The scales of the principal components .
+    scales = np.sqrt(sorted_eval[pcs])  # The scales of the principal components .
     # Now, B does PCA followed by a rescaling = sphering
-    components = diag(1.0 / scales) * components
+    components = np.diag(1.0 / scales) * components
     # B[-1,:] = -B[-1,:] # GB: to make it compatible with octave
     # --- Sphering ------------------------------------------------------
     arr = (
@@ -184,34 +167,36 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     arr = arr.T
     dimsymm = int((m * (m + 1)) / 2)  # Dim. of the space of real symm matrices
     nbcm = dimsymm  # number of cumulant matrices
-    cm = matrix(zeros([m, m * nbcm], dtype=float64))  # Storage for cumulant matrices
-    r = matrix(eye(m, dtype=float64))
-    q_ij = matrix(zeros([m, m], dtype=float64))  # Temp for a cum. matrix
-    xim = zeros(m, dtype=float64)  # Temp
-    xijm = zeros(m, dtype=float64)  # Temp
+    cm = np.matrix(
+        np.zeros([m, m * nbcm], dtype=np.float64)
+    )  # Storage for cumulant matrices
+    r = np.matrix(np.eye(m, dtype=np.float64))
+    q_ij = np.matrix(np.zeros([m, m], dtype=np.float64))  # Temp for a cum. matrix
+    xim = np.zeros(m, dtype=np.float64)  # Temp
+    xijm = np.zeros(m, dtype=np.float64)  # Temp
     # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
     # GB: we don't translate that one because NumPy doesn't need Tony's rule
 
     # I am using a symmetry trick to save storage.  I should write a short note one of
     # these days explaining what is going on here.
-    range_ = arange(m)  # will index the columns of CM where to store the cum. mats.
+    range_ = np.arange(m)  # will index the columns of CM where to store the cum. mats.
 
     for im in range(m):
         xim = arr[:, im]
-        xijm = multiply(xim, xim)
+        xijm = np.multiply(xim, xim)
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
         q_ij = (
-            multiply(xijm, arr).T * arr / float(n_samples)
+            np.multiply(xijm, arr).T * arr / float(n_samples)
             - r
-            - 2 * dot(r[:, im], r[:, im].T)
+            - 2 * np.dot(r[:, im], r[:, im].T)
         )
         cm[:, range_] = q_ij
         range_ = range_ + m
         for jm in range(im):
-            xijm = multiply(xim, arr[:, jm])
+            xijm = np.multiply(xim, arr[:, jm])
             q_ij = (
-                sqrt(2) * multiply(xijm, arr).T * arr / float(n_samples)
+                np.sqrt(2) * np.multiply(xijm, arr).T * arr / float(n_samples)
                 - r[:, im] * r[:, jm].T
                 - r[:, jm] * r[:, im].T
             )
@@ -219,27 +204,27 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
             range_ = range_ + m
 
     # Now we have nbcm = m(m+1)/2 cumulants matrices stored in a big m x m*nbcm array.
-    vec_ = matrix(eye(m, dtype=float64))
+    vec_ = np.matrix(np.eye(m, dtype=np.float64))
 
-    diag_ = zeros(m, dtype=float64)
+    diag_ = np.zeros(m, dtype=np.float64)
     on = 0.0
-    range_ = arange(m)
+    range_ = np.arange(m)
     for _ in range(nbcm):
-        diag_ = diag(cm[:, range_])
+        diag_ = np.diag(cm[:, range_])
         on = on + (diag_ * diag_).sum(axis=0)
         range_ = range_ + m
-    off = (multiply(cm, cm).sum(axis=0)).sum(axis=0) - on
+    off = (np.multiply(cm, cm).sum(axis=0)).sum(axis=0) - on
 
-    seuil = 1.0e-6 / sqrt(
+    seuil = 1.0e-6 / np.sqrt(
         n_samples
     )  # % A statistically scaled threshold on `small" angles
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
     upds = 0  # % Number of rotations in a given seep
-    g = zeros([2, nbcm], dtype=float64)
-    gg = zeros([2, 2], dtype=float64)
-    g = zeros([2, 2], dtype=float64)
+    g = np.zeros([2, nbcm], dtype=np.float64)
+    gg = np.zeros([2, 2], dtype=np.float64)
+    g = np.zeros([2, 2], dtype=np.float64)
     c = 0
     s = 0
     ton = 0
@@ -260,28 +245,28 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
         for p in range(m - 1):
             for q in range(p + 1, m):
 
-                ip = arange(p, m * nbcm, m)
-                iq = arange(q, m * nbcm, m)
+                ip = np.arange(p, m * nbcm, m)
+                iq = np.arange(q, m * nbcm, m)
 
                 # computation of Givens angle
-                g = concatenate([cm[p, ip] - cm[q, iq], cm[p, iq] + cm[q, ip]])
-                gg = dot(g, g.T)
+                g = np.concatenate([cm[p, ip] - cm[q, iq], cm[p, iq] + cm[q, ip]])
+                gg = np.dot(g, g.T)
                 ton = gg[0, 0] - gg[1, 1]
                 toff = gg[0, 1] + gg[1, 0]
-                theta = 0.5 * arctan2(toff, ton + sqrt(ton * ton + toff * toff))
-                gain = (sqrt(ton * ton + toff * toff) - ton) / 4.0
+                theta = 0.5 * np.arctan2(toff, ton + np.sqrt(ton * ton + toff * toff))
+                gain = (np.sqrt(ton * ton + toff * toff) - ton) / 4.0
 
                 # Givens update
-                if abs(theta) > seuil:
+                if np.abs(theta) > seuil:
                     encore = True
                     upds = upds + 1
-                    c = cos(theta)
-                    s = sin(theta)
-                    g = matrix([[c, -s], [s, c]])
-                    pair = array([p, q])
+                    c = np.cos(theta)
+                    s = np.sin(theta)
+                    g = np.matrix([[c, -s], [s, c]])
+                    pair = np.array([p, q])
                     vec_[:, pair] = vec_[:, pair] * g
                     cm[pair, :] = g.T * cm[pair, :]
-                    cm[:, concatenate([ip, iq])] = append(
+                    cm[:, np.concatenate([ip, iq])] = np.append(
                         c * cm[:, ip] + s * cm[:, iq],
                         -s * cm[:, ip] + c * cm[:, iq],
                         axis=1,
@@ -300,21 +285,21 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
 
     # Permute the rows of the separating matrix B to get the most energetic components
     # first. Here the **signals** are normalized to unit variance.  Therefore, the sort
-    # is according to the norm of the columns of A = pinv(B)
+    # is according to the norm of the columns of A = linalg.pinv(B)
 
     logger.info("jade -> Sorting the components")
 
-    unmixing = pinv(components)
-    keys = array(argsort(multiply(unmixing, unmixing).sum(axis=0)[0]))[0]
+    unmixing = linalg.pinv(components)
+    keys = np.array(np.argsort(np.multiply(unmixing, unmixing).sum(axis=0)[0]))[0]
     components = components[keys, :]
     components = components[::-1, :]  # % Is this smart ?
 
     logger.info("jade -> Fixing the signs")
     b = components[:, 0]
-    signs = array(sign(sign(b) + 0.1).T)[0]  # just a trick to deal with sign=0
-    components = diag(signs) * components
+    signs = np.array(np.sign(np.sign(b) + 0.1).T)[0]  # just a trick to deal with sign=0
+    components = np.diag(signs) * components
 
-    return array(components.astype(origtype))
+    return np.array(components.astype(origtype))
 
     # Revision history of MATLAB code:
     #
