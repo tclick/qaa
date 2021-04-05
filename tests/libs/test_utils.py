@@ -50,7 +50,7 @@ class TestUtils:
         )
         assert average.xyz.shape == (1, n_atoms, 3)
         universe_average = universe.xyz.mean(axis=0)
-        testing.assert_allclose(average.xyz[0], universe_average)
+        testing.assert_allclose(average.xyz[0], universe_average, rtol=1e-6)
 
     def test_select_average(self, universe: md.Trajectory):
         """
@@ -86,9 +86,9 @@ class TestUtils:
             ],
         )
         assert array.shape == (n_frames, n_atoms, 3)
-        testing.assert_allclose(array[0], universe.xyz[0])
+        testing.assert_allclose(array[0], universe.xyz[0] * 10)
         assert isinstance(array, np.ndarray)
-        testing.assert_allclose(array[-1], universe.xyz[-1])
+        testing.assert_allclose(array[-1], universe.xyz[-1] * 10)
 
     def test_select_positions(self, universe: md.Trajectory, n_frames: int):
         """
@@ -108,7 +108,7 @@ class TestUtils:
             mask=mask,
         )
         assert array.shape == (n_frames, n_atoms, 3)
-        testing.assert_allclose(array[0], universe.atom_slice(atoms).xyz[0])
+        testing.assert_allclose(array[0], universe.atom_slice(atoms).xyz[0] * 10)
         assert isinstance(array, np.ndarray)
 
     def test_reshape_array(self, universe: md.Trajectory, n_atoms: int, n_frames: int):
