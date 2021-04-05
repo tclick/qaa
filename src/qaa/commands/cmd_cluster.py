@@ -168,7 +168,12 @@ def cli(
         raise IndexError("Axes must be in increasing order")
 
     # Load data
-    data: ArrayType = np.loadtxt(infile, delimiter=",")
+    if ".csv" in infile:
+        data: ArrayType = np.loadtxt(infile, delimiter=",")
+    elif ".npy" in infile:
+        data: ArrayType = np.load(infile)
+    else:
+        raise IOError("Input file must either be a .csv or a .npy file")
     data_method = "ica" if method else "pca"
 
     # Select clustering method and cluster data
