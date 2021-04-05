@@ -22,6 +22,7 @@ from typing import Optional
 import click
 import mdtraj as md
 import numpy as np
+from mdtraj.utils import in_units_of
 
 from .. import _MASK
 from .. import create_logging_dict
@@ -137,11 +138,19 @@ def cli(
     ref_traj: md.Trajectory = get_average_structure(
         topology, trajectory, mask=_MASK[mask], stride=step
     )
+
     logger.info("Saving average structure to %s", reference)
     ref_traj.save(reference)
     unitcell_angles: ArrayType = ref_traj.unitcell_angles.copy()
     unitcell_lengths: ArrayType = ref_traj.unitcell_lengths.copy()
     unitcell_vectors: ArrayType = ref_traj.unitcell_vectors.copy()
+    if not (
+        ".gro" in "".join(trajectory)
+        or ".xtc" in "".join(trajectory)
+        or ".trj" in "".join(trajectory)
+        or ".tng" in "".join(trajectory)
+    ):
+        in_units_of(ref_traj.xyz, "nanometer", "angstroms", inplace=True)
 
     logger.info("Aligning trajectory to average structures")
     ref_traj.xyz = align_trajectory(
@@ -152,6 +161,13 @@ def cli(
     ref_traj.unitcell_angles = np.repeat(unitcell_angles, n_frames, axis=0)
     ref_traj.unitcell_lengths = np.repeat(unitcell_lengths, n_frames, axis=0)
     ref_traj.unitcell_vectors = np.repeat(unitcell_vectors, n_frames, axis=0)
+    if not (
+        ".gro" in "".join(trajectory)
+        or ".xtc" in "".join(trajectory)
+        or ".trj" in "".join(trajectory)
+        or ".tng" in "".join(trajectory)
+    ):
+        in_units_of(ref_traj.xyz, "angstroms", "nanometer", inplace=True)
 
     logger.info("Saving aligned trajectory to %s}", outfile)
     ref_traj.save(outfile)
