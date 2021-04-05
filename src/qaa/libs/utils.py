@@ -20,6 +20,7 @@ from typing import Optional
 
 import mdtraj as md
 import numpy as np
+from mdtraj.utils import in_units_of
 
 from .typing import ArrayType
 from .typing import PathLike
@@ -72,7 +73,9 @@ def get_average_structure(
             coordinates = frames.xyz.sum(axis=0)
             positions.append(coordinates)
 
-    frames.xyz = np.sum(positions, axis=0) / n_frames
+    # MDTraj stores positions in nanometers; we convert it to Ångstroms.
+    positions: ArrayType = np.asfarray(positions, dtype=coordinates.dtype)
+    frames.xyz = positions.sum(axis=0) / n_frames
     frames.unitcell_angles = frames.unitcell_angles[0, :]
     frames.unitcell_lengths = frames.unitcell_lengths[0, :]
     return frames
@@ -114,6 +117,7 @@ def get_positions(
         else trajectory
     )
 
+    # MDTraj stores positions in nanometers; we convert it to Ångstroms.
     positions: ArrayType = np.concatenate(
         [
             frames.xyz
@@ -124,6 +128,13 @@ def get_positions(
         ],
         axis=0,
     )
+    if not (
+        ".gro" in "".join(filenames)
+        or ".xtc" in "".join(filenames)
+        or ".trj" in "".join(filenames)
+        or ".tng" in "".join(filenames)
+    ):
+        in_units_of(positions, "nanometer", "angstroms", inplace=True)
     return positions
 
 
