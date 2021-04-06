@@ -28,6 +28,7 @@ scikit-learn = "^0.24.1"
 mdtraj = "^1.9.5"
 bokeh = "^2.3.0"
 holoviews = "^1.14.2"
+nptyping = "^1.4.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
@@ -70,6 +71,7 @@ numpydoc = "^1.1.0"
 codecov = "^2.1.11"
 flake8-black = "^0.2.1"
 flake8-import-order = "^0.18.1"
+pytest-mypy = "^0.8.1"
 
 [tool.poetry.scripts]
 qaa = "qaa.__main__:main"
