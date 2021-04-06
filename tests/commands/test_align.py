@@ -19,10 +19,10 @@ from pathlib import Path
 import mdtraj as md
 import pytest
 from click.testing import CliRunner
+from qaa.cli import main
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
-from qaa.cli import main
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 LOGGER = logging.getLogger(name="ambgen.commands.cmd_align")
