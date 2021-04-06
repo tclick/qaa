@@ -14,16 +14,16 @@
 # --------------------------------------------------------------------------------------
 """Draw and save figures for QAA."""
 import itertools
+from os import PathLike
 from pathlib import Path
-from typing import NoReturn
+from typing import Any
 from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-
-from .typing import ArrayType
-from .typing import PathLike
+from nptyping import Float
+from nptyping import NDArray
 
 
 class Figure:
@@ -34,9 +34,9 @@ class Figure:
         *,
         n_points: Optional[int] = None,
         method: str = "ica",
-        labels: Optional[ArrayType] = None,
+        labels: Optional[NDArray[(Any, ...), Float]] = None,
         azim: Optional[float] = None,
-    ):
+    ) -> None:
         """Visualize data via a graphical image.
 
         Parameters
@@ -45,7 +45,7 @@ class Figure:
             Number of points to include for 3D plots
         method : str
             Type of data
-        labels : ArrayType
+        labels : NDArray[(Any, ...), Float]
             Vector of cluster labels
         azim : float
             Azimuth rotation for 3D plot
@@ -58,9 +58,9 @@ class Figure:
             if labels is not None
             else None
         )
-        self._figure: Optional[plt.Figure] = None
-        self._axes: Optional[plt.Axes] = None
-        self._azim: float = azim
+        self._figure: plt.Figure
+        self._axes: plt.Axes
+        self._azim: Optional[float] = azim
 
     @property
     def figure(self) -> plt.Figure:
@@ -68,7 +68,7 @@ class Figure:
         return self._figure
 
     @figure.setter
-    def figure(self, fig: plt.Figure) -> NoReturn:
+    def figure(self, fig: plt.Figure) -> None:
         """Set the underlying figure."""
         self._figure = fig
 
@@ -78,20 +78,24 @@ class Figure:
         return self._axes
 
     @axes.setter
-    def axes(self, ax: plt.Axes) -> NoReturn:
+    def axes(self, ax: plt.Axes) -> None:
         """Set the underlying axes."""
         self._axes = ax
 
     def draw(
-        self, data: ArrayType, /, *, centers: Optional[ArrayType] = None
-    ) -> NoReturn:
+        self,
+        data: NDArray[(Any, ...), Float],
+        /,
+        *,
+        centers: Optional[NDArray[(Any, ...), Float]] = None,
+    ) -> None:
         """Draw the first three components in subplots.
 
         Parameters
         ----------
-        data : ArrayType
+        data : NDArray[(Any, ...), Float]
             Matrix with shape (n_samples, n_components)
-        centers : ArrayType
+        centers : NDArray[(Any, ...), Float]
             Vector of cluster centers (n_components, )
 
         Notes
@@ -103,7 +107,7 @@ class Figure:
         * 3D plot
         """
         sns.set_theme(context="paper", style="ticks", palette="husl")
-        self._figure: plt.Figure = plt.figure(figsize=plt.figaspect(1.0))
+        self._figure = plt.figure(figsize=plt.figaspect(1.0))
         data_type: str = self.method.upper()
         label: str = data_type[:2]
 
@@ -162,7 +166,7 @@ class Figure:
         self._figure.suptitle(f"{data_type}")
         self._figure.tight_layout()
 
-    def save(self, filename: PathLike, /, *, dpi: int = 600) -> NoReturn:
+    def save(self, filename: PathLike[str], /, *, dpi: int = 600) -> None:
         """Save the image to disk.
 
         Parameters

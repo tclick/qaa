@@ -14,6 +14,7 @@
 # --------------------------------------------------------------------------------------
 """Various utilities."""
 import glob
+from os import PathLike
 from typing import Any
 from typing import List
 from typing import Optional
@@ -26,7 +27,7 @@ from nptyping import NDArray
 
 
 def get_average_structure(
-    topology: str,
+    topology: PathLike[str],
     trajectory: List[str],
     /,
     *,
@@ -79,7 +80,7 @@ def get_average_structure(
 
 
 def get_positions(
-    topology: str,
+    topology: PathLike[str],
     trajectory: List[str],
     /,
     *,

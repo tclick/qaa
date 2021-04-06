@@ -14,6 +14,8 @@
 # --------------------------------------------------------------------------------------
 """Quasi-Anharmonic Analysis."""
 import logging
+from os import PathLike
+from typing import Any
 from typing import Dict
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -21,7 +23,7 @@ logger.addHandler(logging.NullHandler())
 
 __version__: str = "1.0.0"
 
-_MASK: Dict = dict(
+_MASK: Dict[str, str] = dict(
     ca="protein and name CA",
     cab="protein and name =~ 'C[AB]'",
     back="protein and backbone",
@@ -31,7 +33,7 @@ _MASK: Dict = dict(
 )
 
 
-def create_logging_dict(logfile: str) -> Dict:
+def create_logging_dict(logfile: PathLike[str]) -> Dict[str, Any]:
     """Configure the logger.
 
     Parameters
@@ -41,7 +43,7 @@ def create_logging_dict(logfile: str) -> Dict:
 
     Returns
     -------
-    dict
+    Dict
         Configuration data for logging.
 
     Raises

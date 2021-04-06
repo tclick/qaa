@@ -15,6 +15,7 @@
 """CLI to compute quasi-anharmonic analysis."""
 import logging.config
 import time
+from os import PathLike
 from pathlib import Path
 from typing import Any
 from typing import List
@@ -139,10 +140,10 @@ from ..libs.utils import reshape_positions
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: str,
+    topology: PathLike[str],
     trajectory: List[str],
-    outdir: str,
-    logfile: str,
+    outdir: PathLike[str],
+    logfile: PathLike[str],
     step: int,
     mask: str,
     n_modes: int,

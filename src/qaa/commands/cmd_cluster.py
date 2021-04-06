@@ -16,8 +16,10 @@
 import glob
 import logging.config
 import time
+from os import PathLike
 from pathlib import Path
 from typing import Any
+from typing import Sequence
 from typing import Tuple
 
 import click
@@ -141,11 +143,11 @@ from ..libs.figure import Figure
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: str,
-    trajectory: str,
-    infile: str,
-    outfile: str,
-    logfile: str,
+    topology: PathLike[str],
+    trajectory: Sequence[str],
+    infile: PathLike[str],
+    outfile: PathLike[str],
+    logfile: PathLike[str],
     axes: Tuple[int, int, int],
     method: bool,
     cluster: bool,
@@ -160,6 +162,7 @@ def cli(
 ) -> None:
     """Perform cluster analysis on the provided data."""
     start_time: float = time.perf_counter()
+    in_file = Path(infile)
     out_file = Path(outfile)
 
     # Setup logging
@@ -171,10 +174,10 @@ def cli(
 
     # Load data
     data: NDArray[(Any, ...), Float]
-    if ".csv" in infile:
-        data = np.loadtxt(infile, delimiter=",")
-    elif ".npy" in infile:
-        data = np.load(infile)
+    if in_file.suffix == ".csv":
+        data = np.loadtxt(in_file, delimiter=",")
+    elif in_file.suffix == ".npy":
+        data = np.load(in_file)
     else:
         raise IOError("Input file must either be a .csv or a .npy file")
     data_method = "ica" if method else "pca"
@@ -201,36 +204,34 @@ def cli(
     figure = Figure(n_points=n_points, method=data_method, labels=labels, azim=azim)
     figure.draw(data[:, axes], centers=centers)
 
-    logger.info("Saving cluster data to %s", outfile)  # type: ignore
+    logger.info("Saving cluster data to %s", outfile)
     figure.save(outfile, dpi=dpi)
 
     with out_file.with_suffix(".csv").open(mode="w") as w:
         logger.info("Saving cluster labels to %s", w.name)
         np.savetxt(w, labels, delimiter=",", fmt="%d")
 
-    with out_file.with_suffix(".npy").open(mode="wb") as w:
+    with out_file.with_suffix(".npy").open(mode="wb") as w:  # type: ignore
         logger.info("Saving cluster labels to %s", w.name)
         np.save(w, labels)
 
     if save:
         # Find all trajectories and determine total frames per trajectory
-        filenames = (
-            glob.glob(*trajectory)
-            if len(trajectory) == 1 and "*" in "".join(trajectory)
-            else trajectory
-        )
-        frames = [
-            sum([_.n_frames for _ in md.iterload(filename, top=topology)])
-            for filename in filenames
-        ]
-        frames = np.cumsum(frames)
+        filenames: Sequence[str] = glob.glob(*trajectory)
+        frames: NDArray[(Any, ...), Float] = np.asarray(
+            [
+                sum([_.n_frames for _ in md.iterload(filename, top=topology)])
+                for filename in filenames
+            ],
+            dtype=int,
+        ).cumsum()
 
         for i, center in enumerate(centers):
-            idx: int = find_closest_point(center, data[:, axes])[0]
-            file_no = np.searchsorted(frames, idx)
+            idx: int = find_closest_point(center, data[:, axes])
+            file_no: int = int(np.searchsorted(frames, idx))
             traj: md.Trajectory = md.load_frame(filenames[file_no], idx, top=topology)
 
-            filename = outfile.parent.joinpath(f"cluster{i}_frame{idx}.pdb")
+            filename = out_file.parent.joinpath(f"cluster{i}_frame{idx}.pdb")
             logger.info("Saving frame %d of cluster %d to %s", idx, i, filename)
             traj.save(filename.as_posix())
 
