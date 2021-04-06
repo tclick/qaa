@@ -28,8 +28,10 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
     session's virtual environment. This allows pre-commit to locate hooks in
     that environment when invoked from git.
 
-    Args:
-        session: The Session object.
+    Parameters
+    ----------
+    session : Session
+        Poetry session
     """
     if session.bin is None:
         return
@@ -96,7 +98,7 @@ def precommit(session: Session) -> None:
         activate_virtualenv_in_precommit_hooks(session)
 
 
-@session(python="3.9")
+@session(python=python_versions)
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
@@ -119,7 +121,18 @@ def mypy(session: Session) -> None:
 def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
-    session.install("coverage[toml]", "pytest", "pygments")
+    session.install(
+        "coverage[toml]",
+        "pytest",
+        "pygments",
+        "pytest-click",
+        "pytest-randomly",
+        "pytest-mock",
+        "pytest-cache",
+        "pytest-console-scripts",
+        "pytest-cov",
+        "pytest-coverage",
+    )
     try:
         session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
     finally:
@@ -135,16 +148,25 @@ def coverage(session: Session) -> None:
     has_args = session.posargs and nsessions == 1
     args = session.posargs if has_args else ["report"]
 
-    session.install_("coverage[toml]", "codecov")
+    session.install("coverage[toml]", "codecov")
     session.run("coverage", "xml", "--fail-under=0")
-    session.run("codecov", *session.posargs)
+    session.run("codecov", *args)
 
 
 @session(python=python_versions)
 def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
-    session.install("pytest", "typeguard", "pygments")
+    session.install(
+        "pytest",
+        "typeguard",
+        "pygments",
+        "pytest-click",
+        "pytest-randomly",
+        "pytest-mock",
+        "pytest-cache",
+        "pytest-console-scripts",
+    )
     session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
 
 
