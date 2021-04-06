@@ -16,6 +16,7 @@
 import logging.config
 import time
 from pathlib import Path
+from typing import Any
 from typing import List
 from typing import Optional
 
@@ -23,12 +24,13 @@ import click
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from nptyping import Float
+from nptyping import NDArray
 from sklearn.decomposition import PCA
 
 from .. import _MASK
 from .. import create_logging_dict
 from ..libs.figure import Figure
-from ..libs.typing import ArrayType
 from ..libs.utils import get_positions
 from ..libs.utils import reshape_positions
 
@@ -147,7 +149,7 @@ def cli(
 
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")
-    positions: ArrayType = get_positions(
+    positions: NDArray[(Any, ...), Float] = get_positions(
         topology, trajectory, mask=_MASK[mask], stride=step
     )
     positions = reshape_positions(positions)
@@ -157,14 +159,14 @@ def cli(
     logger.info("Calculating PCA")
     logger.warn("Depending upon the size of the trajectory, this could take a while.")
     pca = PCA(n_components=n_components, svd_solver="full", whiten=whiten)
-    projection: ArrayType = pca.fit_transform(positions)
+    projection: NDArray[(Any, ...), Float] = pca.fit_transform(positions)
     if bias and whiten:
         projection *= np.sqrt(n_samples / (n_samples - 1))
         pca.explained_variance_ *= (n_samples - 1) / n_samples
 
     ratio = pca.explained_variance_.cumsum() / pca.explained_variance_.sum()
     for percentage in np.arange(0.8, 1.0, 0.05):
-        components: ArrayType = np.where(ratio <= percentage)[0]
+        components: NDArray[(Any, ...), Float] = np.where(ratio <= percentage)[0]
         logger.info(
             "%d components cover %.1f%% of the explained variance",
             components,

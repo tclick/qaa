@@ -16,17 +16,19 @@
 import logging.config
 import time
 from pathlib import Path
+from typing import Any
 from typing import List
 
 import click
 import mdtraj as md
 import numpy as np
 from mdtraj.utils import in_units_of
+from nptyping import Float
+from nptyping import NDArray
 
 from .. import _MASK
 from .. import create_logging_dict
 from ..libs.align import align_trajectory
-from ..libs.typing import ArrayType
 from ..libs.utils import get_average_structure
 from ..libs.utils import get_positions
 
@@ -129,7 +131,7 @@ def cli(
     step = step if step > 0 else 1
 
     logger.info("Loading %s and %s", topology, trajectory)
-    positions: ArrayType = get_positions(
+    positions: NDArray[(Any, ...), Float] = get_positions(
         topology, trajectory, mask=_MASK[mask], stride=step
     )
 
@@ -140,9 +142,9 @@ def cli(
 
     logger.info("Saving average structure to %s", reference)
     ref_traj.save(reference)
-    unitcell_angles: ArrayType = ref_traj.unitcell_angles.copy()
-    unitcell_lengths: ArrayType = ref_traj.unitcell_lengths.copy()
-    unitcell_vectors: ArrayType = ref_traj.unitcell_vectors.copy()
+    unitcell_angles: NDArray[(Any, ...), Float] = ref_traj.unitcell_angles.copy()
+    unitcell_lengths: NDArray[(Any, ...), Float] = ref_traj.unitcell_lengths.copy()
+    unitcell_vectors: NDArray[(Any, ...), Float] = ref_traj.unitcell_vectors.copy()
     if not (
         ".gro" in "".join(trajectory)
         or ".xtc" in "".join(trajectory)

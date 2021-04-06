@@ -17,17 +17,19 @@ import glob
 import logging.config
 import time
 from pathlib import Path
+from typing import Any
 from typing import Tuple
 
 import click
 import mdtraj as md
 import numpy as np
+from nptyping import Float
+from nptyping import NDArray
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
 from .. import create_logging_dict
 from ..libs.figure import Figure
-from ..libs.typing import ArrayType
 
 
 @click.command("cluster", short_help="Plot data from QAA.")
@@ -168,7 +170,7 @@ def cli(
         raise IndexError("Axes must be in increasing order")
 
     # Load data
-    data: ArrayType
+    data: NDArray[(Any, ...), Float]
     if ".csv" in infile:
         data = np.loadtxt(infile, delimiter=",")
     elif ".npy" in infile:
@@ -191,7 +193,7 @@ def cli(
             tol=tol,
         )
     )
-    labels: ArrayType = clustering.fit_predict(data[:, axes])
+    labels: NDArray[(Any, ...), Float] = clustering.fit_predict(data[:, axes])
     centers = clustering.means_ if cluster else clustering.cluster_centers_
 
     # Prepare cluster analysis
@@ -240,14 +242,16 @@ def cli(
         logger.info(f"Total execution time: {output}")
 
 
-def find_closest_point(point: ArrayType, data: ArrayType) -> int:
+def find_closest_point(
+    point: NDArray[(Any, ...), Float], data: NDArray[(Any, ...), Float]
+) -> int:
     """Locate a oint in the `data` closest to the `point`.
 
     Parameters
     ----------
-    point : ArrayType
+    point : NDArray[(Any, ...), Float]
         Point of interest with size (n_features, )
-    data : ArrayType
+    data : NDArray[(Any, ...), Float]
         Data to search with shape (n_samples, n_features)
 
     Returns
@@ -255,7 +259,7 @@ def find_closest_point(point: ArrayType, data: ArrayType) -> int:
     int
         Index of value closes to `point`
     """
-    distance: ArrayType = np.fromiter(
+    distance: NDArray[(Any, ...), Float] = np.fromiter(
         [np.linalg.norm(_ - point) for _ in data], dtype=point.dtype
     )
     return int(np.where(distance == distance.min())[0])

@@ -16,18 +16,20 @@
 import logging.config
 import time
 from pathlib import Path
+from typing import Any
 from typing import List
 from typing import Union
 
 import click
 import numpy as np
+from nptyping import Float
+from nptyping import NDArray
 from sklearn.decomposition import FastICA
 
 from .. import _MASK
 from .. import create_logging_dict
 from ..decomposition.jade import JadeICA
 from ..libs.figure import Figure
-from ..libs.typing import ArrayType
 from ..libs.utils import get_positions
 from ..libs.utils import reshape_positions
 
@@ -165,7 +167,7 @@ def cli(
 
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")
-    positions: ArrayType = get_positions(
+    positions: NDArray[(Any, ...), Float] = get_positions(
         topology, trajectory, mask=_MASK[mask], stride=step
     )
     positions = reshape_positions(positions)
