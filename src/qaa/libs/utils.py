@@ -14,21 +14,20 @@
 # --------------------------------------------------------------------------------------
 """Various utilities."""
 import glob
-from pathlib import Path
+from typing import Any
 from typing import List
 from typing import Optional
 
 import mdtraj as md
 import numpy as np
 from mdtraj.utils import in_units_of
-
-from .typing import ArrayType
-from .typing import PathLike
+from nptyping import Float
+from nptyping import NDArray
 
 
 def get_average_structure(
-    topology: PathLike,
-    trajectory: List[PathLike],
+    topology: str,
+    trajectory: List[str],
     /,
     *,
     mask: str = "all",
@@ -38,9 +37,9 @@ def get_average_structure(
 
     Parameters
     ----------
-    topology : PathLike
+    topology : str
         Topology file
-    trajectory : list of PathLike
+    trajectory : list of str
         List of trajectory files
     mask : str
         Atom selection
@@ -53,12 +52,10 @@ def get_average_structure(
         The average positions
     """
     n_frames: int = 0
-    positions: List[ArrayType] = []
-    indices: Optional[ArrayType] = (
+    positions_: List[NDArray[(Any, ...), Float]] = []
+    indices: Optional[NDArray[(Any, ...), Float]] = (
         md.load_topology(topology).select(mask) if mask != "all" else None
     )
-    if isinstance(topology, Path):
-        topology: str = topology.as_posix()
     filenames = (
         glob.iglob(*trajectory)
         if len(trajectory) == 1 and "*" in "".join(trajectory)
@@ -71,10 +68,10 @@ def get_average_structure(
         ):
             n_frames += frames.n_frames
             coordinates = frames.xyz.sum(axis=0)
-            positions.append(coordinates)
+            positions_.append(coordinates)
 
     # MDTraj stores positions in nanometers; we convert it to Ångstroms.
-    positions: ArrayType = np.asfarray(positions, dtype=coordinates.dtype)
+    positions: NDArray[(Any, ...), Float] = np.asfarray(positions_)
     frames.xyz = positions.sum(axis=0) / n_frames
     frames.unitcell_angles = frames.unitcell_angles[0, :]
     frames.unitcell_lengths = frames.unitcell_lengths[0, :]
@@ -82,20 +79,20 @@ def get_average_structure(
 
 
 def get_positions(
-    topology: PathLike,
-    trajectory: List[PathLike],
+    topology: str,
+    trajectory: List[str],
     /,
     *,
     mask: str = "all",
     stride: Optional[int] = None,
-) -> ArrayType:
+) -> NDArray[(Any, ...), Float]:
     """Read a molecular dynamics trajectory and retrieve the coordinates.
 
     Parameters
     ----------
-    topology : PathLike
+    topology : str
         Topology file
-    trajectory : list of PathLike
+    trajectory : list of str
         Trajectory file
     mask : str
         Selection criterion for coordinates
@@ -104,13 +101,13 @@ def get_positions(
 
     Returns
     -------
-    ArrayType
+    : NDArray[(Any, ...), Float]
         The coordinates with shape (n_frames / step, n_atoms, 3)
     """
-    if isinstance(topology, Path):
-        topology: str = topology.as_posix()
     top: md.Topology = md.load_topology(topology)
-    selection: Optional[ArrayType] = top.select(mask) if mask != "all" else None
+    selection: Optional[NDArray[(Any, ...), Float]] = (
+        top.select(mask) if mask != "all" else None
+    )
     filenames = (
         glob.iglob(*trajectory)
         if len(trajectory) == 1 and "*" in "".join(trajectory)
@@ -118,7 +115,7 @@ def get_positions(
     )
 
     # MDTraj stores positions in nanometers; we convert it to Ångstroms.
-    positions: ArrayType = np.concatenate(
+    positions: NDArray[(Any, ...), Float] = np.concatenate(
         [
             frames.xyz
             for filename in filenames
@@ -138,31 +135,35 @@ def get_positions(
     return positions
 
 
-def reshape_positions(positions: ArrayType) -> ArrayType:
+def reshape_positions(
+    positions: NDArray[(Any, ...), Float]
+) -> NDArray[(Any, ...), Float]:
     """Reshape a n * m * 3 trajectory to a n * (m * 3) 2D matrix.
 
     Parameters
     ----------
-    positions : ArrayType
+    positions : NDArray
         A 3-D matrix with shape (n_frames, n_atoms, 3)
 
     Returns
     -------
-    ArrayType
+    : NDArray[(Any, ...), Float]
         A 2-D array with shape (n_frames, n_atoms * 3)
     """
     n_frames, n_atoms, n_dims = positions.shape
     return positions.reshape((n_frames, n_atoms * n_dims))
 
 
-def rmse(mobile: ArrayType, reference: ArrayType) -> float:
+def rmse(
+    mobile: NDArray[(Any, ...), Float], reference: NDArray[(Any, ...), Float]
+) -> float:
     """Calculate the root-mean-square error between two arrays.
 
     Parameters
     ----------
-    mobile : ArrayType
+    mobile : NDArray
         coordinates
-    reference : ArrayType
+    reference : NDArray
         coordinates
 
     Returns
@@ -170,6 +171,6 @@ def rmse(mobile: ArrayType, reference: ArrayType) -> float:
     float
         The error difference between the two arrays
     """
-    diff: ArrayType = mobile - reference
+    diff: NDArray[(Any, ...), Float] = mobile - reference
 
     return np.sqrt(np.sum(np.square(diff)))
