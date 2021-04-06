@@ -101,7 +101,7 @@ def get_positions(
 
     Returns
     -------
-    : NDArray[(Any, ...), Float]
+    NDArray
         The coordinates with shape (n_frames / step, n_atoms, 3)
     """
     top: md.Topology = md.load_topology(topology)
@@ -142,12 +142,12 @@ def reshape_positions(
 
     Parameters
     ----------
-    positions : NDArray
+    positions : array_like
         A 3-D matrix with shape (n_frames, n_atoms, 3)
 
     Returns
     -------
-    : NDArray[(Any, ...), Float]
+    NDArray
         A 2-D array with shape (n_frames, n_atoms * 3)
     """
     n_frames, n_atoms, n_dims = positions.shape
@@ -161,9 +161,9 @@ def rmse(
 
     Parameters
     ----------
-    mobile : NDArray
+    mobile : array_like
         coordinates
-    reference : NDArray
+    reference : array_like
         coordinates
 
     Returns
