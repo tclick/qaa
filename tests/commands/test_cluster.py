@@ -18,11 +18,10 @@ import sys
 
 import pytest
 from click.testing import CliRunner
-from numpy import random
-from numpy.typing import ArrayLike
 from qaa.cli import main
 
 from ..datafile import PROJ
+from ..datafile import PROJNP
 from ..datafile import TOPWW
 from ..datafile import TRJWW
 
@@ -41,11 +40,6 @@ class TestCluster:
     @pytest.fixture
     def n_modes(self) -> int:
         return 5
-
-    @pytest.fixture
-    def data(self, n_modes: int) -> ArrayLike:
-        rng = random.default_rng()
-        return rng.standard_normal((10, n_modes))
 
     @pytest.mark.runner_setup
     def test_help(self, cli_runner: CliRunner):
@@ -85,6 +79,37 @@ class TestCluster:
                 TRJWW,
                 "-i",
                 PROJ,
+                "-o",
+                outfile,
+                "-l",
+                logfile,
+                "--verbose",
+            ),
+        )
+        assert result.exit_code == 0
+        assert logfile.exists()
+        fig.assert_called_once()
+
+    @pytest.mark.runner_setup
+    def test_cluster_npy(self, cli_runner: CliRunner, tmp_path, mocker):
+        """
+        GIVEN a data file
+        WHEN invoking the cluster subcommand
+        THEN saves a cluster image to disk
+        """
+        outfile = tmp_path.joinpath("cluster.png")
+        logfile = outfile.with_suffix(".log")
+        fig = mocker.patch("matplotlib.figure.Figure.savefig")
+        result = cli_runner.invoke(
+            main,
+            args=(
+                "cluster",
+                "-s",
+                TOPWW,
+                "-f",
+                TRJWW,
+                "-i",
+                PROJNP,
                 "-o",
                 outfile,
                 "-l",
