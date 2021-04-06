@@ -21,21 +21,26 @@ https://github.com/gvacaliuc/jade_c/blob/master/jade.py
 from __future__ import annotations
 
 import logging
+from typing import Any
 from typing import Optional
 
 import numpy as np
+from nptyping import Float
+from nptyping import NDArray
 from numpy import float64
 from numpy import linalg
-from sklearn.decomposition import _base
+from numpy.typing import ArrayLike
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 from sklearn.utils.validation import check_array
 from sklearn.utils.validation import check_is_fitted
-
-from ..libs.typing import ArrayType
 
 logger = logging.getLogger(__name__)
 
 
-def _jade(arr: ArrayType, m: Optional[int] = None):
+def _jade(
+    arr: NDArray[(Any, ...), Float], m: Optional[int] = None
+) -> NDArray[(Any, ...), Float]:
     """Blind separation of real signals with JADE.
 
     jadeR implements JADE, an Independent Component Analysis (ICA) algorithm developed
@@ -47,7 +52,7 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
 
     Parameters
     ----------
-    arr : ArrayType
+    arr : NDArray
         a data matrix (n_features, n_samples)
     m : int, default=None
         output matrix B has size mxn so that only m sources are extracted.  This is done
@@ -56,7 +61,7 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
 
     Returns
     -------
-    ArrayType
+    NDArray
         An m*n matrix B (NumPy matrix type), such that Y=B*X are separated sources
         extracted from the n*T data matrix X. If m is omitted, B is a square n*n matrix
         (as many sources as sensors). The rows of B are ordered such that the columns of
@@ -102,7 +107,7 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     # GB: we do some checking of the input arguments and copy data to new variables to
     # avoid messing with the original input. We also require double precision (float64)
     # and a numpy matrix type for X.
-    arr: ArrayType = check_array(arr)
+    arr = check_array(arr)
     origtype = arr.dtype  # remember to return matrix B of the same type
     arr = np.matrix(arr.astype(float64))
 
@@ -294,7 +299,8 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     signs = np.array(np.sign(np.sign(b) + 0.1).T)[0]  # just a trick to deal with sign=0
     B = np.diag(signs) * B
 
-    return np.array(B.astype(origtype))
+    unmix: ArrayLike = np.asarray(B.astype(origtype))
+    return unmix
 
     # Revision history of MATLAB code:
     #
@@ -422,10 +428,10 @@ def _jade(arr: ArrayType, m: Optional[int] = None):
     # clone) output of the original MATLAB script is available
 
 
-class JadeICA(_base._BasePCA):
+class JadeICA(TransformerMixin, BaseEstimator):
     """Perform blind source separation using joint diagonalization."""
 
-    def __init__(self, *, n_components=None):
+    def __init__(self, *, n_components: Optional[int] = None) -> None:
         """Perform a blind signal separation using joint diagonalization.
 
         Parameters
@@ -435,18 +441,22 @@ class JadeICA(_base._BasePCA):
         """
         super().__init__()
 
-        self.n_components = n_components
-        self.mean_ = None
-        self.components_ = None
+        self.n_components: Optional[int] = n_components
+        self.mean_: Optional[NDArray[(Any, ...), Float]] = None
+        self.components_: Optional[NDArray[(Any, ...), Float]] = None
 
-    def fit(self, arr: ArrayType, y: Optional[ArrayType] = None) -> JadeICA:
+    def fit(
+        self,
+        arr: NDArray[(Any, ...), Float],
+        y: Optional[NDArray[(Any, ...), Float]] = None,
+    ) -> JadeICA:
         """Calculate the unmixing matrix.
 
         Parameters
         ----------
-        arr : ArrayType
+        arr : NDArray
             mixed signal array
-        y : ArrayType
+        y : NDArray
             unused
 
         Returns
@@ -457,57 +467,62 @@ class JadeICA(_base._BasePCA):
         self.components_ = _jade(arr.T, m=self.n_components)
         return self
 
-    def transform(self, arr: ArrayType) -> ArrayType:
+    def transform(self, arr: NDArray[(Any, ...), Float]) -> NDArray[(Any, ...), Float]:
         """Project the unmixing matrix onto `arr` to give independent signals.
 
         Parameters
         ----------
-        arr : ArrayType
+        arr : NDArray
             Unmixed signals
 
         Returns
         -------
-        ArrayType
+        NDArray
             Unmixed signal array
         """
         check_is_fitted(self)
 
         arr -= self.mean_
-        signal = self.components_ @ arr.T
+        signal: NDArray[(Any, ...), Float] = self.components_ @ arr.T
         return signal.T
 
     def fit_transform(
-        self, arr: ArrayType, y: Optional[ArrayType] = None, **fit_params
-    ) -> ArrayType:
+        self,
+        arr: NDArray[(Any, ...), Float],
+        y: Optional[NDArray[(Any, ...), Float]] = None,
+        **fit_params: str,
+    ) -> NDArray[(Any, ...), Float]:
         """Determine the independent signals using joint diagonalization.
 
         Parameters
         ----------
-        arr : ArrayType
+        arr : NDArray
             Mixed signal array
-        y : ArrayType
+        y : NDArray
             unused
         fit_params : dict
             unused
 
         Returns
         -------
-        ArrayType
+        NDArray
             Unmixed signal array
         """
         self.mean_ = arr.mean(axis=0)
         self.components_ = _jade(arr.T, m=self.n_components)
 
         arr -= self.mean_
-        signal = self.components_ @ arr.T
+        signal: NDArray[(Any, ...), Float] = self.components_ @ arr.T
         return signal.T
 
-    def inverse_transform(self, arr: ArrayType) -> ArrayType:
+    def inverse_transform(
+        self, arr: NDArray[(Any, ...), Float]
+    ) -> NDArray[(Any, ...), Float]:
         """Find the original mixed signals.
 
         Parameters
         ----------
-        arr : ArrayType
+        arr : NDArray
             Unmixed signal array
 
         Raises
