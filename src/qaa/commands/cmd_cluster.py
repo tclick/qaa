@@ -174,12 +174,14 @@ def cli(
 
     # Load data
     data: NDArray[(Any, ...), Float]
-    if in_file.suffix == ".csv":
-        data = np.loadtxt(in_file, delimiter=",")
-    elif in_file.suffix == ".npy":
-        data = np.load(in_file)
-    else:
-        raise IOError("Input file must either be a .csv or a .npy file")
+    try:
+        try:
+            data = np.loadtxt(in_file, delimiter=",")
+        except UnicodeDecodeError:
+            data = np.load(in_file)
+    except BaseException:
+        raise
+
     data_method = "ica" if method else "pca"
 
     # Select clustering method and cluster data
