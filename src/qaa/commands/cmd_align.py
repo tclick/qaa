@@ -17,7 +17,6 @@ import logging.config
 import time
 from pathlib import Path
 from typing import List
-from typing import Optional
 
 import click
 import mdtraj as md
@@ -119,7 +118,7 @@ def cli(
     mask: str,
     tol: float,
     verbose: bool,
-):
+) -> None:
     """Align a trajectory to average structure using Kabsch fitting."""
     start_time: float = time.perf_counter()
 
@@ -127,7 +126,7 @@ def cli(
     logging.config.dictConfig(create_logging_dict(logfile))
     logger: logging.Logger = logging.getLogger(__name__)
 
-    step: Optional[int] = step if step > 0 else None
+    step = step if step > 0 else 1
 
     logger.info("Loading %s and %s", topology, trajectory)
     positions: ArrayType = get_positions(

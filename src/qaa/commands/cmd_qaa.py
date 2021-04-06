@@ -16,7 +16,8 @@
 import logging.config
 import time
 from pathlib import Path
-from typing import Optional
+from typing import List
+from typing import Union
 
 import click
 import numpy as np
@@ -137,7 +138,7 @@ from ..libs.utils import reshape_positions
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
     topology: str,
-    trajectory: str,
+    trajectory: List[str],
     outdir: str,
     logfile: str,
     step: int,
@@ -151,7 +152,7 @@ def cli(
     dpi: int,
     image_type: str,
     verbose: bool,
-):
+) -> None:
     """Perform quasi-anharmonic analysis on a trajectory."""
     start_time: float = time.perf_counter()
 
@@ -159,8 +160,8 @@ def cli(
     logging.config.dictConfig(create_logging_dict(logfile))
     logger: logging.Logger = logging.getLogger(__name__)
 
-    outdir = Path(outdir)
-    step: Optional[int] = step if step > 0 else None
+    out_dir = Path(outdir)
+    step = step if step > 0 else 1
 
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")
@@ -180,7 +181,7 @@ def cli(
         "Depending upon the size of your system and number of modes,"
         "this could take a while..."
     )
-    qaa = (
+    qaa: Union[JadeICA, FastICA] = (
         JadeICA(n_components=n_components)
         if method
         else FastICA(
@@ -195,25 +196,25 @@ def cli(
     signals = qaa.fit_transform(positions)
 
     # Save unmixed signals
-    with outdir.joinpath("qaa-signals.csv").open(mode="w") as w:
+    with out_dir.joinpath("qaa-signals.csv").open(mode="w") as w:
         logger.info("Saving QAA data to %s", w.name)
         np.savetxt(w, signals, delimiter=",", fmt="%.6f")
-    with outdir.joinpath("qaa-signals.npy").open(mode="wb") as w:
+    with out_dir.joinpath("qaa-signals.npy").open(mode="wb") as w:  # type: ignore
         logger.info("Saving QAA data to %s", w.name)
         np.save(w, signals)
 
     # Save unmixing matrix
-    with outdir.joinpath("unmixing_matrix.csv").open(mode="w") as w:
+    with out_dir.joinpath("unmixing_matrix.csv").open(mode="w") as w:
         logger.info("Saving QAA unmixing matrix to %s", w.name)
         np.savetxt(w, qaa.components_, delimiter=",", fmt="%.6f")
-    with outdir.joinpath("unmixing_matrix.npy").open(mode="wb") as w:
+    with out_dir.joinpath("unmixing_matrix.npy").open(mode="wb") as w:  # type: ignore
         logger.info("Saving QAA unmixing matrix to %s", w.name)
         np.save(w, qaa.components_)
 
     if image:
         # Plot 2D and 3D plots of ICs
         logger.info("Plotting the ICA")
-        filename = outdir.joinpath("qaa").with_suffix(f".{image_type}")
+        filename = out_dir.joinpath("qaa").with_suffix(f".{image_type}")
         figure = Figure(method="ica")
         figure.draw(signals)
         figure.save(filename, dpi=dpi)

@@ -144,7 +144,7 @@ def cli(
     infile: str,
     outfile: str,
     logfile: str,
-    axes: Tuple[int],
+    axes: Tuple[int, int, int],
     method: bool,
     cluster: bool,
     max_iter: int,
@@ -155,10 +155,10 @@ def cli(
     azim: float,
     save: bool,
     verbose: bool,
-):
+) -> None:
     """Perform cluster analysis on the provided data."""
     start_time: float = time.perf_counter()
-    outfile = Path(outfile)
+    out_file = Path(outfile)
 
     # Setup logging
     logging.config.dictConfig(create_logging_dict(logfile))
@@ -168,10 +168,11 @@ def cli(
         raise IndexError("Axes must be in increasing order")
 
     # Load data
+    data: ArrayType
     if ".csv" in infile:
-        data: ArrayType = np.loadtxt(infile, delimiter=",")
+        data = np.loadtxt(infile, delimiter=",")
     elif ".npy" in infile:
-        data: ArrayType = np.load(infile)
+        data = np.load(infile)
     else:
         raise IOError("Input file must either be a .csv or a .npy file")
     data_method = "ica" if method else "pca"
@@ -194,18 +195,18 @@ def cli(
     centers = clustering.means_ if cluster else clustering.cluster_centers_
 
     # Prepare cluster analysis
-    azim = azim if azim >= 0.0 else None
+    azim = azim if 0.0 <= azim < 360.0 else 0.0
     figure = Figure(n_points=n_points, method=data_method, labels=labels, azim=azim)
     figure.draw(data[:, axes], centers=centers)
 
-    logger.info("Saving cluster data to %s", outfile)
+    logger.info("Saving cluster data to %s", outfile)  # type: ignore
     figure.save(outfile, dpi=dpi)
 
-    with outfile.with_suffix(".csv").open(mode="w") as w:
+    with out_file.with_suffix(".csv").open(mode="w") as w:
         logger.info("Saving cluster labels to %s", w.name)
         np.savetxt(w, labels, delimiter=",", fmt="%d")
 
-    with outfile.with_suffix(".npy").open(mode="wb") as w:
+    with out_file.with_suffix(".npy").open(mode="wb") as w:
         logger.info("Saving cluster labels to %s", w.name)
         np.save(w, labels)
 
@@ -257,4 +258,4 @@ def find_closest_point(point: ArrayType, data: ArrayType) -> int:
     distance: ArrayType = np.fromiter(
         [np.linalg.norm(_ - point) for _ in data], dtype=point.dtype
     )
-    return np.where(distance == distance.min())[0]
+    return int(np.where(distance == distance.min())[0])

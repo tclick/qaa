@@ -122,7 +122,7 @@ from ..libs.utils import reshape_positions
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
     topology: str,
-    trajectory: str,
+    trajectory: List[str],
     outdir: str,
     logfile: str,
     step: int,
@@ -134,7 +134,7 @@ def cli(
     dpi: int,
     image_type: str,
     verbose: bool,
-):
+) -> None:
     """Calculate principal components for a trajectory."""
     start_time: float = time.perf_counter()
 
@@ -142,8 +142,8 @@ def cli(
     logging.config.dictConfig(create_logging_dict(logfile))
     logger: logging.Logger = logging.getLogger(__name__)
 
-    outdir = Path(outdir)
-    step: Optional[int] = step if step > 0 else None
+    out_dir = Path(outdir)
+    step = step if step > 0 else 1
 
     # Extract positions and reshape to (n_frames, n_points * 3)
     logger.info("Loading trajectory positions")
@@ -152,7 +152,7 @@ def cli(
     )
     positions = reshape_positions(positions)
     n_samples, n_features = positions.shape
-    n_components: int = n_modes if n_modes > 0 else None
+    n_components: Optional[int] = n_modes if n_modes > 0 else None
 
     logger.info("Calculating PCA")
     logger.warn("Depending upon the size of the trajectory, this could take a while.")
@@ -164,16 +164,16 @@ def cli(
 
     ratio = pca.explained_variance_.cumsum() / pca.explained_variance_.sum()
     for percentage in np.arange(0.8, 1.0, 0.05):
-        components: int = np.where(ratio <= percentage)[0].size
+        components: ArrayType = np.where(ratio <= percentage)[0]
         logger.info(
             "%d components cover %.1f%% of the explained variance",
             components,
             percentage * 100,
         )
 
-    components: List[int] = [50, 100]
+    components = np.fromiter([50, 100], dtype=int)
     for component in components:
-        percentage: float = ratio[:component][-1] * 100
+        percentage = ratio[:component][-1] * 100
         logger.info(
             "%d components cover %.1f%% of the explained variance",
             component,
@@ -189,10 +189,10 @@ def cli(
         singular=pca.singular_values_,
     )
     for key, value in data.items():
-        with outdir.joinpath(f"{key}.csv").open(mode="w") as w:
+        with out_dir.joinpath(f"{key}.csv").open(mode="w") as w:
             logger.info("Saving %s to %s", key, w.name)
             np.savetxt(w, value, delimiter=",", fmt="%.6f")
-        with outdir.joinpath(f"{key}.npy").open(mode="wb") as w:
+        with out_dir.joinpath(f"{key}.npy").open(mode="wb") as w:  # type: ignore
             logger.info("Saving %s to %s", key, w.name)
             np.save(w, value)
 
@@ -207,13 +207,13 @@ def cli(
         ax.set_ylim(bottom=0.0, top=1.1)
 
         fig.suptitle("Explained Variance Ratio from PCA")
-        filename = outdir.joinpath("explained_variance_ratio")
-        with filename.with_suffix(f".{image_type}").open(mode="wb") as w:
+        filename = out_dir.joinpath("explained_variance_ratio")
+        with filename.with_suffix(f".{image_type}").open(mode="wb") as w:  # type: ignore
             fig.savefig(w, dpi=dpi)
 
         # Plot 2D plots of PCAs
         logger.info("Plotting the PCA")
-        filename = outdir.joinpath("pca").with_suffix(f".{image_type}")
+        filename = out_dir.joinpath("pca").with_suffix(f".{image_type}")
         figure = Figure(method="pca")
         figure.draw(projection)
         figure.save(filename, dpi=dpi)
