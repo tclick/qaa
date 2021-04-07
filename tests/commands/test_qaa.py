@@ -12,7 +12,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-"""Test jade CLI subcommand"""
+"""Test jade CLI subcommand."""
 import logging
 import sys
 from pathlib import Path
@@ -22,6 +22,7 @@ import pytest
 from click.testing import CliRunner
 from numpy import random
 from numpy.typing import ArrayLike
+from pytest_mock import MockerFixture
 from qaa.cli import main
 from qaa.decomposition.jade import JadeICA
 from sklearn.decomposition import FastICA
@@ -41,28 +42,55 @@ if not sys.warnoptions:
 
 
 class TestQaa:
+    """Run test for qaa subcommand."""
+
     @pytest.fixture
     def n_modes(self) -> int:
+        """Return number of modes to compute.
+
+        Returns
+        -------
+        int
+            Number of components
+        """
         return 5
 
     @pytest.fixture
     def data(self, n_modes: int) -> ArrayLike:
+        """Generate random data.
+
+        Parameters
+        ----------
+        n_modes : int
+            Number of components
+
+        Returns
+        -------
+        ArrayLike
+            Randomly generated array (n_features, n_components)
+        """
         rng = random.default_rng()
         return rng.standard_normal((10, n_modes))
 
     @pytest.mark.runner_setup
-    def test_help(self, cli_runner: CliRunner):
-        """
+    def test_help(self, cli_runner: CliRunner) -> None:
+        """Test help output.
+
         GIVEN the qaa subcommand
         WHEN the help option is invoked
         THEN the help output should be displayed
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
         """
         result = cli_runner.invoke(
             main,
-            args=(
+            args=[
                 "qaa",
                 "-h",
-            ),
+            ],
         )
 
         assert "Usage:" in result.output
@@ -73,14 +101,28 @@ class TestQaa:
         self,
         cli_runner: CliRunner,
         tmp_path: Path,
+        mocker: MockerFixture,
         data: ArrayLike,
         n_modes: int,
-        mocker,
-    ):
-        """
+    ) -> None:
+        """Test qaa subcommand using JADE ICA.
+
         GIVEN a trajectory file
         WHEN invoking the qaa subcommand with the --jade flag
         THEN output `signal.csv`
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        mocker : MockerFixture
+            Mock object
+        data : ArrayLike
+            Data to represent ICA calculation
+        n_modes : int
+            Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
         ica = mocker.patch.object(JadeICA, "fit_transform", return_value=data)
@@ -88,23 +130,23 @@ class TestQaa:
         save = mocker.patch.object(np, "save", autospec=True)
         result = cli_runner.invoke(
             main,
-            args=(
+            args=[
                 "qaa",
                 "-s",
                 TOPWW,
                 "-f",
                 TRJWW,
                 "-o",
-                tmp_path,
+                tmp_path.as_posix(),
                 "-l",
-                logfile,
+                logfile.as_posix(),
                 "-m",
                 "ca",
                 "--jade",
                 "-n",
-                n_modes,
+                str(n_modes),
                 "--verbose",
-            ),
+            ],
         )
 
         assert result.exit_code == 0
@@ -120,43 +162,57 @@ class TestQaa:
         self,
         cli_runner: CliRunner,
         tmp_path: Path,
+        mocker: MockerFixture,
         data: ArrayLike,
         n_modes: int,
-        mocker,
-    ):
-        """
+    ) -> None:
+        """Test qaa subcommand using FastICA.
+
         GIVEN a trajectory file
         WHEN invoking the qaa subcommand with the --jade flag
         THEN output `signal.csv`
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        mocker : MockerFixture
+            Mock object
+        data : ArrayLike
+            Data to represent ICA calculation
+        n_modes : int
+            Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
         ica = mocker.patch.object(FastICA, "fit_transform", return_value=data)
         save_txt = mocker.patch.object(np, "savetxt", autospec=True)
         save = mocker.patch.object(np, "save", autospec=True)
-        result = cli_runner.invoke(
+        cli_runner.invoke(
             main,
-            args=(
+            args=[
                 "qaa",
                 "-s",
                 TOPWW,
                 "-f",
                 TRJWW,
                 "-o",
-                tmp_path,
+                tmp_path.as_posix(),
                 "-l",
-                logfile,
+                logfile.as_posix(),
                 "-m",
                 "ca",
                 "--fastica",
                 "-n",
-                n_modes,
+                str(n_modes),
                 "-w",
                 "--iter",
-                1000,
+                "1000",
                 "--tol",
-                0.01,
+                "0.01",
                 "--verbose",
-            ),
+            ],
         )
 
         ica.assert_called_once()
@@ -167,61 +223,32 @@ class TestQaa:
         assert not tmp_path.joinpath("qaa.png").exists()
 
     @pytest.mark.runner_setup
-    def test_qaa_error(
-        self,
-        cli_runner: CliRunner,
-        tmp_path: Path,
-        data: ArrayLike,
-        n_modes: int,
-        mocker,
-    ):
-        """
-        GIVEN stop < start
-        WHEN invoking the qaa subcommand
-        THEN exit code > 0
-        """
-        logfile = tmp_path.joinpath("qaa.log")
-        mocker.patch.object(JadeICA, "fit_transform", return_value=data)
-        mocker.patch.object(np, "savetxt", autospec=True)
-        result = cli_runner.invoke(
-            main,
-            args=(
-                "qaa",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-o",
-                tmp_path,
-                "-l",
-                logfile,
-                "-b",
-                "3",
-                "-e",
-                "1",
-                "-m",
-                "ca",
-                "--jade",
-                "-n",
-                n_modes,
-                "--verbose",
-            ),
-        )
-        assert result.exit_code > 0
-
-    @pytest.mark.runner_setup
     def test_qaa_with_image(
         self,
         cli_runner: CliRunner,
         tmp_path: Path,
+        mocker: MockerFixture,
         data: ArrayLike,
         n_modes: int,
-        mocker,
-    ):
-        """
+    ) -> None:
+        """Test qaa subcommand with image option.
+
         GIVEN a trajectory file
         WHEN invoking the qaa subcommand with an image option
-        THEN an several files will be written
+        THEN an several files will be written including an image file
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        mocker : MockerFixture
+            Mock object
+        data : ArrayLike
+            Data to represent ICA calculation
+        n_modes : int
+            Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
         ica = mocker.patch.object(JadeICA, "fit_transform", return_value=data)
@@ -237,14 +264,14 @@ class TestQaa:
                 "-f",
                 TRJWW,
                 "-o",
-                tmp_path,
+                tmp_path.as_posix(),
                 "-l",
-                logfile,
+                logfile.as_posix(),
                 "-m",
                 "ca",
                 "--jade",
                 "-n",
-                n_modes,
+                str(n_modes),
                 "--image",
                 "--verbose",
             ),

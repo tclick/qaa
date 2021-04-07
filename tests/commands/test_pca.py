@@ -12,6 +12,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
+"""Test CLI with pca subcommand."""
 import logging
 import sys
 from pathlib import Path
@@ -19,6 +20,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 from click.testing import CliRunner
+from pytest_mock import MockerFixture
 from qaa.cli import main
 
 from ..datafile import TOPWW
@@ -36,49 +38,69 @@ if not sys.warnoptions:
 
 
 class TestPCA:
+    """Run test for pca subcommand."""
+
     @pytest.mark.runner_setup
-    def test_help(self, cli_runner: CliRunner, tmp_path: Path):
-        """
+    def test_help(self, cli_runner: CliRunner) -> None:
+        """Test help output.
+
         GIVEN the pca subcommand
         WHEN the help option is invoked
         THEN the help output should be displayed
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
         """
         result = cli_runner.invoke(
             main,
-            args=(
+            args=[
                 "pca",
                 "-h",
-            ),
+            ],
         )
 
         assert "Usage:" in result.output
         assert result.exit_code == 0
 
     @pytest.mark.runner_setup
-    def test_pca(self, cli_runner: CliRunner, tmp_path: Path, mocker):
-        """
+    def test_pca(
+        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+    ) -> None:
+        """Test pca subcommand.
+
         GIVEN a trajectory file
         WHEN invoking the pca subcommand
         THEN an several files will be written
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        mocker : MockerFixture
+            Mock object
         """
         logfile = tmp_path.joinpath("pca.log")
         patch = mocker.patch.object(np, "savetxt", autospec=True)
         result = cli_runner.invoke(
             main,
-            args=(
+            args=[
                 "pca",
                 "-s",
                 TOPWW,
                 "-f",
                 TRJWW,
                 "-o",
-                tmp_path,
+                tmp_path.as_posix(),
                 "-l",
-                logfile,
+                logfile.as_posix(),
                 "-m",
                 "ca",
                 "--verbose",
-            ),
+            ],
         )
 
         assert result.exit_code == 0
@@ -88,33 +110,45 @@ class TestPCA:
         assert not tmp_path.joinpath("explained_variance_ratio.png").exists()
 
     @pytest.mark.runner_setup
-    def test_pca_with_image(self, cli_runner: CliRunner, tmp_path: Path, mocker):
-        """
+    def test_pca_with_image(
+        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+    ) -> None:
+        """Test pca subcommand with image option.
+
         GIVEN a trajectory file
         WHEN invoking the pca subcommand with an image option
-        THEN an several files will be written
+        THEN an several files will be written including an image file
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        mocker : MockerFixture
+            Mock object
         """
         logfile = tmp_path.joinpath("pca.log")
         patch = mocker.patch.object(np, "savetxt", autospec=True)
         fig = mocker.patch("matplotlib.figure.Figure.savefig")
         result = cli_runner.invoke(
             main,
-            args=(
+            args=[
                 "pca",
                 "-s",
                 TOPWW,
                 "-f",
                 TRJWW,
                 "-o",
-                tmp_path,
+                tmp_path.as_posix(),
                 "-l",
-                logfile,
+                logfile.as_posix(),
                 "--bias",
                 "--whiten",
                 "-m",
                 "ca",
                 "--image",
-            ),
+            ],
         )
 
         assert result.exit_code == 0
