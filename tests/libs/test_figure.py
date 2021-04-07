@@ -99,3 +99,34 @@ class TestFigure:
         fig.draw(data)
         fig.save(filename)
         patch.assert_called_once()
+
+    def test_properties(self, data: NDArray, fig: figure.Figure) -> None:
+        """Test the attribute properties of the Figure object.
+
+        GIVEN randomly generated data
+        WHEN the draw method is called
+        THEN figure and axes properties should be set
+
+        Parameters
+        ----------
+        data : NDArray
+            Randomly generated matrix
+        fig : Figure
+            Figure object
+        """
+        # Test for non-existent attributes
+        with pytest.raises(AttributeError):
+            _ = fig.figure
+        with pytest.raises(AttributeError):
+            _ = fig.axes
+
+        # Test for existence of attributes
+        fig.draw(data)
+        assert isinstance(fig.figure, plt.Figure)
+        assert isinstance(fig.axes, plt.Axes)
+
+        # Test setters
+        fig.figure = None
+        fig.axes = None
+        assert fig.figure is None
+        assert fig.axes is None
