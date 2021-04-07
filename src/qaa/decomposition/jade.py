@@ -29,7 +29,6 @@ from nptyping import Float
 from nptyping import NDArray
 from numpy import float64
 from numpy import linalg
-from numpy.typing import ArrayLike
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
 from sklearn.utils.validation import check_array
@@ -299,8 +298,7 @@ def _jade(
     signs = np.array(np.sign(np.sign(b) + 0.1).T)[0]  # just a trick to deal with sign=0
     B = np.diag(signs) * B
 
-    unmix: ArrayLike = np.asarray(B.astype(origtype))
-    return unmix
+    return np.asarray(B.astype(origtype))
 
     # Revision history of MATLAB code:
     #
