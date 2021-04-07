@@ -17,7 +17,7 @@ from pathlib import Path
 
 from pkg_resources import resource_filename
 
-__all__ = ["PROJ", "TOPWW", "TRJWW"]
+__all__ = ["PROJ", "PROJNP", "TOPWW", "TRJWW"]
 
 PROJ = resource_filename(__name__, Path().joinpath("data", "projection.csv").as_posix())
 PROJNP = resource_filename(
