@@ -13,11 +13,13 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Test the Jade ICA module."""
+from typing import Any
 from typing import Optional
 
 import pytest
+from nptyping import Float
+from nptyping import NDArray
 from numpy import random
-from numpy import typing
 from qaa.decomposition import jade
 from sklearn.utils._testing import assert_array_almost_equal
 
@@ -26,7 +28,7 @@ class TestJade:
     """Test JadeICA class."""
 
     @pytest.fixture
-    def matrix(self) -> typing.ArrayLike:
+    def matrix(self) -> NDArray[(Any, ...), Float]:
         """Mixed signal data.
 
         Returns
@@ -44,12 +46,21 @@ class TestJade:
             None,
         ],
     )
-    def test_fit(self, matrix: typing.ArrayLike, n_components: Optional[int]):
-        """
+    def test_fit(
+        self, matrix: NDArray[(Any, ...), Float], n_components: Optional[int]
+    ) -> None:
+        """Test Jade ICA fit method.
 
         GIVEN mixed signal data
         WHEN the fit method is called
         THEN the JadeICA object is returned
+
+        Parameters
+        ----------
+        matrix : ArrayLike
+            Randomly generated data
+        n_components : int, optional
+            Number of components
         """
         n_components_ = n_components if n_components is not None else matrix.shape[1]
 
@@ -64,12 +75,21 @@ class TestJade:
             None,
         ],
     )
-    def test_transform(self, matrix: typing.ArrayLike, n_components: Optional[int]):
-        """
+    def test_transform(
+        self, matrix: NDArray[(Any, ...), Float], n_components: Optional[int]
+    ) -> None:
+        """Test Jade ICA transform method.
 
         GIVEN mixed signal data
         WHEN the transform method is called
         THEN the JadeICA object is returned
+
+        Parameters
+        ----------
+        matrix : ArrayLike
+            Randomly generated data
+        n_components : int, optional
+            Number of components
         """
         n_components_ = n_components if n_components is not None else matrix.shape[1]
 
@@ -86,12 +106,21 @@ class TestJade:
             None,
         ],
     )
-    def test_fit_transform(self, matrix: typing.ArrayLike, n_components: Optional[int]):
-        """
+    def test_fit_transform(
+        self, matrix: NDArray[(Any, ...), Float], n_components: Optional[int]
+    ) -> None:
+        """Test Jade ICA fit_transform method.
 
         GIVEN mixed signal data
         WHEN the fit_transform method is called
         THEN a 2D array of signals (n_samples, n_components) is returned
+
+        Parameters
+        ----------
+        matrix : ArrayLike
+            Randomly generated data
+        n_components : int, optional
+            Number of components
         """
         n_components_ = n_components if n_components is not None else matrix.shape[1]
 
@@ -105,11 +134,17 @@ class TestJade:
         assert_array_almost_equal(ica.components_, ica2.components_)
         assert_array_almost_equal(signal, signal2)
 
-    def test_inverse_transform(self, matrix):
-        """
+    def test_inverse_transform(self, matrix: NDArray[(Any, ...), Float]) -> None:
+        """Test Jade ICA inverse_transform method.
+
         GIVEN an unmixed signal matrix
         WHEN the inverse_transform method is called
         THEN an exception is raised
+
+        Parameters
+        ----------
+        matrix : ArrayLike
+            Randomly generated data
         """
         ica = jade.JadeICA(n_components=5)
         with pytest.raises(NotImplementedError):

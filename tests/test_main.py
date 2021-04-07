@@ -18,12 +18,16 @@ import runpy
 import pytest
 import qaa.__main__
 import qaa.cli
+from click.testing import CliRunner
 from qaa import create_logging_dict
 
 
 class TestMain:
-    def test_main_module(self):
-        """
+    """Test the main module."""
+
+    def test_main_module(self) -> None:
+        """Test the __main__ module.
+
         GIVEN the main command-line module
         WHEN the module is executed
         THEN the `qaa` module should be present
@@ -33,11 +37,17 @@ class TestMain:
         assert isinstance(sys_dict["main"], qaa.cli._ComplexCLI)
 
     @pytest.mark.runner_setup
-    def test_main_help(self, cli_runner):
-        """
+    def test_main_help(self, cli_runner: CliRunner) -> None:
+        """Test help option.
+
         GIVEN the main command-line interface
         WHEN the '-h' or '--help' argument is provided
         THEN the help screen should appear
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
         """
         result = cli_runner.invoke(qaa.cli.main, args=("-h",))
         result2 = cli_runner.invoke(qaa.cli.main, args=("--help",))
@@ -47,24 +57,33 @@ class TestMain:
         assert result.output == result2.output
 
     @pytest.mark.runner_setup
-    def test_main_version(self, cli_runner):
-        """
+    def test_main_version(self, cli_runner: CliRunner) -> None:
+        """Test version option.
+
         GIVEN the main command-line interface
         WHEN the '--version' argument is provided
         THEN the version should print to the screen
+
+        Parameters
+        ----------
+        cli_runner : CliRunner
+            Command-line runner
         """
         result = cli_runner.invoke(qaa.cli.main, args=("--version",))
         assert qaa.__version__ in result.output
 
 
 class TestLoggingDict:
-    def test_create_logging_dict(self):
+    """Test creation of logging dictionary."""
+
+    def test_create_logging_dict(self) -> None:
         """Check create_logging_dict return."""
         logfile = "test.log"
         assert isinstance(create_logging_dict(logfile), dict)
 
-    def test_create_logging_dict_error(self):
-        """
+    def test_create_logging_dict_error(self) -> None:
+        """Test whether an error is raised.
+
         GIVEN create_logging_dict function
         WHEN an empty string for a filename is provided
         THEN an exception is thrown

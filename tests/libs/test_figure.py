@@ -14,43 +14,85 @@
 # --------------------------------------------------------------------------------------
 """Test figure module."""
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pytest
+from nptyping import Float
+from nptyping import NDArray
 from numpy import random
-from numpy.typing import ArrayLike
+from pytest_mock import MockerFixture
 from qaa.libs import figure
 
 
 class TestFigure:
+    """Test the methods within a Figure object."""
+
     @pytest.fixture
-    def data(self) -> ArrayLike:
+    def data(self) -> NDArray[(Any, ...), Float]:
+        """Generate random matrix.
+
+        Returns
+        -------
+        NDArray
+            Randomly generated matrix
+        """
         rng = random.default_rng()
         return rng.standard_normal((1000, 50))
 
     @pytest.fixture
     def fig(self) -> figure.Figure:
+        """Create a figure object.
+
+        Returns
+        -------
+        Figure
+            a figure object
+        """
         return figure.Figure(method="ica")
 
-    def test_draw(self, data: ArrayLike, fig: figure.Figure):
+    def test_draw(self, data: NDArray[(Any, ...), Float], fig: figure.Figure) -> None:
         """Test draw method.
 
         GIVEN a 2D array with shape (n_samples, n_components)
         WHEN the draw method of a `Figure` object is called
         THEN a figure with subplots is created
+
+        Parameters
+        ----------
+        data : NDArray
+            Randomly generated matrix
+        fig : Figure
+            Figure object
         """
         fig.draw(data)
 
         assert isinstance(fig.figure, plt.Figure)
         assert isinstance(fig.axes, plt.Axes)
 
-    def test_save(self, data: ArrayLike, fig: figure.Figure, tmp_path: Path, mocker):
+    def test_save(
+        self,
+        data: NDArray[(Any, ...), Float],
+        fig: figure.Figure,
+        tmp_path: Path,
+        mocker: MockerFixture,
+    ) -> None:
         """Test save method.
 
         GIVEN a filename
         WHEN the save method method of a `Figure` object is called
         THEN an image is written to disk
+
+        Parameters
+        ----------
+        data : NDArray
+            Randomly generated matrix
+        fig : Figure
+            Figure object
+        tmp_path : Path
+            Temporary directory
+        mocker : MockerFixture
+            Mock object
         """
         filename: Path = tmp_path.joinpath("test.png")
         patch = mocker.patch("matplotlib.figure.Figure.savefig")

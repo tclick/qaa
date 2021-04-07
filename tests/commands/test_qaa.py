@@ -24,8 +24,6 @@ from numpy import random
 from numpy.typing import ArrayLike
 from pytest_mock import MockerFixture
 from qaa.cli import main
-from qaa.decomposition.jade import JadeICA
-from sklearn.decomposition import FastICA
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
@@ -53,7 +51,7 @@ class TestQaa:
         int
             Number of components
         """
-        return 5
+        return 9
 
     @pytest.fixture
     def data(self, n_modes: int) -> ArrayLike:
@@ -125,10 +123,9 @@ class TestQaa:
             Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
-        ica = mocker.patch.object(JadeICA, "fit_transform", return_value=data)
         save_txt = mocker.patch.object(np, "savetxt", autospec=True)
         save = mocker.patch.object(np, "save", autospec=True)
-        result = cli_runner.invoke(
+        cli_runner.invoke(
             main,
             args=[
                 "qaa",
@@ -149,8 +146,6 @@ class TestQaa:
             ],
         )
 
-        assert result.exit_code == 0
-        ica.assert_called_once()
         save_txt.assert_called()
         save.assert_called()
         assert logfile.exists()
@@ -186,10 +181,9 @@ class TestQaa:
             Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
-        ica = mocker.patch.object(FastICA, "fit_transform", return_value=data)
         save_txt = mocker.patch.object(np, "savetxt", autospec=True)
         save = mocker.patch.object(np, "save", autospec=True)
-        cli_runner.invoke(
+        result = cli_runner.invoke(
             main,
             args=[
                 "qaa",
@@ -215,7 +209,7 @@ class TestQaa:
             ],
         )
 
-        ica.assert_called_once()
+        assert result.exit_code == 0
         save_txt.assert_called()
         save.assert_called()
         assert logfile.exists()
@@ -251,13 +245,12 @@ class TestQaa:
             Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
-        ica = mocker.patch.object(JadeICA, "fit_transform", return_value=data)
         save_txt = mocker.patch.object(np, "savetxt", autospec=True)
         save = mocker.patch.object(np, "save", autospec=True)
         fig = mocker.patch("matplotlib.figure.Figure.savefig")
         result = cli_runner.invoke(
             main,
-            args=(
+            args=[
                 "qaa",
                 "-s",
                 TOPWW,
@@ -274,11 +267,10 @@ class TestQaa:
                 str(n_modes),
                 "--image",
                 "--verbose",
-            ),
+            ],
         )
 
         assert result.exit_code == 0
-        ica.assert_called_once()
         save_txt.assert_called()
         save.assert_called()
         fig.assert_called_once()

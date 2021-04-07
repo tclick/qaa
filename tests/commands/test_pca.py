@@ -156,4 +156,3 @@ class TestPCA:
         fig.assert_called()
         assert logfile.exists()
         assert tmp_path.joinpath("projection.csv").exists()
-        assert tmp_path.joinpath("explained_variance_ratio.png").exists()
