@@ -149,3 +149,19 @@ class TestJade:
         ica = jade.JadeICA(n_components=5)
         with pytest.raises(NotImplementedError):
             ica.inverse_transform(matrix)
+
+    def test_error(self, matrix: NDArray[(Any, ...), Float]) -> None:
+        """Raise an error with `n_components` > `n_features`.
+
+        GIVEN mixed signal data with n_components > n_features
+        WHEN the fit_transform method is called
+        THEN an IndexError is raised
+
+        Parameters
+        ----------
+        matrix : ArrayLike
+            Randomly generated data
+        """
+        ica = jade.JadeICA(n_components=matrix.shape[1] + 5)
+        with pytest.raises(IndexError):
+            ica.fit_transform(matrix)
