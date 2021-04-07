@@ -13,8 +13,6 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Test cases for the __main__ module."""
-import runpy
-
 import pytest
 import qaa.__main__
 import qaa.cli
@@ -24,17 +22,6 @@ from qaa import create_logging_dict
 
 class TestMain:
     """Test the main module."""
-
-    def test_main_module(self) -> None:
-        """Test the __main__ module.
-
-        GIVEN the main command-line module
-        WHEN the module is executed
-        THEN the `qaa` module should be present
-        """
-        sys_dict = runpy.run_module("qaa.__main__")
-        assert sys_dict["__name__"] == "qaa.__main__"
-        assert isinstance(sys_dict["main"], qaa.cli._ComplexCLI)
 
     @pytest.mark.runner_setup
     def test_main_help(self, cli_runner: CliRunner) -> None:
