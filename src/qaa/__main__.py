@@ -12,9 +12,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-"""
-Entrypoint module, in case you use `python -mambgen`.
-
+"""Entrypoint module, in case you use `python -mambgen`.
 
 Why does this file exist, and why __main__? For more info, read:
 
