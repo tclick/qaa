@@ -440,8 +440,8 @@ class JadeICA(TransformerMixin, BaseEstimator):
         super().__init__()
 
         self.n_components: Optional[int] = n_components
-        self.mean_: Optional[NDArray[(Any, ...), Float]] = None
-        self.components_: Optional[NDArray[(Any, ...), Float]] = None
+        self.mean_: NDArray[(Any, ...), Float]
+        self.components_: NDArray[(Any, ...), Float]
 
     def fit(
         self,
@@ -454,7 +454,7 @@ class JadeICA(TransformerMixin, BaseEstimator):
         ----------
         arr : NDArray
             mixed signal array
-        y : NDArray
+        y : NDArray, optional
             unused
 
         Returns
@@ -496,7 +496,7 @@ class JadeICA(TransformerMixin, BaseEstimator):
         ----------
         arr : NDArray
             Mixed signal array
-        y : NDArray
+        y : NDArray, optional
             unused
         fit_params : dict
             unused
