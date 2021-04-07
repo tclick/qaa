@@ -18,7 +18,7 @@ classifiers = [
 Changelog = "https://github.com/tclick/qaa/releases"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 click = "^7.0"
 numpy = "^1.20.1"
 scipy = "^1.6.1"
