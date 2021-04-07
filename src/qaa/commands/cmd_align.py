@@ -15,7 +15,6 @@
 """Align trajectories to their average structure."""
 import logging.config
 import time
-from os import PathLike
 from pathlib import Path
 from typing import Any
 from typing import List
@@ -29,6 +28,7 @@ from nptyping import NDArray
 
 from .. import _MASK
 from .. import create_logging_dict
+from .. import PathLike
 from ..libs.align import align_trajectory
 from ..libs.utils import get_average_structure
 from ..libs.utils import get_positions
@@ -112,11 +112,11 @@ from ..libs.utils import get_positions
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: PathLike[str],
+    topology: PathLike,
     trajectory: List[str],
-    reference: PathLike[str],
-    outfile: PathLike[str],
-    logfile: PathLike[str],
+    reference: PathLike,
+    outfile: PathLike,
+    logfile: PathLike,
     step: int,
     mask: str,
     tol: float,

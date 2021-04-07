@@ -16,7 +16,6 @@
 import glob
 import logging.config
 import time
-from os import PathLike
 from pathlib import Path
 from typing import Any
 from typing import Sequence
@@ -31,6 +30,7 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
 from .. import create_logging_dict
+from .. import PathLike
 from ..libs.figure import Figure
 
 
@@ -143,11 +143,11 @@ from ..libs.figure import Figure
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: PathLike[str],
+    topology: PathLike,
     trajectory: Sequence[str],
-    infile: PathLike[str],
-    outfile: PathLike[str],
-    logfile: PathLike[str],
+    infile: PathLike,
+    outfile: PathLike,
+    logfile: PathLike,
     axes: Tuple[int, int, int],
     method: bool,
     cluster: bool,

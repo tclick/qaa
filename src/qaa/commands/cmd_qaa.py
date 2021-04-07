@@ -15,7 +15,6 @@
 """CLI to compute quasi-anharmonic analysis."""
 import logging.config
 import time
-from os import PathLike
 from pathlib import Path
 from typing import Any
 from typing import List
@@ -29,6 +28,7 @@ from sklearn.decomposition import FastICA
 
 from .. import _MASK
 from .. import create_logging_dict
+from .. import PathLike
 from ..decomposition.jade import JadeICA
 from ..libs.figure import Figure
 from ..libs.utils import get_positions
@@ -140,10 +140,10 @@ from ..libs.utils import reshape_positions
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: PathLike[str],
+    topology: PathLike,
     trajectory: List[str],
-    outdir: PathLike[str],
-    logfile: PathLike[str],
+    outdir: PathLike,
+    logfile: PathLike,
     step: int,
     mask: str,
     n_modes: int,

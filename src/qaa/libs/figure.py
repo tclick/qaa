@@ -14,7 +14,6 @@
 # --------------------------------------------------------------------------------------
 """Draw and save figures for QAA."""
 import itertools
-from os import PathLike
 from pathlib import Path
 from typing import Any
 from typing import Optional
@@ -24,6 +23,8 @@ import numpy as np
 import seaborn as sns
 from nptyping import Float
 from nptyping import NDArray
+
+from .. import PathLike
 
 
 class Figure:
@@ -166,7 +167,7 @@ class Figure:
         self._figure.suptitle(f"{data_type}")
         self._figure.tight_layout()
 
-    def save(self, filename: PathLike[str], /, *, dpi: int = 600) -> None:
+    def save(self, filename: PathLike, /, *, dpi: int = 600) -> None:
         """Save the image to disk.
 
         Parameters

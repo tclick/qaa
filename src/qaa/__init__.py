@@ -14,12 +14,15 @@
 # --------------------------------------------------------------------------------------
 """Quasi-Anharmonic Analysis."""
 import logging
-from os import PathLike
+import os
 from typing import Any
 from typing import Dict
+from typing import TypeVar
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+PathLike = TypeVar("PathLike", str, os.PathLike[str])
 
 __version__: str = "1.0.0"
 
@@ -33,12 +36,12 @@ _MASK: Dict[str, str] = dict(
 )
 
 
-def create_logging_dict(logfile: PathLike[str]) -> Dict[str, Any]:
+def create_logging_dict(logfile: PathLike) -> Dict[str, Any]:
     """Configure the logger.
 
     Parameters
     ----------
-    logfile : str
+    logfile : PathLike
         Filename for log output.
 
     Returns

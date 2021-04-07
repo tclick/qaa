@@ -14,7 +14,6 @@
 # --------------------------------------------------------------------------------------
 """Various utilities."""
 import glob
-from os import PathLike
 from typing import Any
 from typing import List
 from typing import Optional
@@ -25,9 +24,11 @@ from mdtraj.utils import in_units_of
 from nptyping import Float
 from nptyping import NDArray
 
+from .. import PathLike
+
 
 def get_average_structure(
-    topology: PathLike[str],
+    topology: PathLike,
     trajectory: List[str],
     /,
     *,
@@ -38,7 +39,7 @@ def get_average_structure(
 
     Parameters
     ----------
-    topology : str
+    topology : PathLike
         Topology file
     trajectory : list of str
         List of trajectory files
@@ -80,7 +81,7 @@ def get_average_structure(
 
 
 def get_positions(
-    topology: PathLike[str],
+    topology: PathLike,
     trajectory: List[str],
     /,
     *,
@@ -91,7 +92,7 @@ def get_positions(
 
     Parameters
     ----------
-    topology : str
+    topology : PathLike
         Topology file
     trajectory : list of str
         Trajectory file
