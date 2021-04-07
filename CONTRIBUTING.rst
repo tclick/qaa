@@ -12,7 +12,7 @@ Here is a list of important resources for contributors:
 - `Issue Tracker`_
 - `Code of Conduct`_
 
-.. BSD 3-Clause license: https://opensource.org/licenses/BSD-3-Clause
+.. _BSD 3-Clause license: https://opensource.org/licenses/BSD-3-Clause
 .. _Source Code: https://github.com/tclick/qaa
 .. _Documentation: https://qaa.readthedocs.io/
 .. _Issue Tracker: https://github.com/tclick/qaa/issues
