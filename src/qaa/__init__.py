@@ -17,12 +17,16 @@ import logging
 import os
 from typing import Any
 from typing import Dict
+from typing import TYPE_CHECKING
 from typing import TypeVar
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-PathLike = TypeVar("PathLike", str, os.PathLike[str])
+if TYPE_CHECKING:
+    PathLike = TypeVar("PathLike", str, os.PathLike[str])
+else:
+    PathLike = TypeVar("PathLike", str, os.PathLike)
 
 __version__: str = "1.0.0"
 
