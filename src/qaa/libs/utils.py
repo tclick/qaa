@@ -173,6 +173,4 @@ def rmse(
     float
         The error difference between the two arrays
     """
-    diff: NDArray[(Any, ...), Float] = mobile - reference
-
-    return np.sqrt(np.sum(np.square(diff)))
+    return float(np.linalg.norm(mobile - reference))
