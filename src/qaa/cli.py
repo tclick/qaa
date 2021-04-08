@@ -70,7 +70,7 @@ cmd_folder = Path(__file__).parent.joinpath("commands").resolve()
 
 
 class _ComplexCLI(click.MultiCommand):
-    """Complex command-line options with subcommands for fluctmatch."""
+    """Complex command-line options with subcommands for qaa."""
 
     def list_commands(self, ctx: click.Context) -> List[str]:
         """List available commands.
