@@ -1329,6 +1329,20 @@ sphinx = "*"
 test = ["pytest", "pytest-cov"]
 
 [[package]]
+name = "sphinx-automodapi"
+version = "0.13"
+description = "Sphinx extension for auto-generating API documentation for entire modules"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+sphinx = ">=1.7"
+
+[package.extras]
+test = ["pytest", "pytest-cov", "cython", "codecov", "coverage (<5.0)"]
+
+[[package]]
 name = "sphinx-click"
 version = "2.7.1"
 description = "Sphinx extension that automatically documents click applications"
@@ -1603,7 +1617,7 @@ tests = ["pytest", "pytest-cov", "codecov", "scikit-build", "cmake", "ninja", "p
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <4.0"
-content-hash = "6b5f74c68df3124adf69ca8b887c569df5d343893845011ad25ef9d48bd6db73"
+content-hash = "432ff01cfd7ae44289a757f3646ed0c92641cb092cd5538b270884192a7ed2e8"
 
 [metadata.files]
 alabaster = [
@@ -2408,6 +2422,10 @@ sphinx = [
 sphinx-autobuild = [
     {file = "sphinx-autobuild-2021.3.14.tar.gz", hash = "sha256:de1ca3b66e271d2b5b5140c35034c89e47f263f2cd5db302c9217065f7443f05"},
     {file = "sphinx_autobuild-2021.3.14-py3-none-any.whl", hash = "sha256:8fe8cbfdb75db04475232f05187c776f46f6e9e04cacf1e49ce81bdac649ccac"},
+]
+sphinx-automodapi = [
+    {file = "sphinx-automodapi-0.13.tar.gz", hash = "sha256:e1019336df7f7f0bcbf848eff7b84e7bef71691a57d8b5bda9107a2a046a226a"},
+    {file = "sphinx_automodapi-0.13-py3-none-any.whl", hash = "sha256:f9ebc9c10597f3aab1d93e5a8b1829903eee7c64f5bafb0cf71fd40e5c7d95f0"},
 ]
 sphinx-click = [
     {file = "sphinx-click-2.7.1.tar.gz", hash = "sha256:1b6175df5392564fd3780000d4627e5a2c8c3b29d05ad311dbbe38fcf5f3327b"},

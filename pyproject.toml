@@ -66,6 +66,7 @@ nox = "^2020.12"
 nox-poetry = "^0.8"
 numpydoc = "^1.1"
 codecov = "^2.1"
+sphinx-automodapi = "^0.13"
 
 [tool.poetry.scripts]
 qaa = "qaa.__main__:main"
