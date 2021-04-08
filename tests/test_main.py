@@ -16,7 +16,7 @@
 import pytest
 import qaa.__main__
 import qaa.cli
-from click.testing import CliRunner
+from pytest_console_scripts import ScriptRunner
 from qaa import create_logging_dict
 
 
@@ -24,7 +24,7 @@ class TestMain:
     """Test the main module."""
 
     @pytest.mark.runner_setup
-    def test_main_help(self, cli_runner: CliRunner) -> None:
+    def test_main_help(self, script_runner: ScriptRunner) -> None:
         """Test help option.
 
         GIVEN the main command-line interface
@@ -33,18 +33,24 @@ class TestMain:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         """
-        result = cli_runner.invoke(qaa.cli.main, args=("-h",))
-        result2 = cli_runner.invoke(qaa.cli.main, args=("--help",))
+        result = script_runner.run(
+            "qaa",
+            "-h",
+        )
+        result2 = script_runner.run(
+            "qaa",
+            "--help",
+        )
 
-        assert "Usage:" in result.output
-        assert result.exit_code == 0
-        assert result.output == result2.output
+        assert "Usage:" in result.stdout
+        assert result.success
+        assert result.stdout == result2.stdout
 
     @pytest.mark.runner_setup
-    def test_main_version(self, cli_runner: CliRunner) -> None:
+    def test_main_version(self, script_runner: ScriptRunner) -> None:
         """Test version option.
 
         GIVEN the main command-line interface
@@ -53,11 +59,11 @@ class TestMain:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         """
-        result = cli_runner.invoke(qaa.cli.main, args=("--version",))
-        assert qaa.__version__ in result.output
+        result = script_runner.run("qaa", "--version")
+        assert qaa.__version__ in result.stdout
 
 
 class TestLoggingDict:

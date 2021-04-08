@@ -17,11 +17,9 @@ import logging
 import sys
 from pathlib import Path
 
-import mdtraj as md
 import pytest
-from click.testing import CliRunner
+from pytest_console_scripts import ScriptRunner
 from pytest_mock import MockerFixture
-from qaa.cli import main
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
@@ -40,8 +38,7 @@ if not sys.warnoptions:
 class TestAlign:
     """Run test for align subcommand."""
 
-    @pytest.mark.runner_setup
-    def test_help(self, cli_runner: CliRunner) -> None:
+    def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
 
         GIVEN the align subcommand
@@ -50,23 +47,21 @@ class TestAlign:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         """
-        result = cli_runner.invoke(
-            main,
-            args=(
-                "align",
-                "-h",
-            ),
+        result = script_runner.run(
+            "qaa",
+            "align",
+            "-h",
         )
 
-        assert "Usage:" in result.output
-        assert result.exit_code == 0
+        assert "Usage:" in result.stdout
+        assert result.success
 
     @pytest.mark.runner_setup
     def test_align(
-        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
         """Test align subcommand.
 
@@ -76,7 +71,7 @@ class TestAlign:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -84,33 +79,29 @@ class TestAlign:
             Mock object
         """
         logfile = tmp_path.joinpath("align.log")
-        patch = mocker.patch.object(md.Trajectory, "save", autospec=True)
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "align",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-r",
-                tmp_path.joinpath("average.pdb").as_posix(),
-                "-o",
-                tmp_path.joinpath("align.nc").as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "-m",
-                "ca",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "align",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-r",
+            tmp_path.joinpath("average.pdb").as_posix(),
+            "-o",
+            tmp_path.joinpath("align.nc").as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "-m",
+            "ca",
         )
 
-        assert result.exit_code == 0
-        patch.assert_called()
+        assert result.success
         assert logfile.exists()
 
     @pytest.mark.runner_setup
     def test_align_verbose(
-        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
         """Test align subcommand with verbose option.
 
@@ -120,7 +111,7 @@ class TestAlign:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -128,68 +119,23 @@ class TestAlign:
             Mock object
         """
         logfile = tmp_path.joinpath("align.log")
-        patch = mocker.patch.object(md.Trajectory, "save", autospec=True)
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "align",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-r",
-                tmp_path.joinpath("average.pdb").as_posix(),
-                "-o",
-                tmp_path.joinpath("align.nc").as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "-m",
-                "ca",
-                "--verbose",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "align",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-r",
+            tmp_path.joinpath("average.pdb").as_posix(),
+            "-o",
+            tmp_path.joinpath("align.nc").as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "-m",
+            "ca",
+            "--verbose",
         )
 
-        assert result.exit_code == 0
-        patch.assert_called()
+        assert result.success
         assert logfile.exists()
-
-    @pytest.mark.runner_setup
-    def test_align_error(self, cli_runner: CliRunner, tmp_path: Path) -> None:
-        """Test whether exception is raised.
-
-        GIVEN a stop < start
-        WHEN invoking the align subcommand
-        THEN exit code > 0
-
-        Parameters
-        ----------
-        cli_runner : CliRunner
-            Command-line runner
-        tmp_path : Path
-            Temporary directory
-        """
-        logfile = tmp_path.joinpath("align.log")
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "align",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-r",
-                tmp_path.joinpath("average.pdb").as_posix(),
-                "-o",
-                tmp_path.joinpath("align.nc").as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "-b",
-                "3",
-                "-e",
-                "1",
-                "-m",
-                "ca",
-                "--verbose",
-            ],
-        )
-        assert result.exit_code > 0

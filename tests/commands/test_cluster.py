@@ -18,9 +18,8 @@ import sys
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
+from pytest_console_scripts import ScriptRunner
 from pytest_mock import MockerFixture
-from qaa.cli import main
 
 from ..datafile import PROJ
 from ..datafile import PROJNP
@@ -53,7 +52,7 @@ class TestCluster:
         return 5
 
     @pytest.mark.runner_setup
-    def test_help(self, cli_runner: CliRunner) -> None:
+    def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
 
         GIVEN the cluster subcommand
@@ -62,23 +61,21 @@ class TestCluster:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         """
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "cluster",
-                "-h",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "cluster",
+            "-h",
         )
 
-        assert "Usage:" in result.output
-        assert result.exit_code == 0
+        assert "Usage:" in result.stdout
+        assert result.success
 
     @pytest.mark.runner_setup
     def test_cluster_csv(
-        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
         """Test cluster subcommand with CSV input file.
 
@@ -88,7 +85,7 @@ class TestCluster:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -97,31 +94,27 @@ class TestCluster:
         """
         outfile = tmp_path.joinpath("cluster.png")
         logfile = outfile.with_suffix(".log")
-        fig = mocker.patch("matplotlib.figure.Figure.savefig")
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "cluster",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-i",
-                PROJ,
-                "-o",
-                outfile.as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "--verbose",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "cluster",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-i",
+            PROJ,
+            "-o",
+            outfile.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "--verbose",
         )
-        assert result.exit_code == 0
+        assert result.success
         assert logfile.exists()
-        fig.assert_called_once()
 
     @pytest.mark.runner_setup
     def test_cluster_npy(
-        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
         """Test cluster subcommand with binary Numpy input file.
 
@@ -131,7 +124,7 @@ class TestCluster:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -140,31 +133,27 @@ class TestCluster:
         """
         outfile = tmp_path.joinpath("cluster.png")
         logfile = outfile.with_suffix(".log")
-        fig = mocker.patch("matplotlib.figure.Figure.savefig")
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "cluster",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-i",
-                PROJNP,
-                "-o",
-                outfile.as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "--verbose",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "cluster",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-i",
+            PROJNP,
+            "-o",
+            outfile.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "--verbose",
         )
-        assert result.exit_code == 0
+        assert result.success
         assert logfile.exists()
-        fig.assert_called_once()
 
     @pytest.mark.runner_setup
     def test_cluster_save(
-        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
         """Test save option.
 
@@ -174,7 +163,7 @@ class TestCluster:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -183,27 +172,21 @@ class TestCluster:
         """
         outfile = tmp_path.joinpath("cluster.png")
         logfile = outfile.with_suffix(".log")
-        fig = mocker.patch("matplotlib.figure.Figure.savefig")
-        pdb = mocker.patch("mdtraj.Trajectory.save")
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "cluster",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-i",
-                PROJ,
-                "-o",
-                outfile.as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "--save",
-                "--verbose",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "cluster",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-i",
+            PROJ,
+            "-o",
+            outfile.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "--save",
+            "--verbose",
         )
-        assert result.exit_code == 0
+        assert result.success
         assert logfile.exists()
-        fig.assert_called_once()
-        pdb.assert_called()

@@ -17,13 +17,11 @@ import logging
 import sys
 from pathlib import Path
 
-import numpy as np
 import pytest
-from click.testing import CliRunner
 from numpy import random
 from numpy.typing import ArrayLike
+from pytest_console_scripts import ScriptRunner
 from pytest_mock import MockerFixture
-from qaa.cli import main
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
@@ -71,7 +69,7 @@ class TestQaa:
         return rng.standard_normal((10, n_modes))
 
     @pytest.mark.runner_setup
-    def test_help(self, cli_runner: CliRunner) -> None:
+    def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
 
         GIVEN the qaa subcommand
@@ -80,24 +78,22 @@ class TestQaa:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         """
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "qaa",
-                "-h",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "qaa",
+            "-h",
         )
 
-        assert "Usage:" in result.output
-        assert result.exit_code == 0
+        assert "Usage:" in result.stdout
+        assert result.success
 
     @pytest.mark.runner_setup
     def test_qaa_jade(
         self,
-        cli_runner: CliRunner,
+        script_runner: ScriptRunner,
         tmp_path: Path,
         mocker: MockerFixture,
         data: ArrayLike,
@@ -111,7 +107,7 @@ class TestQaa:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -123,31 +119,25 @@ class TestQaa:
             Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
-        save_txt = mocker.patch.object(np, "savetxt", autospec=True)
-        save = mocker.patch.object(np, "save", autospec=True)
-        cli_runner.invoke(
-            main,
-            args=[
-                "qaa",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-o",
-                tmp_path.as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "-m",
-                "ca",
-                "--jade",
-                "-n",
-                str(n_modes),
-                "--verbose",
-            ],
+        script_runner.run(
+            "qaa",
+            "qaa",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-o",
+            tmp_path.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "-m",
+            "ca",
+            "--jade",
+            "-n",
+            str(n_modes),
+            "--verbose",
         )
 
-        save_txt.assert_called()
-        save.assert_called()
         assert logfile.exists()
         assert tmp_path.joinpath("qaa-signals.csv").exists()
         assert not tmp_path.joinpath("qaa.png").exists()
@@ -155,7 +145,7 @@ class TestQaa:
     @pytest.mark.runner_setup
     def test_qaa_fastica(
         self,
-        cli_runner: CliRunner,
+        script_runner: ScriptRunner,
         tmp_path: Path,
         mocker: MockerFixture,
         data: ArrayLike,
@@ -169,7 +159,7 @@ class TestQaa:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -181,37 +171,31 @@ class TestQaa:
             Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
-        save_txt = mocker.patch.object(np, "savetxt", autospec=True)
-        save = mocker.patch.object(np, "save", autospec=True)
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "qaa",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-o",
-                tmp_path.as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "-m",
-                "ca",
-                "--fastica",
-                "-n",
-                str(n_modes),
-                "-w",
-                "--iter",
-                "1000",
-                "--tol",
-                "0.01",
-                "--verbose",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "qaa",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-o",
+            tmp_path.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "-m",
+            "ca",
+            "--fastica",
+            "-n",
+            str(n_modes),
+            "-w",
+            "--iter",
+            "1000",
+            "--tol",
+            "0.01",
+            "--verbose",
         )
 
-        assert result.exit_code == 0
-        save_txt.assert_called()
-        save.assert_called()
+        assert result.success
         assert logfile.exists()
         assert tmp_path.joinpath("qaa-signals.csv").exists()
         assert not tmp_path.joinpath("qaa.png").exists()
@@ -219,7 +203,7 @@ class TestQaa:
     @pytest.mark.runner_setup
     def test_qaa_with_image(
         self,
-        cli_runner: CliRunner,
+        script_runner: ScriptRunner,
         tmp_path: Path,
         mocker: MockerFixture,
         data: ArrayLike,
@@ -233,7 +217,7 @@ class TestQaa:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -245,35 +229,27 @@ class TestQaa:
             Number of components
         """
         logfile = tmp_path.joinpath("qaa.log")
-        save_txt = mocker.patch.object(np, "savetxt", autospec=True)
-        save = mocker.patch.object(np, "save", autospec=True)
-        fig = mocker.patch("matplotlib.figure.Figure.savefig")
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "qaa",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-o",
-                tmp_path.as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "-m",
-                "ca",
-                "--jade",
-                "-n",
-                str(n_modes),
-                "--image",
-                "--verbose",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "qaa",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-o",
+            tmp_path.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "-m",
+            "ca",
+            "--jade",
+            "-n",
+            str(n_modes),
+            "--image",
+            "--verbose",
         )
 
-        assert result.exit_code == 0
-        save_txt.assert_called()
-        save.assert_called()
-        fig.assert_called_once()
+        assert result.success
         assert logfile.exists()
         assert tmp_path.joinpath("qaa-signals.csv").exists()
         assert tmp_path.joinpath("qaa.png").exists()

@@ -97,7 +97,7 @@ class TestFigure:
         filename: Path = tmp_path.joinpath("test.png")
         patch = mocker.patch("matplotlib.figure.Figure.savefig")
         fig.draw(data)
-        fig.save(filename)
+        fig.save(filename.as_posix())
         patch.assert_called_once()
 
     def test_properties(self, data: NDArray, fig: figure.Figure) -> None:
@@ -126,7 +126,7 @@ class TestFigure:
         assert isinstance(fig.axes, plt.Axes)
 
         # Test setters
-        fig.figure = None
-        fig.axes = None
-        assert fig.figure is None
-        assert fig.axes is None
+        fig.figure = plt.figure(figsize=plt.figaspect(1.0))
+        fig.axes = plt.axes()
+        assert isinstance(fig.figure, plt.Figure)
+        assert isinstance(fig.axes, plt.Axes)

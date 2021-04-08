@@ -17,11 +17,9 @@ import logging
 import sys
 from pathlib import Path
 
-import numpy as np
 import pytest
-from click.testing import CliRunner
+from pytest_console_scripts import ScriptRunner
 from pytest_mock import MockerFixture
-from qaa.cli import main
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
@@ -41,7 +39,7 @@ class TestPCA:
     """Run test for pca subcommand."""
 
     @pytest.mark.runner_setup
-    def test_help(self, cli_runner: CliRunner) -> None:
+    def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
 
         GIVEN the pca subcommand
@@ -50,23 +48,21 @@ class TestPCA:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         """
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "pca",
-                "-h",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "pca",
+            "-h",
         )
 
-        assert "Usage:" in result.output
-        assert result.exit_code == 0
+        assert "Usage:" in result.stdout
+        assert result.success
 
     @pytest.mark.runner_setup
     def test_pca(
-        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
         """Test pca subcommand.
 
@@ -76,7 +72,7 @@ class TestPCA:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -84,34 +80,30 @@ class TestPCA:
             Mock object
         """
         logfile = tmp_path.joinpath("pca.log")
-        patch = mocker.patch.object(np, "savetxt", autospec=True)
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "pca",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-o",
-                tmp_path.as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "-m",
-                "ca",
-                "--verbose",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "pca",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-o",
+            tmp_path.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "-m",
+            "ca",
+            "--verbose",
         )
 
-        assert result.exit_code == 0
-        patch.assert_called()
+        assert result.success
         assert logfile.exists()
         assert tmp_path.joinpath("projection.csv").exists()
         assert not tmp_path.joinpath("explained_variance_ratio.png").exists()
 
     @pytest.mark.runner_setup
     def test_pca_with_image(
-        self, cli_runner: CliRunner, tmp_path: Path, mocker: MockerFixture
+        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
         """Test pca subcommand with image option.
 
@@ -121,7 +113,7 @@ class TestPCA:
 
         Parameters
         ----------
-        cli_runner : CliRunner
+        script_runner : ScriptRunner
             Command-line runner
         tmp_path : Path
             Temporary directory
@@ -129,30 +121,24 @@ class TestPCA:
             Mock object
         """
         logfile = tmp_path.joinpath("pca.log")
-        patch = mocker.patch.object(np, "savetxt", autospec=True)
-        fig = mocker.patch("matplotlib.figure.Figure.savefig")
-        result = cli_runner.invoke(
-            main,
-            args=[
-                "pca",
-                "-s",
-                TOPWW,
-                "-f",
-                TRJWW,
-                "-o",
-                tmp_path.as_posix(),
-                "-l",
-                logfile.as_posix(),
-                "--bias",
-                "--whiten",
-                "-m",
-                "ca",
-                "--image",
-            ],
+        result = script_runner.run(
+            "qaa",
+            "pca",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-o",
+            tmp_path.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "--bias",
+            "--whiten",
+            "-m",
+            "ca",
+            "--image",
         )
 
-        assert result.exit_code == 0
-        patch.assert_called()
-        fig.assert_called()
+        assert result.success
         assert logfile.exists()
         assert tmp_path.joinpath("projection.csv").exists()
