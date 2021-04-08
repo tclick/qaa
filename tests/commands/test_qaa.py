@@ -68,7 +68,6 @@ class TestQaa:
         rng = random.default_rng()
         return rng.standard_normal((10, n_modes))
 
-    @pytest.mark.runner_setup
     def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
 
@@ -90,7 +89,6 @@ class TestQaa:
         assert "Usage:" in result.stdout
         assert result.success
 
-    @pytest.mark.runner_setup
     def test_qaa_jade(
         self,
         script_runner: ScriptRunner,
@@ -142,7 +140,6 @@ class TestQaa:
         assert tmp_path.joinpath("qaa-signals.csv").exists()
         assert not tmp_path.joinpath("qaa.png").exists()
 
-    @pytest.mark.runner_setup
     def test_qaa_fastica(
         self,
         script_runner: ScriptRunner,
@@ -200,7 +197,6 @@ class TestQaa:
         assert tmp_path.joinpath("qaa-signals.csv").exists()
         assert not tmp_path.joinpath("qaa.png").exists()
 
-    @pytest.mark.runner_setup
     def test_qaa_with_image(
         self,
         script_runner: ScriptRunner,

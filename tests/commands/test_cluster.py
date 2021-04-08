@@ -51,7 +51,6 @@ class TestCluster:
         """
         return 5
 
-    @pytest.mark.runner_setup
     def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
 
@@ -73,7 +72,6 @@ class TestCluster:
         assert "Usage:" in result.stdout
         assert result.success
 
-    @pytest.mark.runner_setup
     def test_cluster_csv(
         self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
@@ -112,7 +110,6 @@ class TestCluster:
         assert result.success
         assert logfile.exists()
 
-    @pytest.mark.runner_setup
     def test_cluster_npy(
         self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
@@ -151,7 +148,6 @@ class TestCluster:
         assert result.success
         assert logfile.exists()
 
-    @pytest.mark.runner_setup
     def test_cluster_save(
         self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:

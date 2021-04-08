@@ -17,7 +17,6 @@ import logging
 import sys
 from pathlib import Path
 
-import pytest
 from pytest_console_scripts import ScriptRunner
 from pytest_mock import MockerFixture
 
@@ -38,7 +37,6 @@ if not sys.warnoptions:
 class TestPCA:
     """Run test for pca subcommand."""
 
-    @pytest.mark.runner_setup
     def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
 
@@ -60,7 +58,6 @@ class TestPCA:
         assert "Usage:" in result.stdout
         assert result.success
 
-    @pytest.mark.runner_setup
     def test_pca(
         self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
@@ -101,7 +98,6 @@ class TestPCA:
         assert tmp_path.joinpath("projection.csv").exists()
         assert not tmp_path.joinpath("explained_variance_ratio.png").exists()
 
-    @pytest.mark.runner_setup
     def test_pca_with_image(
         self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:

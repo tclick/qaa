@@ -17,7 +17,6 @@ import logging
 import sys
 from pathlib import Path
 
-import pytest
 from pytest_console_scripts import ScriptRunner
 from pytest_mock import MockerFixture
 
@@ -59,7 +58,6 @@ class TestAlign:
         assert "Usage:" in result.stdout
         assert result.success
 
-    @pytest.mark.runner_setup
     def test_align(
         self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
@@ -99,7 +97,6 @@ class TestAlign:
         assert result.success
         assert logfile.exists()
 
-    @pytest.mark.runner_setup
     def test_align_verbose(
         self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
     ) -> None:
