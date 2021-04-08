@@ -186,3 +186,45 @@ class TestCluster:
         )
         assert result.success
         assert logfile.exists()
+
+    def test_cluster_error(
+        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
+    ) -> None:
+        """Test cluster subcommand with incorrect axes selection.
+
+        GIVEN a data file and descending axes order
+        WHEN invoking the cluster subcommand
+        THEN raises an IndexError
+
+        Parameters
+        ----------
+        script_runner : ScriptRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        mocker : MockerFixture
+            Mock object
+        """
+        outfile = tmp_path.joinpath("cluster.png")
+        logfile = outfile.with_suffix(".log")
+        result = script_runner.run(
+            "qaa",
+            "cluster",
+            "-s",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-i",
+            PROJ,
+            "-o",
+            outfile.as_posix(),
+            "--axes",
+            "2",
+            "1",
+            "0",
+            "-l",
+            logfile.as_posix(),
+            "--verbose",
+        )
+        assert not result.success
+        assert "IndexError" in result.stderr
