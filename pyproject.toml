@@ -25,6 +25,13 @@ seaborn = "^0.11"
 scikit-learn = "^0.24"
 mdtraj = "^1.9"
 nptyping = "^1.4"
+jupyter = "^1.0.0"
+jupyterlab = "^3.0.13"
+jupyterlab-code-formatter = "^1.4.10"
+jupyterlab-mathjax3 = "^4.2.2"
+nglview = "^3.0.0"
+holoviews = "^1.14.3"
+bokeh = "^2.3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
