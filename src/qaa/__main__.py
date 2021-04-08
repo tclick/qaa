@@ -12,14 +12,7 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
-"""Entrypoint module, in case you use `python -mambgen`.
-
-Why does this file exist, and why __main__? For more info, read:
-
-- https://www.python.org/dev/peps/pep-0338/
-- https://docs.python.org/2/using/cmdline.html#cmdoption-m
-- https://docs.python.org/3/using/cmdline.html#cmdoption-m
-"""
+"""Command-line interface."""
 from qaa.cli import main
 
 if __name__ == "__main__":
