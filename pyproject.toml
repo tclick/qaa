@@ -29,7 +29,6 @@ nptyping = "^1.4"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
 pytest-cache = "^1.0"
-pytest-click = "^1.0"
 pytest-console-scripts = "^1.1"
 pytest-cov = "^2.11"
 pytest-flake8 = "^1.0"

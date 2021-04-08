@@ -985,18 +985,6 @@ execnet = ">=1.1.dev1"
 pytest = ">=2.2"
 
 [[package]]
-name = "pytest-click"
-version = "1.0.2"
-description = "Py.test plugin for Click"
-category = "dev"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-click = ">=6.0"
-pytest = ">=5.0"
-
-[[package]]
 name = "pytest-console-scripts"
 version = "1.1.0"
 description = "Pytest plugin for testing console scripts"
@@ -1615,7 +1603,7 @@ tests = ["pytest", "pytest-cov", "codecov", "scikit-build", "cmake", "ninja", "p
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <4.0"
-content-hash = "068392ad3e40255805fd0650b1312757e7f3fa4000efee21c3a116f913c861aa"
+content-hash = "6b5f74c68df3124adf69ca8b887c569df5d343893845011ad25ef9d48bd6db73"
 
 [metadata.files]
 alabaster = [
@@ -2184,10 +2172,6 @@ pytest = [
 ]
 pytest-cache = [
     {file = "pytest-cache-1.0.tar.gz", hash = "sha256:be7468edd4d3d83f1e844959fd6e3fd28e77a481440a7118d430130ea31b07a9"},
-]
-pytest-click = [
-    {file = "pytest_click-1.0.2-py3-none-any.whl", hash = "sha256:ac298e15a31d8892d9d063c3be82bb9877aaa11a4944e05e541ecc753258e474"},
-    {file = "pytest_click-1.0.2.tar.gz", hash = "sha256:b40b8435adde7a0d931352036a3882b13cd424fce2ffd7be6c87665050259be5"},
 ]
 pytest-console-scripts = [
     {file = "pytest-console-scripts-1.1.0.tar.gz", hash = "sha256:c1344853e80d8096403e36b270254a094071d0c4f1533e94a91d7386f0f1ccfd"},
