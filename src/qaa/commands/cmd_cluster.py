@@ -24,6 +24,7 @@ from typing import Tuple
 import click
 import mdtraj as md
 import numpy as np
+import pandas as pd
 from nptyping import Float
 from nptyping import NDArray
 from sklearn.cluster import KMeans
@@ -199,23 +200,37 @@ def cli(
         )
     )
     labels: NDArray[(Any, ...), Float] = clustering.fit_predict(data[:, axes])
-    centers = clustering.means_ if cluster else clustering.cluster_centers_
+    centroids = clustering.means_ if cluster else clustering.cluster_centers_
 
     # Prepare cluster analysis
     azim = azim if 0.0 <= azim < 360.0 else 0.0
     figure = Figure(n_points=n_points, method=data_method, labels=labels, azim=azim)
-    figure.draw(data[:, axes], centers=centers)
+    figure.draw(data[:, axes], centers=centroids)
 
     logger.info("Saving cluster data to %s", outfile)
     figure.save(outfile, dpi=dpi)
 
+    # Prepare dataframe
+    cols = [f"{data_method[:2]}_{_ + 1}" for _ in axes]
+    df = pd.DataFrame(columns=["labels"] + cols)
+    df["labels"] = labels
+    for col, axis in zip(cols, axes):
+        df[col] = data[:, axis]
+
     with out_file.with_suffix(".csv").open(mode="w") as w:
-        logger.info("Saving cluster labels to %s", w.name)
-        np.savetxt(w, labels, delimiter=",", fmt="%d")
+        logger.info("Saving cluster data to %s", w.name)
+        df.to_csv(w, index=False, float_format="%.6f")
 
     with out_file.with_suffix(".npy").open(mode="wb") as w:  # type: ignore
-        logger.info("Saving cluster labels to %s", w.name)
-        np.save(w, labels)
+        logger.info("Saving cluster data to %s", w.name)
+        np.save(w, df)
+
+    with Path("centroids.csv").open("w") as w:
+        logger.info("Saving centroids to %s", w.name)
+        np.savetxt(w, centroids, fmt="%.6f", delimiter=",")
+    with Path("centroids.npy").open("wb") as w:
+        logger.info("Saving centroids to %s", w.name)
+        np.save(w, centroids)
 
     if save:
         # Find all trajectories and determine total frames per trajectory
@@ -228,7 +243,7 @@ def cli(
             dtype=int,
         ).cumsum()
 
-        for i, center in enumerate(centers):
+        for i, center in enumerate(centroids):
             idx: int = find_closest_point(center, data[:, axes])
             file_no: int = int(np.searchsorted(frames, idx))
             traj: md.Trajectory = md.load_frame(filenames[file_no], idx, top=topology)
