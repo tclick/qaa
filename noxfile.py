@@ -113,7 +113,16 @@ def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or ["src", "tests", "docs/conf.py"]
     session.install(".")
-    session.install("mypy", "pytest")
+    session.install(
+        "mypy",
+        "pytest",
+        "pytest-random-order",
+        "pytest-mock",
+        "pytest-cache",
+        "pytest-console-scripts",
+        "pytest-cov",
+        "pytest-coverage",
+    )
     session.run("mypy", *args)
     if not session.posargs:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
@@ -127,8 +136,7 @@ def tests(session: Session) -> None:
         "coverage[toml]",
         "pytest",
         "pygments",
-        "pytest-click",
-        "pytest-randomly",
+        "pytest-random-order",
         "pytest-mock",
         "pytest-cache",
         "pytest-console-scripts",
@@ -136,7 +144,16 @@ def tests(session: Session) -> None:
         "pytest-coverage",
     )
     try:
-        session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
+        session.run(
+            "coverage",
+            "run",
+            "--parallel",
+            "-m",
+            "pytest",
+            "--random-order",
+            "--script-launch-mode=subprocess",
+            *session.posargs,
+        )
     finally:
         if session.interactive:
             session.notify("coverage")
@@ -150,9 +167,12 @@ def coverage(session: Session) -> None:
     has_args = session.posargs and nsessions == 1
     args = session.posargs if has_args else ["report"]
 
-    session.install("coverage[toml]", "codecov")
-    session.run("coverage", "xml", "--fail-under=0")
-    session.run("codecov", *args)
+    session.install("coverage[toml]")
+
+    if not has_args and any(Path().glob(".coverage.*")):
+        session.run("coverage", "combine")
+
+    session.run("coverage", *args)
 
 
 @session(python=python_versions)
@@ -163,13 +183,18 @@ def typeguard(session: Session) -> None:
         "pytest",
         "typeguard",
         "pygments",
-        "pytest-click",
-        "pytest-randomly",
+        "pytest-random-order",
         "pytest-mock",
         "pytest-cache",
         "pytest-console-scripts",
     )
-    session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
+    session.run(
+        "pytest",
+        f"--typeguard-packages={package}",
+        "--random-order",
+        "--script-launch-mode=subprocess",
+        *session.posargs,
+    )
 
 
 @session(python=python_versions)
