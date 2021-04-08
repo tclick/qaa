@@ -131,3 +131,7 @@ jobs:
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v1.2.2
+        with:
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: 4e8d6d99-1098-4fa8-9c06-fabbfd0bdcfe

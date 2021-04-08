@@ -15,3 +15,9 @@ jobs:
       - run: nox --sessions tests-3.9 coverage
         env:
           CODECOV_TOKEN: 4e8d6d99-1098-4fa8-9c06-fabbfd0bdcfe
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: 4e8d6d99-1098-4fa8-9c06-fabbfd0bdcfe
