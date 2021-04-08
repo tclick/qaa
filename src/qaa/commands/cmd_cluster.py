@@ -248,7 +248,7 @@ def cli(
 def find_closest_point(
     point: NDArray[(Any, ...), Float], data: NDArray[(Any, ...), Float]
 ) -> int:
-    """Locate a oint in the `data` closest to the `point`.
+    """Locate a point in the `data` closest to the `point`.
 
     Parameters
     ----------
