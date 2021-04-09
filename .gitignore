@@ -79,3 +79,4 @@ docs/_build
 
 # Jupyter notebook output subdirectory
 notebooks/output/
+notebooks/.ipynb_checkpoints/
