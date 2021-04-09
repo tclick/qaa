@@ -170,7 +170,7 @@ def cli(
         components: NDArray[(Any, ...), Float] = np.where(ratio <= percentage)[0]
         logger.info(
             "%d components cover %.1f%% of the explained variance",
-            components,
+            components.size,
             percentage * 100,
         )
 
