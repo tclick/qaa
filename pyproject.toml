@@ -25,14 +25,16 @@ seaborn = "^0.11"
 scikit-learn = "^0.24"
 mdtraj = "^1.9"
 nptyping = "^1.4"
-jupyter = "^1.0.0"
-jupyterlab = "^3.0.13"
-jupyterlab-code-formatter = "^1.4.10"
-jupyterlab-mathjax3 = "^4.2.2"
-nglview = "^3.0.0"
-holoviews = "^1.14.3"
-bokeh = "^2.3.1"
-ipykernel = "^5.5.3"
+
+# Optional installs for usage with notebooks
+jupyter = { version = "^1.0.0", optional = true }
+jupyterlab = { version = "^3.0.13", optional = true }
+jupyterlab-code-formatter = { version = "^1.4.10", optional = true }
+jupyterlab-mathjax3 = { version = "^4.2.2", optional = true }
+nglview = { version = "^3.0.0", optional = true }
+holoviews = { version = "^1.14.3", optional = true }
+ipykernel = { version = "^5.5.3", optional = true }
+plotly = { version = "^4.14.3", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
@@ -45,11 +47,11 @@ pytest-pep8 = "^1.0"
 pytest-mypy = "^0.8"
 pytest-coverage = "^0.0"
 pytest-random-order = "^1.0"
-coverage = {extras = ["toml"], version = "^5.4"}
+coverage = { extras = ["toml"], version = "^5.4" }
 safety = "^1.10.3"
 mypy = "^0.812"
 typeguard = "^2.11.1"
-xdoctest = {extras = ["colors"], version = "^0.15.4"}
+xdoctest = { extras = ["colors"], version = "^0.15.4" }
 sphinx = "^3.5.2"
 sphinx-autobuild = "^2021"
 sphinx-rtd-theme = "^0.5.1"
@@ -76,6 +78,9 @@ numpydoc = "^1.1"
 codecov = "^2.1"
 sphinx-automodapi = "^0.13"
 
+[tool.poetry.extras]
+jupyter = ["jupyter", "jupyterlab", "jupyterlab-code-formatter",
+    "jupyterlab-mathjax3", "nglview", "holoviews", "ipykernal", "plotly"]
 [tool.poetry.scripts]
 qaa = "qaa.__main__:main"
 
@@ -94,47 +99,47 @@ requires = ["poetry-core>=1.0.0", "setuptools>=52.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.towncrier]
-    package = "qaa"
-    package_dir = "src"
-    filename = "docs/changelog.rst"
-    directory = "docs/changelog"
-    template = "docs/changelog/template.jinja2"
-    title_format = "v{version} ({project_date})"
-    issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
-    underlines = ["-", "^"]
+package = "qaa"
+package_dir = "src"
+filename = "docs/changelog.rst"
+directory = "docs/changelog"
+template = "docs/changelog/template.jinja2"
+title_format = "v{version} ({project_date})"
+issue_format = "`#{issue} <https://github.com/tox-dev/tox/issues/{issue}>`_"
+underlines = ["-", "^"]
 
-    [[tool.towncrier.section]]
-        path = ""
+[[tool.towncrier.section]]
+path = ""
 
-    [[tool.towncrier.type]]
-        directory = "bugfix"
-        name = "Bugfixes"
-        showcontent = true
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bugfixes"
+showcontent = true
 
-    [[tool.towncrier.type]]
-        directory = "feature"
-        name = "Features"
-        showcontent = true
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
 
-    [[tool.towncrier.type]]
-        directory = "deprecation"
-        name = "Deprecations (removal in next major release)"
-        showcontent = true
+[[tool.towncrier.type]]
+directory = "deprecation"
+name = "Deprecations (removal in next major release)"
+showcontent = true
 
-    [[tool.towncrier.type]]
-        directory = "breaking"
-        name = "Backward incompatible changes"
-        showcontent = true
+[[tool.towncrier.type]]
+directory = "breaking"
+name = "Backward incompatible changes"
+showcontent = true
 
-    [[tool.towncrier.type]]
-        directory = "doc"
-        name = "Documentation"
-        showcontent = true
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Documentation"
+showcontent = true
 
-    [[tool.towncrier.type]]
-        directory = "misc"
-        name = "Miscellaneous"
-        showcontent = true
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Miscellaneous"
+showcontent = true
 
 [tool.black]
 line-length = 88
