@@ -66,6 +66,13 @@ You can install *Quasi-Anharmonic Analysis* via pip_ from PyPI_:
 
    $ pip install qaa
 
+If you want to visualize the tutorial notebooks, you can install the extra
+dependencies via pip_ from PyPI_:
+
+.. code:: console
+
+   $ pip install qaa[jupyter]
+
 
 Usage
 -----
