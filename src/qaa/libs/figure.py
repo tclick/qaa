@@ -14,17 +14,18 @@
 # --------------------------------------------------------------------------------------
 """Draw and save figures for QAA."""
 import itertools
-from pathlib import Path
 from typing import Any
 from typing import Optional
 
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
+import holoviews as hv
+import pandas as pd
+from holoviews import opts
 from nptyping import Float
 from nptyping import NDArray
 
 from .. import PathLike
+
+hv.extension("matplotlib")
 
 
 class Figure:
@@ -36,7 +37,7 @@ class Figure:
         n_points: Optional[int] = None,
         method: str = "ica",
         labels: Optional[NDArray[(Any, ...), Float]] = None,
-        azim: Optional[float] = None,
+        azim: Optional[int] = None,
     ) -> None:
         """Visualize data via a graphical image.
 
@@ -48,55 +49,62 @@ class Figure:
             Type of data
         labels : NDArray[(Any, ...), Float]
             Vector of cluster labels
-        azim : float
+        azim : int
             Azimuth rotation for 3D plot
         """
         self.n_points = n_points
         self.method = method
         self.labels = labels
-        self._cmap = (
-            sns.husl_palette(n_colors=np.unique(labels).size, as_cmap=True)
-            if labels is not None
-            else None
-        )
-        self._figure: plt.Figure
-        self._axes: plt.Axes
-        self._azim: Optional[float] = azim
+        self._figure: hv.Layout
+        self._azimuth: int = azim if azim is not None else 120
 
     @property
-    def figure(self) -> plt.Figure:
-        """Return the underlying figure object."""
+    def figure(self) -> hv.Layout:
+        """Return a holoviews Layout.
+
+        Returns
+        -------
+        hv.Layout
+            A multicolumn 2D and 3D scatter plots
+        """
         return self._figure
 
-    @figure.setter
-    def figure(self, fig: plt.Figure) -> None:
-        """Set the underlying figure."""
-        self._figure = fig
-
     @property
-    def axes(self) -> plt.Axes:
-        """Return the underlying axes object."""
-        return self._axes
+    def azimuth(self) -> int:
+        """Return the azimuth of the 3D scatter plot.
 
-    @axes.setter
-    def axes(self, ax: plt.Axes) -> None:
-        """Set the underlying axes."""
-        self._axes = ax
+        Returns
+        -------
+        int
+            Azimuth
+        """
+        return self._azimuth
+
+    @azimuth.setter
+    def azimuth(self, azimuth: int) -> None:
+        """Set azimuth of the 3D scatter plot.
+
+        Parameters
+        ----------
+        azimuth : int
+            Azimuth
+        """
+        self._azimuth = azimuth
 
     def draw(
         self,
-        data: NDArray[(Any, ...), Float],
+        data: pd.DataFrame,
         /,
         *,
-        centers: Optional[NDArray[(Any, ...), Float]] = None,
+        centers: Optional[pd.DataFrame] = None,
     ) -> None:
         """Draw the first three components in subplots.
 
         Parameters
         ----------
-        data : NDArray[(Any, ...), Float]
+        data : pd.DataFrame
             Matrix with shape (n_samples, n_components)
-        centers : NDArray[(Any, ...), Float]
+        centers : pd.DataFrame, optional
             Vector of cluster centers (n_components, )
 
         Notes
@@ -107,65 +115,23 @@ class Figure:
         * component 2 vs. component 3
         * 3D plot
         """
-        sns.set_theme(context="paper", style="ticks", palette="husl")
-        self._figure = plt.figure(figsize=plt.figaspect(1.0))
-        data_type: str = self.method.upper()
-        label: str = data_type[:2]
-
-        for i, (x, y) in enumerate(itertools.combinations(range(3), 2), 1):
-            self._axes = self._figure.add_subplot(2, 2, i)
-            sns.scatterplot(
-                x=data[:, x],
-                y=data[:, y],
-                ax=self._axes,
-                marker=".",
-                hue=self.labels,
-                edgecolor="none",
-                legend=False,
-            )
+        header = self.method[:2].upper()
+        scatter = []
+        for i, j in itertools.combinations(range(3), 2):
+            fig = hv.Scatter(data, f"{header}{i+1}", f"{header}{j+1}")
             if centers is not None:
-                sns.scatterplot(
-                    x=centers[:, x],
-                    y=centers[:, y],
-                    ax=self._axes,
-                    marker="o",
-                    palette=self._cmap,
-                    hue=np.unique(self.labels),
-                    edgecolor="none",
-                )
-            self._axes.set_xlabel(f"${label}_{x + 1:d}$")
-            self._axes.set_ylabel(f"${label}_{y + 1:d}$")
+                fig *= hv.Scatter(centers, f"{header}{i+1}", f"{header}{j+1}")
+            scatter.append(fig)
 
-        # Plot first 3 PCs
-        self._axes = self._figure.add_subplot(
-            2, 2, i + 1, projection="3d", proj_type="ortho"
-        )
-
-        self._axes.scatter3D(
-            data[:: self.n_points, 0],
-            data[:: self.n_points, 1],
-            data[:: self.n_points, 2],
-            marker=".",
-            cmap=self._cmap,
-            c=self.labels[:: self.n_points] if self.labels is not None else self.labels,
-            alpha=0.5,
-        )
+        scatter3d = hv.Scatter3D(data, kdims=[f"{header}1", f"{header}2", f"{header}3"])
+        scatter3d.opts(opts.Scatter3D(azimuth=self._azimuth))
         if centers is not None:
-            self._axes.scatter3D(
-                centers[:, 0],
-                centers[:, 1],
-                centers[:, 2],
-                marker="o",
-                cmap=sns.husl_palette(n_colors=len(centers), as_cmap=True),
-                c=np.arange(len(centers)),
+            scatter3d *= hv.Scatter3D(
+                centers, kdims=[f"{header}1", f"{header}2", f"{header}3"]
             )
 
-        self._axes.view_init(azim=self._azim)
-        self._axes.set_xlabel(f"${label}_1$")
-        self._axes.set_ylabel(f"${label}_2$")
-        self._axes.set_zlabel(f"${label}_3$")
-        self._figure.suptitle(f"{data_type}")
-        self._figure.tight_layout()
+        self._figure = hv.Layout(scatter) + scatter3d
+        self._figure.cols(2)
 
     def save(self, filename: PathLike, /, *, dpi: int = 600) -> None:
         """Save the image to disk.
@@ -177,5 +143,10 @@ class Figure:
         dpi : int
             Image resolution
         """
-        with Path(filename).open(mode="wb") as w:
-            self._figure.savefig(w, dpi=dpi)
+        hv.output(dpi=dpi)
+        hv.save(
+            self._figure,
+            filename=filename,
+            backend="matplotlib",
+            title=f"First three {self.method[:2].upper()}s",
+        )

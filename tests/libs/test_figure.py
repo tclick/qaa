@@ -14,12 +14,10 @@
 # --------------------------------------------------------------------------------------
 """Test figure module."""
 from pathlib import Path
-from typing import Any
 
-import matplotlib.pyplot as plt
+import holoviews as hv
+import pandas as pd
 import pytest
-from nptyping import Float
-from nptyping import NDArray
 from numpy import random
 from pytest_mock import MockerFixture
 from qaa.libs import figure
@@ -29,16 +27,20 @@ class TestFigure:
     """Test the methods within a Figure object."""
 
     @pytest.fixture
-    def data(self) -> NDArray[(Any, ...), Float]:
+    def data(self) -> pd.DataFrame:
         """Generate random matrix.
 
         Returns
         -------
-        NDArray
+        pd.DataFrame
             Randomly generated matrix
         """
+        n_samples, n_components = 1000, 50
         rng = random.default_rng()
-        return rng.standard_normal((1000, 50))
+        df = rng.standard_normal((n_samples, n_components))
+        df = pd.DataFrame(df, columns=[f"IC{_+1}" for _ in range(n_components)])
+        df.index.name = "Frame"
+        return df
 
     @pytest.fixture
     def fig(self) -> figure.Figure:
@@ -51,7 +53,7 @@ class TestFigure:
         """
         return figure.Figure(method="ica")
 
-    def test_draw(self, data: NDArray[(Any, ...), Float], fig: figure.Figure) -> None:
+    def test_draw(self, data: pd.DataFrame, fig: figure.Figure) -> None:
         """Test draw method.
 
         GIVEN a 2D array with shape (n_samples, n_components)
@@ -60,19 +62,19 @@ class TestFigure:
 
         Parameters
         ----------
-        data : NDArray
+        data : pd.DataFrame
             Randomly generated matrix
         fig : Figure
             Figure object
         """
         fig.draw(data)
 
-        assert isinstance(fig.figure, plt.Figure)
-        assert isinstance(fig.axes, plt.Axes)
+        assert isinstance(fig.figure, hv.Layout)
+        assert fig.azimuth == 120
 
     def test_save(
         self,
-        data: NDArray[(Any, ...), Float],
+        data: pd.DataFrame,
         fig: figure.Figure,
         tmp_path: Path,
         mocker: MockerFixture,
@@ -85,7 +87,7 @@ class TestFigure:
 
         Parameters
         ----------
-        data : NDArray
+        data : pd.DataFrame
             Randomly generated matrix
         fig : Figure
             Figure object
@@ -95,38 +97,7 @@ class TestFigure:
             Mock object
         """
         filename: Path = tmp_path.joinpath("test.png")
-        patch = mocker.patch("matplotlib.figure.Figure.savefig")
         fig.draw(data)
         fig.save(filename.as_posix())
-        patch.assert_called_once()
-
-    def test_properties(self, data: NDArray, fig: figure.Figure) -> None:
-        """Test the attribute properties of the Figure object.
-
-        GIVEN randomly generated data
-        WHEN the draw method is called
-        THEN figure and axes properties should be set
-
-        Parameters
-        ----------
-        data : NDArray
-            Randomly generated matrix
-        fig : Figure
-            Figure object
-        """
-        # Test for non-existent attributes
-        with pytest.raises(AttributeError):
-            _ = fig.figure
-        with pytest.raises(AttributeError):
-            _ = fig.axes
-
-        # Test for existence of attributes
-        fig.draw(data)
-        assert isinstance(fig.figure, plt.Figure)
-        assert isinstance(fig.axes, plt.Axes)
-
-        # Test setters
-        fig.figure = plt.figure(figsize=plt.figaspect(1.0))
-        fig.axes = plt.axes()
-        assert isinstance(fig.figure, plt.Figure)
-        assert isinstance(fig.axes, plt.Axes)
+        assert filename.exists()
+        assert filename.stat().st_size > 0
