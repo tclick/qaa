@@ -31,23 +31,15 @@ class Figure:
     def __init__(
         self,
         *,
-        n_points: Optional[int] = None,
-        labels: Optional[pd.Series] = None,
         azim: int = 120,
     ) -> None:
         """Visualize data via a graphical image.
 
         Parameters
         ----------
-        n_points : int
-            Number of points to include for 3D plots
-        labels : pd.Series, optional
-            Vector of cluster labels
         azim : int
             Azimuth rotation for 3D plot
         """
-        self.n_points = n_points
-        self.labels = labels
         self._figure: Optional[hv.Layout] = None
         self._azimuth: int = azim
 
