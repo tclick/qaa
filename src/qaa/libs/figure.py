@@ -133,13 +133,13 @@ class Figure:
 
         if "Cluster" not in columns:
             scatter = [
-                hv.Scatter(data, kdims=i, vdims=j)
+                hv.Points(data, kdims=[i, j], vdims=[])
                 for i, j in itertools.combinations(columns, 2)
             ]
             self._figure = hv.Layout(scatter)
             self._figure += hv.Scatter3D(data, kdims=columns, vdims=[])
             self._figure.opts(
-                opts.Scatter(marker=".", s=10),
+                opts.Points(marker=".", s=10),
                 opts.Scatter3D(
                     azimuth=self._azimuth, elevation=self._elevation, marker=".", s=10
                 ),
@@ -147,7 +147,7 @@ class Figure:
         else:
             if centers is None:
                 scatter = [
-                    hv.Scatter(data, kdims=i, vdims=[j, "Cluster"])
+                    hv.Points(data, kdims=[i, j], vdims="Cluster")
                     for i, j in itertools.combinations(columns, 2)
                 ]
             else:
@@ -161,14 +161,14 @@ class Figure:
 
             self._figure = hv.Layout(scatter)
             self._figure.opts(
-                opts.Scatter(
+                opts.Points(
                     show_legend=False,
                     color_index="Cluster",
                     color=hv.Palette("Dark2"),
                     marker=".",
                     s=10,
                 ),
-                opts.Scatter(
+                opts.Points(
                     show_legend=True,
                     color_index="Cluster",
                     color=hv.Palette("tab20"),
