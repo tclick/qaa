@@ -202,7 +202,7 @@ name = "bokeh"
 version = "2.3.1"
 description = "Interactive plots and applications in the browser from Python"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -302,7 +302,7 @@ name = "colorcet"
 version = "2.0.6"
 description = "Collection of perceptually uniform colormaps"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7"
 
 [package.dependencies]
@@ -363,7 +363,7 @@ python-versions = ">=3.6,<4.0"
 
 [[package]]
 name = "decorator"
-version = "5.0.6"
+version = "5.0.7"
 description = "Decorators for Humans"
 category = "main"
 optional = false
@@ -577,15 +577,11 @@ name = "holoviews"
 version = "1.14.3"
 description = "Stop plotting your data - annotate your data and let it visualize itself."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7"
 
 [package.dependencies]
-bokeh = {version = ">=1.1.0", optional = true, markers = "extra == \"recommended\""}
 colorcet = "*"
-ipython = {version = ">=5.4.0", optional = true, markers = "extra == \"recommended\""}
-matplotlib = {version = ">=2.2", optional = true, markers = "extra == \"recommended\""}
-notebook = {version = "*", optional = true, markers = "extra == \"recommended\""}
 numpy = ">=1.0"
 pandas = "*"
 panel = ">=0.8.0"
@@ -860,7 +856,7 @@ traitlets = "*"
 
 [[package]]
 name = "jupyter-packaging"
-version = "0.8.3"
+version = "0.9.1"
 description = "Jupyter Packaging Utilities."
 category = "main"
 optional = true
@@ -1011,7 +1007,7 @@ name = "markdown"
 version = "3.3.4"
 description = "Python implementation of Markdown."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.extras]
@@ -1365,10 +1361,10 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "panel"
-version = "0.11.2"
+version = "0.11.3"
 description = "A high level app and dashboarding solution for Python."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -1381,9 +1377,9 @@ requests = "*"
 tqdm = "*"
 
 [package.extras]
-all = ["altair", "channels", "codecov", "datashader", "django", "flake8", "folium", "graphviz", "holoviews", "holoviews (>1.14.1)", "hvplot", "ipyleaflet", "ipympl", "ipython (>=7.0)", "ipyvolume", "ipywidgets", "ipywidgets-bokeh", "jupyter-bokeh", "lxml", "matplotlib", "nbconvert", "nbsite (>=0.6.8a36)", "nbsmoke (>=0.2.0)", "notebook (>=5.4)", "pandas", "parameterized", "phantomjs", "pillow", "plotly", "pytest", "pytest-cov", "pyvista", "scikit-learn", "scipy", "selenium", "sphinx-holoviz-theme", "streamz", "twine", "vega-datasets", "vtk", "xarray (<0.17)"]
+all = ["altair", "channels", "codecov", "datashader", "django", "flake8", "folium", "graphviz", "holoviews", "holoviews (>1.14.1)", "hvplot", "ipyleaflet", "ipympl", "ipython (>=7.0)", "ipyvolume", "ipywidgets", "ipywidgets-bokeh", "jupyter-bokeh", "lxml", "matplotlib", "nbsite (>=0.7.0a4)", "nbsmoke (>=0.2.0)", "notebook (>=5.4)", "pandas", "parameterized", "pillow", "plotly", "pytest", "pytest-cov", "pyvista", "scikit-learn", "scipy", "streamz", "twine", "vega-datasets", "vtk", "xarray (<0.17)"]
 build = ["param (>=1.9.2)", "pyct (>=0.4.4)", "setuptools (>=30.3.0)", "bokeh (>=2.0.0)", "pyviz-comms (>=0.6.0)"]
-doc = ["notebook (>=5.4)", "holoviews (>1.14.1)", "matplotlib", "pillow", "plotly", "nbsite (>=0.6.8a36)", "nbconvert", "sphinx-holoviz-theme", "selenium", "phantomjs", "graphviz", "lxml"]
+doc = ["notebook (>=5.4)", "holoviews (>1.14.1)", "matplotlib", "pillow", "plotly", "nbsite (>=0.7.0a4)", "graphviz", "lxml"]
 examples = ["hvplot", "plotly", "altair", "streamz", "vega-datasets", "vtk", "scikit-learn", "datashader", "jupyter-bokeh", "django", "channels", "pyvista", "ipywidgets", "ipywidgets-bokeh", "ipyvolume", "ipyleaflet", "xarray (<0.17)"]
 recommended = ["notebook (>=5.4)", "holoviews (>1.14.1)", "matplotlib", "pillow", "plotly"]
 tests = ["flake8", "parameterized", "pytest", "scipy", "nbsmoke (>=0.2.0)", "pytest-cov", "codecov", "folium", "ipympl", "twine", "pandas", "ipython (>=7.0)", "holoviews"]
@@ -1393,7 +1389,7 @@ name = "param"
 version = "1.10.1"
 description = "Make your Python code clearer and more reliable by declaring Parameters."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7"
 
 [package.extras]
@@ -1584,7 +1580,7 @@ name = "pyct"
 version = "0.4.8"
 description = "Python package common tasks for users (e.g. copy examples, fetch data, ...)"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7"
 
 [package.dependencies]
@@ -1812,7 +1808,7 @@ name = "pyviz-comms"
 version = "2.0.1"
 description = "Bidirectional communication for the HoloViz ecosystem."
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -2323,7 +2319,7 @@ name = "tqdm"
 version = "4.60.0"
 description = "Fast, Extensible Progress Meter"
 category = "main"
-optional = true
+optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
 
 [package.extras]
@@ -2468,7 +2464,7 @@ jupyter = ["jupyter", "jupyterlab", "jupyterlab-code-formatter", "jupyterlab-mat
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <4.0"
-content-hash = "9c78d05fc1b175611e49df21522b5ce1be5b5b776fa1b39a475c0e334d429bcb"
+content-hash = "26d4239fc2bdb685e4d1dad08a252c48c3fa8e7939a0b0b96e9c9872d1edac7b"
 
 [metadata.files]
 alabaster = [
@@ -2699,8 +2695,8 @@ darglint = [
     {file = "darglint-1.8.0.tar.gz", hash = "sha256:aa605ef47817a6d14797d32b390466edab621768ea4ca5cc0f3c54f6d8dcaec8"},
 ]
 decorator = [
-    {file = "decorator-5.0.6-py3-none-any.whl", hash = "sha256:d9f2d2863183a3c0df05f4b786f2e6b8752c093b3547a558f287bf3022fd2bf4"},
-    {file = "decorator-5.0.6.tar.gz", hash = "sha256:f2e71efb39412bfd23d878e896a51b07744f2e2250b2e87d158e76828c5ae202"},
+    {file = "decorator-5.0.7-py3-none-any.whl", hash = "sha256:945d84890bb20cc4a2f4a31fc4311c0c473af65ea318617f13a7257c9a58bc98"},
+    {file = "decorator-5.0.7.tar.gz", hash = "sha256:6f201a6c4dac3d187352661f508b9364ec8091217442c9478f1f83c003a0f060"},
 ]
 defusedxml = [
     {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
@@ -2849,8 +2845,8 @@ jupyter-core = [
     {file = "jupyter_core-4.7.1.tar.gz", hash = "sha256:79025cb3225efcd36847d0840f3fc672c0abd7afd0de83ba8a1d3837619122b4"},
 ]
 jupyter-packaging = [
-    {file = "jupyter_packaging-0.8.3-py2.py3-none-any.whl", hash = "sha256:67b37ea81c37d12aefe1057c99b3e3121f5c6a49605249f45a302c3b45d94c1f"},
-    {file = "jupyter_packaging-0.8.3.tar.gz", hash = "sha256:c52debebf8b23e5903ef22053294885440b77c525b1035afa7268585fc1a83a7"},
+    {file = "jupyter_packaging-0.9.1-py2.py3-none-any.whl", hash = "sha256:a3e6135d2f287cb66d1fc25d02307c68fa77bb93269c3b21dfe814efc1f9c4ed"},
+    {file = "jupyter_packaging-0.9.1.tar.gz", hash = "sha256:6f819759804536f9e563cc8a76a9d8588bb90cd735deaa550a6d8453012b0164"},
 ]
 jupyter-server = [
     {file = "jupyter_server-1.6.1-py3-none-any.whl", hash = "sha256:ce7609d75c624d2e6b6eb9159ef019a0320cc55c3b77795ee295c3eb72a08425"},
@@ -3122,8 +3118,8 @@ pandocfilters = [
     {file = "pandocfilters-1.4.3.tar.gz", hash = "sha256:bc63fbb50534b4b1f8ebe1860889289e8af94a23bff7445259592df25a3906eb"},
 ]
 panel = [
-    {file = "panel-0.11.2-py2.py3-none-any.whl", hash = "sha256:8570b50ebf21553fa80d850ea59adc0db297be069a2114cff241d62e22a13425"},
-    {file = "panel-0.11.2.tar.gz", hash = "sha256:11a5921312ebeb0b985af33a90b3e90f648aef7549c43777fbbc2dc3a7225eff"},
+    {file = "panel-0.11.3-py2.py3-none-any.whl", hash = "sha256:7a0fe3d13ce58741fe0915c69bc236278d8068e2e9654d54127d948ddbe3f98f"},
+    {file = "panel-0.11.3.tar.gz", hash = "sha256:1e91d81f2b0f13a311c51d247a4e42eecba71cc7c1b1419d65fc5a9b3da370b7"},
 ]
 param = [
     {file = "param-1.10.1-py2.py3-none-any.whl", hash = "sha256:fdfdb9544e7bdc0a1e5df7ced1c4840aa106625192b8efe0b6e2479f1519dc37"},

@@ -25,6 +25,7 @@ seaborn = "^0.11"
 scikit-learn = "^0.24"
 mdtraj = "^1.9"
 nptyping = "^1.4"
+holoviews = "^1.14.3"
 
 # Optional installs for usage with notebooks
 jupyter = { version = "^1.0.0", optional = true }
@@ -32,7 +33,6 @@ jupyterlab = { version = "^3.0.13", optional = true }
 jupyterlab-code-formatter = { version = "^1.4.10", optional = true }
 jupyterlab-mathjax3 = { version = "^4.2.2", optional = true }
 nglview = { version = "^3.0.0", optional = true }
-holoviews = { version = "^1.14.3", optional = true, extras = ["recommended"] }
 ipykernel = { version = "^5.5.3", optional = true }
 plotly = { version = "^4.14.3", optional = true }
 
