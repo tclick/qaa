@@ -32,6 +32,7 @@ class Figure:
         self,
         *,
         azim: int = 120,
+        elevation: int = 30,
     ) -> None:
         """Visualize data via a graphical image.
 
@@ -39,9 +40,12 @@ class Figure:
         ----------
         azim : int
             Azimuth rotation for 3D plot
+        elevation : int
+            Elevation of 3D plot
         """
         self._figure: Optional[hv.Layout] = None
         self._azimuth: int = azim
+        self._elevation: int = elevation
 
     @property
     def figure(self) -> hv.Layout:
@@ -75,6 +79,28 @@ class Figure:
             Azimuth
         """
         self._azimuth = azimuth
+
+    @property
+    def elevation(self) -> int:
+        """Set elevation of the 3D scatter plot.
+
+        Parameters
+        ----------
+        elevation : int
+            Azimuth
+        """
+        return self._elevation
+
+    @elevation.setter
+    def elevation(self, elevation: int) -> None:
+        """Set elevation of the 3D scatter plot.
+
+        Parameters
+        ----------
+        elevation : int
+            Elevation
+        """
+        self._elevation = elevation
 
     def draw(
         self,
@@ -114,7 +140,9 @@ class Figure:
             self._figure += hv.Scatter3D(data, kdims=columns, vdims=[])
             self._figure.opts(
                 opts.Scatter(marker=".", s=10),
-                opts.Scatter3D(azimuth=self._azimuth, marker=".", s=10),
+                opts.Scatter3D(
+                    azimuth=self._azimuth, elevation=self._elevation, marker=".", s=10
+                ),
             )
         else:
             if centers is None:
@@ -152,6 +180,7 @@ class Figure:
                     color_index="Cluster",
                     color=hv.Palette("Dark2"),
                     azimuth=self._azimuth,
+                    elevation=self._elevation,
                     marker=".",
                     s=10,
                 ),
