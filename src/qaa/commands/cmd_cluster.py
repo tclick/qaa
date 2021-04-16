@@ -136,7 +136,7 @@ from ..libs.figure import Figure
     "--azim",
     default=-1.0,
     show_default=True,
-    type=click.FloatRange(min=-1.0, max=359.0, clamp=True),
+    type=click.IntRange(min=-0, max=359, clamp=True),
     help="Azimuth rotation for 3D plot",
 )
 @click.option(
@@ -157,7 +157,7 @@ def cli(
     n_clusters: int,
     n_points: int,
     dpi: int,
-    azim: float,
+    azim: int,
     save: bool,
     verbose: bool,
 ) -> None:
@@ -170,20 +170,20 @@ def cli(
     logging.config.dictConfig(create_logging_dict(logfile))
     logger: logging.Logger = logging.getLogger(__name__)
 
-    if axes[2] <= axes[1] <= axes[0]:
-        raise IndexError("Axes must be in increasing order")
+    data_method = "ica" if method else "pca"
+    sorted_axes = np.sort(axes)
+    features = [f"{data_method[:2].upper()}{_+1:d}" for _ in sorted_axes]
 
     # Load data
-    data: NDArray[(Any, ...), Float]
+    data: pd.DataFrame
     try:
         try:
-            data = np.loadtxt(in_file, delimiter=",")
-        except UnicodeDecodeError:
-            data = np.load(in_file)
+            data = pd.DataFrame(np.load(in_file)[:, axes], columns=features)
+            data.index.name = "Frame"
+        except ValueError:
+            data = pd.read_csv(in_file, header=0, index_col=0)[features]
     except BaseException:
         raise
-
-    data_method = "ica" if method else "pca"
 
     # Select clustering method and cluster data
     clustering = (
@@ -199,38 +199,41 @@ def cli(
             tol=tol,
         )
     )
-    labels: NDArray[(Any, ...), Float] = clustering.fit_predict(data[:, axes])
-    centroids = clustering.means_ if cluster else clustering.cluster_centers_
+    clustering.fit_predict(data)
+    centroids = pd.DataFrame(
+        clustering.means_ if cluster else clustering.cluster_centers_, columns=features
+    )
+    centroids.index.name = "Cluster"
+
+    labels = pd.Series(clustering.predict(data), name="Cluster")
+    labels.index.name = "Frame"
+    data = pd.concat([labels, data], axis=1)
 
     # Prepare cluster analysis
-    azim = azim if 0.0 <= azim < 360.0 else 0.0
     figure = Figure(n_points=n_points, method=data_method, labels=labels, azim=azim)
-    figure.draw(data[:, axes], centers=centroids)
+    figure.draw(data, centers=centroids)
 
     logger.info("Saving cluster data to %s", outfile)
     figure.save(outfile, dpi=dpi)
 
     # Prepare dataframe
-    cols = [f"{data_method[:2]}_{_ + 1}" for _ in axes]
-    df = pd.DataFrame(columns=["labels"] + cols)
-    df["labels"] = labels
-    for col, axis in zip(cols, axes):
-        df[col] = data[:, axis]
-
     with out_file.with_suffix(".csv").open(mode="w") as w:
         logger.info("Saving cluster data to %s", w.name)
-        df.to_csv(w, index=False, float_format="%.6f")
+        data.to_csv(w, index=False, float_format="%.6f")
 
-    with out_file.with_suffix(".npy").open(mode="wb") as w:  # type: ignore
-        logger.info("Saving cluster data to %s", w.name)
-        np.save(w, df)
+    with out_file.with_suffix(".npy").open(mode="wb") as wb:
+        logger.info("Saving cluster data to %s", wb.name)
+        np.save(wb, data.set_index("Cluster"))
+    with out_file.parent.joinpath("labels.npy").open("wb") as wb:
+        logger.info("Saving label data to %s", wb.name)
+        np.save(wb, data["Cluster"])
 
-    with Path("centroids.csv").open("w") as w:
+    with out_file.parent.joinpath("centroids.csv").open("w") as w:
         logger.info("Saving centroids to %s", w.name)
-        np.savetxt(w, centroids, fmt="%.6f", delimiter=",")
-    with Path("centroids.npy").open("wb") as w:
-        logger.info("Saving centroids to %s", w.name)
-        np.save(w, centroids)
+        centroids.reset_index().to_csv(w, float_format="%.6f", index=False)
+    with out_file.parent.joinpath("centroids.npy").open("wb") as wb:
+        logger.info("Saving centroids to %s", wb.name)
+        np.save(wb, centroids)
 
     if save:
         # Find all trajectories and determine total frames per trajectory
@@ -243,8 +246,8 @@ def cli(
             dtype=int,
         ).cumsum()
 
-        for i, center in enumerate(centroids):
-            idx: int = find_closest_point(center, data[:, axes])
+        for i, center in enumerate(centroids.iterrows()):
+            idx: int = find_closest_point(center[1], data[features])
             file_no: int = int(np.searchsorted(frames, idx))
             traj: md.Trajectory = md.load_frame(filenames[file_no], idx, top=topology)
 
@@ -277,7 +280,5 @@ def find_closest_point(
     int
         Index of value closes to `point`
     """
-    distance: NDArray[(Any, ...), Float] = np.fromiter(
-        [np.linalg.norm(_ - point) for _ in data], dtype=point.dtype
-    )
+    distance: NDArray[(Any, ...), Float] = np.linalg.norm(data - point, axis=1)
     return int(np.where(distance == distance.min())[0])

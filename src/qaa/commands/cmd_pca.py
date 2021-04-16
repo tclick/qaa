@@ -21,9 +21,9 @@ from typing import List
 from typing import Optional
 
 import click
-import matplotlib.pyplot as plt
+import holoviews as hv
 import numpy as np
-import seaborn as sns
+import pandas as pd
 from nptyping import Float
 from nptyping import NDArray
 from sklearn.decomposition import PCA
@@ -34,6 +34,8 @@ from .. import PathLike
 from ..libs.figure import Figure
 from ..libs.utils import get_positions
 from ..libs.utils import reshape_positions
+
+hv.extension("matplotlib")
 
 
 @click.command("pca", short_help="Perform principal component analysis on a trajectory")
@@ -109,6 +111,14 @@ from ..libs.utils import reshape_positions
 @click.option("--bias / --no-bias", help="Calculate with population bias (N vs N-1")
 @click.option("--image", is_flag=True, help="Save images of PCA projections")
 @click.option(
+    "--azim",
+    "azimuth",
+    default=120,
+    show_default=True,
+    type=click.IntRange(min=0, max=359, clamp=True),
+    help="Azimuth rotation for 3D plot",
+)
+@click.option(
     "--dpi",
     default=600,
     type=click.IntRange(min=100, clamp=True),
@@ -134,6 +144,7 @@ def cli(
     whiten: bool,
     bias: bool,
     image: bool,
+    azimuth: int,
     dpi: int,
     image_type: str,
     verbose: bool,
@@ -160,66 +171,84 @@ def cli(
     logger.info("Calculating PCA")
     logger.warn("Depending upon the size of the trajectory, this could take a while.")
     pca = PCA(n_components=n_components, svd_solver="full", whiten=whiten)
-    projection: NDArray[(Any, ...), Float] = pca.fit_transform(positions)
+
+    projection = pd.DataFrame(pca.fit_transform(positions))
+    projection.columns = [f"PC{_+1}" for _ in range(pca.n_components_)]
+    projection.index.name = "Frame"
+
+    logger.info("%d components were calculated.", pca.n_components_)
+    explained_variance = pd.Series(pca.explained_variance_, name="Explained Variance")
+    explained_variance.index += 1
+    explained_variance.index.name = "Component"
+
+    singular_values = pd.Series(pca.singular_values_, name="Singular Value")
+    singular_values.index = explained_variance.index.copy()
+    singular_values.index.name = explained_variance.index.name
+
     if bias and whiten:
-        projection *= np.sqrt(n_samples / (n_samples - 1))
-        pca.explained_variance_ *= (n_samples - 1) / n_samples
+        conversion = n_samples / (n_samples - 1)
+        projection *= np.sqrt(conversion)
+        explained_variance /= conversion
 
-    ratio = pca.explained_variance_.cumsum() / pca.explained_variance_.sum()
-    for percentage in np.arange(0.8, 1.0, 0.05):
-        components: NDArray[(Any, ...), Float] = np.where(ratio <= percentage)[0]
+    ratio: pd.Series = explained_variance.cumsum() / explained_variance.sum() * 100.0
+    ratio.name = "Percentage of Explained Variance"
+    for percentage in range(80, 100, 5):
         logger.info(
             "%d components cover %.1f%% of the explained variance",
-            components.size,
-            percentage * 100,
-        )
-
-    components = np.fromiter([50, 100], dtype=int)
-    for component in components:
-        percentage = ratio[:component][-1] * 100
-        logger.info(
-            "%d components cover %.1f%% of the explained variance",
-            component,
+            ratio.where(ratio <= float(percentage)).dropna().size,
             percentage,
         )
+
+    if pca.n_components_ >= 50:
+        for component in np.fromiter([50, 100], dtype=int):
+            logger.info(
+                "%d components cover %.1f%% of the explained variance",
+                component,
+                ratio.iloc[component] * 100,
+            )
+
+    components = pd.DataFrame(pca.components_, index=projection.columns).T
+    components.index += 1
+    components.index.name = "Feature"
 
     # Save data
     data = dict(
         projection=projection,
-        components=pca.components_.T,
-        explained_variance=pca.explained_variance_,
+        components=components,
+        explained_variance=explained_variance,
         explained_variance_ratio=ratio,
-        singular=pca.singular_values_,
+        singular=singular_values,
     )
     for key, value in data.items():
         with out_dir.joinpath(f"{key}.csv").open(mode="w") as w:
             logger.info("Saving %s to %s", key, w.name)
-            np.savetxt(w, value, delimiter=",", fmt="%.6f")
+            value.reset_index().to_csv(w, float_format="%.6f", index=False)
         with out_dir.joinpath(f"{key}.npy").open(mode="wb") as w:  # type: ignore
             logger.info("Saving %s to %s", key, w.name)
-            np.save(w, value)
+            np.save(w, value.values)
 
     if image:
         # Plot explained variance ratio
-        fig = plt.figure(figsize=plt.figaspect(0.5))
-        ax = fig.add_subplot(1, 1, 1)
-        sns.lineplot(x=np.arange(pca.n_components_) + 1, y=ratio, markers=".", ax=ax)
-        ax.set_xlabel("Mode")
-        ax.set_ylabel("Explained Variance Ratio")
-        ax.set_xlim(left=0, right=pca.n_components_)
-        ax.set_ylim(bottom=0.0, top=1.1)
-
-        fig.suptitle("Explained Variance Ratio from PCA")
-        filename = out_dir.joinpath("explained_variance_ratio")
-        with filename.with_suffix(f".{image_type}").open(mode="wb") as w:  # type: ignore
-            fig.savefig(w, dpi=dpi)
+        filename = out_dir.joinpath("explained_variance_ratio").with_suffix(
+            "." + image_type
+        )
+        logger.info("Saving explained variance ratio to %s", filename)
+        curve = hv.Curve(ratio, "Component", "Percentage of Explained Variance")
+        layout = curve * hv.Scatter(curve)
+        hv.output(dpi=dpi)
+        hv.save(
+            layout,
+            filename=filename,
+            backend="matplotlib",
+            title="Explained Variance Percentage",
+        )
 
         # Plot 2D plots of PCAs
         logger.info("Plotting the PCA")
-        filename = out_dir.joinpath("pca").with_suffix(f".{image_type}")
-        figure = Figure(method="pca")
+        filename = out_dir.joinpath("pca").with_suffix("." + image_type)
+        figure = Figure()
         figure.draw(projection)
-        figure.save(filename, dpi=dpi)
+        figure.save(filename, dpi=dpi, title="First three PCs")
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time

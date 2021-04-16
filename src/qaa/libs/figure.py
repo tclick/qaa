@@ -14,14 +14,11 @@
 # --------------------------------------------------------------------------------------
 """Draw and save figures for QAA."""
 import itertools
-from typing import Any
 from typing import Optional
 
 import holoviews as hv
 import pandas as pd
 from holoviews import opts
-from nptyping import Float
-from nptyping import NDArray
 
 from .. import PathLike
 
@@ -35,9 +32,8 @@ class Figure:
         self,
         *,
         n_points: Optional[int] = None,
-        method: str = "ica",
-        labels: Optional[NDArray[(Any, ...), Float]] = None,
-        azim: Optional[int] = None,
+        labels: Optional[pd.Series] = None,
+        azim: int = 120,
     ) -> None:
         """Visualize data via a graphical image.
 
@@ -45,18 +41,15 @@ class Figure:
         ----------
         n_points : int
             Number of points to include for 3D plots
-        method : str
-            Type of data
-        labels : NDArray[(Any, ...), Float]
+        labels : pd.Series, optional
             Vector of cluster labels
         azim : int
             Azimuth rotation for 3D plot
         """
         self.n_points = n_points
-        self.method = method
         self.labels = labels
-        self._figure: hv.Layout
-        self._azimuth: int = azim if azim is not None else 120
+        self._figure: Optional[hv.Layout] = None
+        self._azimuth: int = azim
 
     @property
     def figure(self) -> hv.Layout:
@@ -115,25 +108,87 @@ class Figure:
         * component 2 vs. component 3
         * 3D plot
         """
-        header = self.method[:2].upper()
-        scatter = []
-        for i, j in itertools.combinations(range(3), 2):
-            fig = hv.Scatter(data, f"{header}{i+1}", f"{header}{j+1}")
-            if centers is not None:
-                fig *= hv.Scatter(centers, f"{header}{i+1}", f"{header}{j+1}")
-            scatter.append(fig)
+        try:
+            columns = data.drop("Cluster", axis=1).columns[:3].to_list()
+        except KeyError:
+            columns = data.columns[:3].to_list()
 
-        scatter3d = hv.Scatter3D(data, kdims=[f"{header}1", f"{header}2", f"{header}3"])
-        scatter3d.opts(opts.Scatter3D(azimuth=self._azimuth))
-        if centers is not None:
-            scatter3d *= hv.Scatter3D(
-                centers, kdims=[f"{header}1", f"{header}2", f"{header}3"]
+        if "Cluster" not in columns:
+            scatter = [
+                hv.Scatter(data, kdims=i, vdims=j)
+                for i, j in itertools.combinations(columns, 2)
+            ]
+            self._figure = hv.Layout(scatter)
+            self._figure += hv.Scatter3D(data, kdims=columns, vdims=[])
+            self._figure.opts(
+                opts.Scatter(marker=".", s=10),
+                opts.Scatter3D(azimuth=self._azimuth, marker=".", s=10),
+            )
+        else:
+            if centers is None:
+                scatter = [
+                    hv.Scatter(data, kdims=i, vdims=[j, "Cluster"])
+                    for i, j in itertools.combinations(columns, 2)
+                ]
+            else:
+                scatter = [
+                    (
+                        hv.Scatter(data, kdims=i, vdims=[j, "Cluster"])
+                        * hv.Scatter(centers, kdiims=i, vdims=[j, "Cluster"])
+                    )
+                    for i, j in itertools.combinations(columns, 2)
+                ]
+
+            self._figure = hv.Layout(scatter)
+            self._figure.opts(
+                opts.Scatter(
+                    show_legend=False,
+                    color_index="Cluster",
+                    color=hv.Palette("Dark2"),
+                    marker=".",
+                    s=10,
+                ),
+                opts.Scatter(
+                    show_legend=True,
+                    color_index="Cluster",
+                    color=hv.Palette("tab20"),
+                    marker=".",
+                    s=20,
+                ),
+                opts.Scatter3D(
+                    show_legend=False,
+                    color_index="Cluster",
+                    color=hv.Palette("Dark2"),
+                    azimuth=self._azimuth,
+                    marker=".",
+                    s=10,
+                ),
             )
 
-        self._figure = hv.Layout(scatter) + scatter3d
+        #         if centers is not None:
+        #             clusters = hv.Scatter(centers, kdiims=i, vdims=[j, "Cluster"])
+        #             clusters.opts(
+        #                 show_legend=False,
+        #                 color_index="Cluster",
+        #                 color=hv.Palette("tab20"),
+        #             )
+        #             fig *= clusters
+        #         scatter.append(fig)
+        #
+        # scatter3d = hv.Scatter3D(table, kdims=columns, vdims="Cluster")
+        # scatter3d.opts(opts.Scatter3D(azimuth=self._azimuth))
+
+        # if centers is not None:
+        #     scatter3d *= hv.Scatter3D(centers, kdims=columns, vdims="Cluster").opts(
+        #         show_legend=True, color_index="Cluster", color=hv.Palette("Dark2")
+        #     )
+
+        # self._figure = hv.Layout(scatter) + scatter3d
         self._figure.cols(2)
 
-    def save(self, filename: PathLike, /, *, dpi: int = 600) -> None:
+    def save(
+        self, filename: PathLike, /, *, dpi: int = 600, title: Optional[str] = None
+    ) -> None:
         """Save the image to disk.
 
         Parameters
@@ -142,11 +197,13 @@ class Figure:
             Image file
         dpi : int
             Image resolution
+        title : str
+            Figure title
         """
         hv.output(dpi=dpi)
         hv.save(
             self._figure,
             filename=filename,
             backend="matplotlib",
-            title=f"First three {self.method[:2].upper()}s",
+            title=title,
         )

@@ -18,10 +18,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from numpy import random
-from numpy.typing import ArrayLike
 from pytest_console_scripts import ScriptRunner
-from pytest_mock import MockerFixture
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
@@ -51,23 +48,6 @@ class TestQaa:
         """
         return 9
 
-    @pytest.fixture
-    def data(self, n_modes: int) -> ArrayLike:
-        """Generate random data.
-
-        Parameters
-        ----------
-        n_modes : int
-            Number of components
-
-        Returns
-        -------
-        ArrayLike
-            Randomly generated array (n_features, n_components)
-        """
-        rng = random.default_rng()
-        return rng.standard_normal((10, n_modes))
-
     def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
 
@@ -93,8 +73,6 @@ class TestQaa:
         self,
         script_runner: ScriptRunner,
         tmp_path: Path,
-        mocker: MockerFixture,
-        data: ArrayLike,
         n_modes: int,
     ) -> None:
         """Test qaa subcommand using JADE ICA.
@@ -109,10 +87,6 @@ class TestQaa:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
-        data : ArrayLike
-            Data to represent ICA calculation
         n_modes : int
             Number of components
         """
@@ -144,8 +118,6 @@ class TestQaa:
         self,
         script_runner: ScriptRunner,
         tmp_path: Path,
-        mocker: MockerFixture,
-        data: ArrayLike,
         n_modes: int,
     ) -> None:
         """Test qaa subcommand using FastICA.
@@ -160,10 +132,6 @@ class TestQaa:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
-        data : ArrayLike
-            Data to represent ICA calculation
         n_modes : int
             Number of components
         """
@@ -194,15 +162,23 @@ class TestQaa:
 
         assert result.success
         assert logfile.exists()
-        assert tmp_path.joinpath("qaa-signals.csv").exists()
+
+        # Test whether text data file exists
+        data = tmp_path.joinpath("qaa-signals.csv")
+        assert data.exists()
+        assert data.stat().st_size > 0
+
+        # Test whether binary data file exists
+        bindata = tmp_path.joinpath("qaa-signals.npy")
+        assert bindata.exists()
+        assert bindata.stat().st_size > 0
+
         assert not tmp_path.joinpath("qaa.png").exists()
 
     def test_qaa_with_image(
         self,
         script_runner: ScriptRunner,
         tmp_path: Path,
-        mocker: MockerFixture,
-        data: ArrayLike,
         n_modes: int,
     ) -> None:
         """Test qaa subcommand with image option.
@@ -217,10 +193,6 @@ class TestQaa:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
-        data : ArrayLike
-            Data to represent ICA calculation
         n_modes : int
             Number of components
         """
@@ -247,5 +219,7 @@ class TestQaa:
 
         assert result.success
         assert logfile.exists()
-        assert tmp_path.joinpath("qaa-signals.csv").exists()
-        assert tmp_path.joinpath("qaa.png").exists()
+
+        image = tmp_path.joinpath("qaa.png")
+        assert image.exists()
+        assert image.stat().st_size > 0

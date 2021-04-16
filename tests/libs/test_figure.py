@@ -51,7 +51,7 @@ class TestFigure:
         Figure
             a figure object
         """
-        return figure.Figure(method="ica")
+        return figure.Figure()
 
     def test_draw(self, data: pd.DataFrame, fig: figure.Figure) -> None:
         """Test draw method.

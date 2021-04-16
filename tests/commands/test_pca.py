@@ -18,7 +18,6 @@ import sys
 from pathlib import Path
 
 from pytest_console_scripts import ScriptRunner
-from pytest_mock import MockerFixture
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
@@ -58,9 +57,7 @@ class TestPCA:
         assert "Usage:" in result.stdout
         assert result.success
 
-    def test_pca(
-        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
-    ) -> None:
+    def test_pca(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
         """Test pca subcommand.
 
         GIVEN a trajectory file
@@ -73,8 +70,6 @@ class TestPCA:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
         """
         logfile = tmp_path.joinpath("pca.log")
         result = script_runner.run(
@@ -95,12 +90,20 @@ class TestPCA:
 
         assert result.success
         assert logfile.exists()
-        assert tmp_path.joinpath("projection.csv").exists()
+
+        # Test whether text data file exists
+        data = tmp_path.joinpath("projection.csv")
+        assert data.exists()
+        assert data.stat().st_size > 0
+
+        # Test whether binary data file exists
+        bindata = tmp_path.joinpath("projection.npy")
+        assert bindata.exists()
+        assert bindata.stat().st_size > 0
+
         assert not tmp_path.joinpath("explained_variance_ratio.png").exists()
 
-    def test_pca_with_image(
-        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
-    ) -> None:
+    def test_pca_with_image(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
         """Test pca subcommand with image option.
 
         GIVEN a trajectory file
@@ -113,8 +116,6 @@ class TestPCA:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
         """
         logfile = tmp_path.joinpath("pca.log")
         result = script_runner.run(
@@ -137,4 +138,7 @@ class TestPCA:
 
         assert result.success
         assert logfile.exists()
-        assert tmp_path.joinpath("projection.csv").exists()
+
+        image = tmp_path.joinpath("pca.png")
+        assert image.exists()
+        assert image.stat().st_size > 0

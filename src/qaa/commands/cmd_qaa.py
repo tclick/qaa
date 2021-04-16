@@ -22,6 +22,7 @@ from typing import Union
 
 import click
 import numpy as np
+import pandas as pd
 from nptyping import Float
 from nptyping import NDArray
 from sklearn.decomposition import FastICA
@@ -196,20 +197,24 @@ def cli(
             random_state=0,
         )
     )
-    signals = qaa.fit_transform(positions)
+    signals = pd.DataFrame(qaa.fit_transform(positions))
+    signals.columns = [f"IC{_+1}" for _ in range(signals.columns.size)]
+    signals.index.name = "Frame"
 
     # Save unmixed signals
     with out_dir.joinpath("qaa-signals.csv").open(mode="w") as w:
         logger.info("Saving QAA data to %s", w.name)
-        np.savetxt(w, signals, delimiter=",", fmt="%.6f")
+        signals.reset_index().to_csv(w, float_format="%.6f", index=False)
     with out_dir.joinpath("qaa-signals.npy").open(mode="wb") as w:  # type: ignore
         logger.info("Saving QAA data to %s", w.name)
         np.save(w, signals)
 
     # Save unmixing matrix
+    unmixing = pd.DataFrame(qaa.components_, index=signals.columns)
+    unmixing.columns += 1
     with out_dir.joinpath("unmixing_matrix.csv").open(mode="w") as w:
         logger.info("Saving QAA unmixing matrix to %s", w.name)
-        np.savetxt(w, qaa.components_, delimiter=",", fmt="%.6f")
+        unmixing.reset_index().to_csv(w, float_format="%.6f", index=False)
     with out_dir.joinpath("unmixing_matrix.npy").open(mode="wb") as w:  # type: ignore
         logger.info("Saving QAA unmixing matrix to %s", w.name)
         np.save(w, qaa.components_)
@@ -218,9 +223,9 @@ def cli(
         # Plot 2D and 3D plots of ICs
         logger.info("Plotting the ICA")
         filename = out_dir.joinpath("qaa").with_suffix(f".{image_type}")
-        figure = Figure(method="ica")
+        figure = Figure()
         figure.draw(signals)
-        figure.save(filename, dpi=dpi)
+        figure.save(filename, dpi=dpi, title="First three ICs")
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time
