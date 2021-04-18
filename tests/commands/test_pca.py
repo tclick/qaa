@@ -97,48 +97,8 @@ class TestPCA:
         assert data.stat().st_size > 0
 
         # Test whether binary data file exists
-        bindata = tmp_path.joinpath("projection.npy")
-        assert bindata.exists()
-        assert bindata.stat().st_size > 0
+        bin_data = tmp_path.joinpath("projection.npy")
+        assert bin_data.exists()
+        assert bin_data.stat().st_size > 0
 
-        assert not tmp_path.joinpath("explained_variance_ratio.png").exists()
-
-    def test_pca_with_image(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
-        """Test pca subcommand with image option.
-
-        GIVEN a trajectory file
-        WHEN invoking the pca subcommand with an image option
-        THEN an several files will be written including an image file
-
-        Parameters
-        ----------
-        script_runner : ScriptRunner
-            Command-line runner
-        tmp_path : Path
-            Temporary directory
-        """
-        logfile = tmp_path.joinpath("pca.log")
-        result = script_runner.run(
-            "qaa",
-            "pca",
-            "-s",
-            TOPWW,
-            "-f",
-            TRJWW,
-            "-o",
-            tmp_path.as_posix(),
-            "-l",
-            logfile.as_posix(),
-            "--bias",
-            "--whiten",
-            "-m",
-            "ca",
-            "--image",
-        )
-
-        assert result.success
-        assert logfile.exists()
-
-        image = tmp_path.joinpath("pca.png")
-        assert image.exists()
-        assert image.stat().st_size > 0
+        assert tmp_path.joinpath("explained_variance_ratio.png").exists()

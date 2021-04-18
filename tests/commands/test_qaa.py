@@ -112,7 +112,6 @@ class TestQaa:
 
         assert logfile.exists()
         assert tmp_path.joinpath("qaa-signals.csv").exists()
-        assert not tmp_path.joinpath("qaa.png").exists()
 
     def test_qaa_fastica(
         self,
@@ -172,54 +171,3 @@ class TestQaa:
         bindata = tmp_path.joinpath("qaa-signals.npy")
         assert bindata.exists()
         assert bindata.stat().st_size > 0
-
-        assert not tmp_path.joinpath("qaa.png").exists()
-
-    def test_qaa_with_image(
-        self,
-        script_runner: ScriptRunner,
-        tmp_path: Path,
-        n_modes: int,
-    ) -> None:
-        """Test qaa subcommand with image option.
-
-        GIVEN a trajectory file
-        WHEN invoking the qaa subcommand with an image option
-        THEN an several files will be written including an image file
-
-        Parameters
-        ----------
-        script_runner : ScriptRunner
-            Command-line runner
-        tmp_path : Path
-            Temporary directory
-        n_modes : int
-            Number of components
-        """
-        logfile = tmp_path.joinpath("qaa.log")
-        result = script_runner.run(
-            "qaa",
-            "qaa",
-            "-s",
-            TOPWW,
-            "-f",
-            TRJWW,
-            "-o",
-            tmp_path.as_posix(),
-            "-l",
-            logfile.as_posix(),
-            "-m",
-            "ca",
-            "--jade",
-            "-n",
-            str(n_modes),
-            "--image",
-            "--verbose",
-        )
-
-        assert result.success
-        assert logfile.exists()
-
-        image = tmp_path.joinpath("qaa.png")
-        assert image.exists()
-        assert image.stat().st_size > 0

@@ -90,8 +90,7 @@ class TestCluster:
         mocker : MockerFixture
             Mock object
         """
-        outfile = tmp_path.joinpath("cluster.png")
-        logfile = outfile.with_suffix(".log")
+        logfile = tmp_path.joinpath("cluster.log")
         result = script_runner.run(
             "qaa",
             "cluster",
@@ -102,7 +101,7 @@ class TestCluster:
             "-i",
             PROJ,
             "-o",
-            outfile.as_posix(),
+            tmp_path.as_posix(),
             "-l",
             logfile.as_posix(),
             "--pca",
@@ -129,8 +128,7 @@ class TestCluster:
         mocker : MockerFixture
             Mock object
         """
-        outfile = tmp_path.joinpath("cluster.png")
-        logfile = outfile.with_suffix(".log")
+        logfile = tmp_path.joinpath("cluster.log")
         result = script_runner.run(
             "qaa",
             "cluster",
@@ -141,7 +139,7 @@ class TestCluster:
             "-i",
             PROJNP,
             "-o",
-            outfile.as_posix(),
+            tmp_path.as_posix(),
             "-l",
             logfile.as_posix(),
             "--verbose",
@@ -167,8 +165,7 @@ class TestCluster:
         mocker : MockerFixture
             Mock object
         """
-        outfile = tmp_path.joinpath("cluster.png")
-        logfile = outfile.with_suffix(".log")
+        logfile = tmp_path.joinpath("cluster.log")
         result = script_runner.run(
             "qaa",
             "cluster",
@@ -179,7 +176,7 @@ class TestCluster:
             "-i",
             PROJ,
             "-o",
-            outfile.as_posix(),
+            tmp_path.as_posix(),
             "-l",
             logfile.as_posix(),
             "--pca",

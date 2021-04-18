@@ -32,7 +32,6 @@ from sklearn.mixture import GaussianMixture
 
 from .. import create_logging_dict
 from .. import PathLike
-from ..libs.figure import Figure
 
 
 @click.command("cluster", short_help="Plot data from QAA.")
@@ -70,11 +69,11 @@ from ..libs.figure import Figure
 )
 @click.option(
     "-o",
-    "--outfile",
-    metavar="FILE",
-    default=Path.cwd().joinpath("cluster.png"),
+    "--outdir",
+    metavar="DIR",
+    default=Path.cwd(),
     show_default=True,
-    type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True),
     help="Clustered image file",
 )
 @click.option(
@@ -126,20 +125,6 @@ from ..libs.figure import Figure
     help="Number of points to skip for plotting",
 )
 @click.option(
-    "--dpi",
-    default=600,
-    show_default=True,
-    type=click.IntRange(min=100, clamp=True),
-    help="Resolution of the figure",
-)
-@click.option(
-    "--azim",
-    default=-1.0,
-    show_default=True,
-    type=click.IntRange(min=-0, max=359, clamp=True),
-    help="Azimuth rotation for 3D plot",
-)
-@click.option(
     "--save", is_flag=True, help="Save structures from corresponding cluster center"
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
@@ -147,7 +132,7 @@ def cli(
     topology: PathLike,
     trajectory: Sequence[str],
     infile: PathLike,
-    outfile: PathLike,
+    outdir: PathLike,
     logfile: PathLike,
     axes: Tuple[int, int, int],
     method: bool,
@@ -156,15 +141,13 @@ def cli(
     tol: float,
     n_clusters: int,
     n_points: int,
-    dpi: int,
-    azim: int,
     save: bool,
     verbose: bool,
 ) -> None:
     """Perform cluster analysis on the provided data."""
     start_time: float = time.perf_counter()
     in_file = Path(infile)
-    out_file = Path(outfile)
+    out_dir = Path(outdir)
 
     # Setup logging
     logging.config.dictConfig(create_logging_dict(logfile))
@@ -209,29 +192,22 @@ def cli(
     labels.index.name = "Frame"
     data = pd.concat([labels, data], axis=1)
 
-    # Prepare cluster analysis
-    figure = Figure(n_points=n_points, method=data_method, labels=labels, azim=azim)
-    figure.draw(data, centers=centroids)
-
-    logger.info("Saving cluster data to %s", outfile)
-    figure.save(outfile, dpi=dpi)
-
     # Prepare dataframe
-    with out_file.with_suffix(".csv").open(mode="w") as w:
+    with out_dir.joinpath("cluster.csv").open(mode="w") as w:
         logger.info("Saving cluster data to %s", w.name)
         data.to_csv(w, index=False, float_format="%.6f")
 
-    with out_file.with_suffix(".npy").open(mode="wb") as wb:
+    with out_dir.joinpath("cluster.npy").open(mode="wb") as wb:
         logger.info("Saving cluster data to %s", wb.name)
         np.save(wb, data.set_index("Cluster"))
-    with out_file.parent.joinpath("labels.npy").open("wb") as wb:
+    with out_dir.joinpath("labels.npy").open("wb") as wb:
         logger.info("Saving label data to %s", wb.name)
         np.save(wb, data["Cluster"])
 
-    with out_file.parent.joinpath("centroids.csv").open("w") as w:
+    with out_dir.joinpath("centroids.csv").open("w") as w:
         logger.info("Saving centroids to %s", w.name)
         centroids.reset_index().to_csv(w, float_format="%.6f", index=False)
-    with out_file.parent.joinpath("centroids.npy").open("wb") as wb:
+    with out_dir.joinpath("centroids.npy").open("wb") as wb:
         logger.info("Saving centroids to %s", wb.name)
         np.save(wb, centroids)
 
@@ -251,7 +227,7 @@ def cli(
             file_no: int = int(np.searchsorted(frames, idx))
             traj: md.Trajectory = md.load_frame(filenames[file_no], idx, top=topology)
 
-            filename = out_file.parent.joinpath(f"cluster{i}_frame{idx}.pdb")
+            filename = out_dir.joinpath(f"cluster{i}_frame{idx}.pdb")
             logger.info("Saving frame %d of cluster %d to %s", idx, i, filename)
             traj.save(filename.as_posix())
 

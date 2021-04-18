@@ -31,7 +31,6 @@ from .. import _MASK
 from .. import create_logging_dict
 from .. import PathLike
 from ..decomposition.jade import JadeICA
-from ..libs.figure import Figure
 from ..libs.utils import get_positions
 from ..libs.utils import reshape_positions
 
@@ -124,21 +123,6 @@ from ..libs.utils import reshape_positions
     type=click.FloatRange(min=0.0, max=1.0, clamp=True),
     help="Maximum number of iterations for FastICA",
 )
-@click.option("--image", is_flag=True, help="Save images of QAA projections")
-@click.option(
-    "--dpi",
-    default=600,
-    type=click.IntRange(min=100, clamp=True),
-    help="Resolution of the figure",
-)
-@click.option(
-    "--type",
-    "image_type",
-    default="png",
-    show_default=True,
-    type=click.Choice("png pdf svg jpg".split()),
-    help="Image type",
-)
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
     topology: PathLike,
@@ -152,9 +136,6 @@ def cli(
     whiten: bool,
     max_iter: int,
     tol: float,
-    image: bool,
-    dpi: int,
-    image_type: str,
     verbose: bool,
 ) -> None:
     """Perform quasi-anharmonic analysis on a trajectory."""
@@ -218,14 +199,6 @@ def cli(
     with out_dir.joinpath("unmixing_matrix.npy").open(mode="wb") as w:  # type: ignore
         logger.info("Saving QAA unmixing matrix to %s", w.name)
         np.save(w, qaa.components_)
-
-    if image:
-        # Plot 2D and 3D plots of ICs
-        logger.info("Plotting the ICA")
-        filename = out_dir.joinpath("qaa").with_suffix(f".{image_type}")
-        figure = Figure()
-        figure.draw(signals)
-        figure.save(filename, dpi=dpi, title="First three ICs")
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time

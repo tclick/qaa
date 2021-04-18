@@ -31,7 +31,6 @@ from sklearn.decomposition import PCA
 from .. import _MASK
 from .. import create_logging_dict
 from .. import PathLike
-from ..libs.figure import Figure
 from ..libs.utils import get_positions
 from ..libs.utils import reshape_positions
 
@@ -109,27 +108,19 @@ hv.extension("matplotlib")
 )
 @click.option("-w", "--whiten", is_flag=True, help="Whitens the data")
 @click.option("--bias / --no-bias", help="Calculate with population bias (N vs N-1")
-@click.option("--image", is_flag=True, help="Save images of PCA projections")
-@click.option(
-    "--azim",
-    "azimuth",
-    default=120,
-    show_default=True,
-    type=click.IntRange(min=0, max=359, clamp=True),
-    help="Azimuth rotation for 3D plot",
-)
 @click.option(
     "--dpi",
     default=600,
+    show_default=True,
     type=click.IntRange(min=100, clamp=True),
     help="Resolution of the figure",
 )
 @click.option(
-    "--type",
+    "--it",
     "image_type",
     default="png",
     show_default=True,
-    type=click.Choice("png pdf svg jpg".split()),
+    type=click.Choice("png pdf svg jpg".split(), case_sensitive=False),
     help="Image type",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
@@ -143,8 +134,6 @@ def cli(
     n_modes: int,
     whiten: bool,
     bias: bool,
-    image: bool,
-    azimuth: int,
     dpi: int,
     image_type: str,
     verbose: bool,
@@ -227,28 +216,20 @@ def cli(
             logger.info("Saving %s to %s", key, w.name)
             np.save(w, value.values)
 
-    if image:
-        # Plot explained variance ratio
-        filename = out_dir.joinpath("explained_variance_ratio").with_suffix(
-            "." + image_type
-        )
-        logger.info("Saving explained variance ratio to %s", filename)
-        curve = hv.Curve(ratio, "Component", "Percentage of Explained Variance")
-        layout = curve * hv.Scatter(curve)
-        hv.output(dpi=dpi)
-        hv.save(
-            layout,
-            filename=filename,
-            backend="matplotlib",
-            title="Explained Variance Percentage",
-        )
-
-        # Plot 2D plots of PCAs
-        logger.info("Plotting the PCA")
-        filename = out_dir.joinpath("pca").with_suffix("." + image_type)
-        figure = Figure()
-        figure.draw(projection)
-        figure.save(filename, dpi=dpi, title="First three PCs")
+    # Plot explained variance ratio
+    filename = out_dir.joinpath("explained_variance_ratio").with_suffix(
+        "." + image_type.lower()
+    )
+    logger.info("Saving explained variance ratio to %s", filename)
+    curve = hv.Curve(ratio, "Component", "Percentage of Explained Variance")
+    layout = curve * hv.Scatter(curve)
+    hv.output(dpi=dpi)
+    hv.save(
+        layout,
+        filename=filename,
+        backend="matplotlib",
+        title="Explained Variance Percentage",
+    )
 
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time
