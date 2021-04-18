@@ -120,3 +120,35 @@ class TestPlot:
         assert logfile.exists()
         assert outfile.exists()
         assert outfile.stat().st_size > 0
+
+    def test_plot_error(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
+        """Test plot subcommand with non-existent file.
+
+        GIVEN a non-existent data file
+        WHEN invoking the plot subcommand
+        THEN an error is thrown
+
+        Parameters
+        ----------
+        script_runner : ScriptRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        """
+        outfile = tmp_path.joinpath("projection.png")
+        logfile = tmp_path.joinpath("plot.log")
+        result = script_runner.run(
+            "qaa",
+            "plot",
+            "-i",
+            "test.csv",
+            "-o",
+            outfile.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "--pca",
+            "--verbose",
+        )
+        assert not result.success
+        assert not logfile.exists()
+        assert not outfile.exists()
