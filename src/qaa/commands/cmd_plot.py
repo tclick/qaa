@@ -74,7 +74,11 @@ from ..libs.figure import Figure
     help="Log file",
 )
 @click.option(
-    "--axes", nargs=3, default=(0, 1, 2), type=click.IntRange(min=0, clamp=True)
+    "--axes",
+    nargs=3,
+    default=(0, 1, 2),
+    type=click.IntRange(min=0, clamp=True),
+    help="Components to plot",
 )
 @click.option("--ica / --pca", "method", default=True, help="Type of data")
 @click.option(
@@ -100,6 +104,7 @@ from ..libs.figure import Figure
     type=click.IntRange(min=0, max=90, clamp=True),
     help="Elevation of 3D plot",
 )
+@click.option("--cluster", is_flag=True, help="Cluster analysis")
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
     infile: PathLike,
@@ -112,6 +117,7 @@ def cli(
     dpi: int,
     azimuth: int,
     elevation: int,
+    cluster: bool,
     verbose: bool,
 ) -> None:
     """Visualize the data."""
@@ -129,25 +135,32 @@ def cli(
     # Load data
     logger.info("Loading %s", in_file)
 
-    data = read_file(in_file, index="Frame")
+    index = "Cluster" if cluster else "Frame"
+    data = read_file(in_file, index=index)
     if data is None:
         raise SystemExit(f"Could not open {in_file}")
     else:
-        data.columns = [
-            f"{data_method[:2].upper()}{_+1:d}" for _ in range(data.columns.size)
-        ]
+        data = data.set_index(index)
+        data.columns = (
+            [f"{data_method[:2].upper()}{_+1:d}" for _ in range(data.columns.size)]
+            if isinstance(data.columns, int)
+            else data.columns
+        )
         data = data[features]
 
     # Load labels, if exists
-    label_data = read_file(Path(label), index="Frame")
-    if "Cluster" not in data.columns and label_data is not None:
-        label_data.columns = ["Cluster"]
-        data = pd.concat([label_data, data], axis=1)
+    centroid_data: Optional[pd.DataFrame] = None
+    if cluster:
+        label_data = read_file(Path(label), index="Frame")
+        if data.index.name != "Cluster" and label_data is not None:
+            label_data.columns = ["Cluster"]
+            data = pd.concat([label_data, data], axis=1)
 
-    # Load centroid data, if exists
-    centroid_data = read_file(Path(centroid), index="Cluster")
-    if centroid_data is not None:
-        centroid_data.columns = features
+        # Load centroid data, if exists
+        centroid_data = read_file(Path(centroid), index="Cluster")
+        if centroid_data is not None:
+            centroid_data = centroid_data.set_index("Cluster")
+            centroid_data.columns = features
 
     # Prepare cluster analysis
     figure = Figure(azim=azimuth, elevation=elevation)
@@ -181,11 +194,12 @@ def read_file(filename: Path, /, *, index: str = "") -> Optional[pd.DataFrame]:
     """
     try:
         df = (
-            pd.read_csv(filename, header=0, index_col=0)
+            pd.read_csv(filename, header=0)
             if filename.suffix == ".csv"
             else pd.DataFrame(np.load(filename))
         )
-        df.index.name = index
+        if not df.index.name:
+            df.index.name = index
     except Exception:
         df = None
     return df
