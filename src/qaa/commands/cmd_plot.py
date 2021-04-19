@@ -153,7 +153,7 @@ def cli(
     figure = Figure(azim=azimuth, elevation=elevation)
     figure.draw(data, centers=centroid_data)
 
-    logger.info("Saving cluster data to %s", outfile)
+    logger.info("Saving visualization data to %s", outfile)
     figure.save(outfile, dpi=dpi)
 
     stop_time: float = time.perf_counter()
