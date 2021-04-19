@@ -86,7 +86,13 @@ from .. import PathLike
     help="Log file",
 )
 @click.option(
-    "--axes", nargs=3, default=(0, 1, 2), type=click.IntRange(min=0, clamp=True)
+    "--axes",
+    metavar="AXES",
+    nargs=3,
+    default=(0, 1, 2),
+    show_default=True,
+    type=click.IntRange(min=0, clamp=True),
+    help="Components",
 )
 @click.option("--ica / --pca", "method", default=True, help="Type of data")
 @click.option("--gmm / --kmeans", "cluster", default=True, help="Clustering method")
@@ -193,21 +199,21 @@ def cli(
     data = pd.concat([labels, data], axis=1)
 
     # Prepare dataframe
-    with out_dir.joinpath("cluster.csv").open(mode="w") as w:
+    with out_dir.joinpath(f"{data_method}-cluster.csv").open(mode="w") as w:
         logger.info("Saving cluster data to %s", w.name)
         data.to_csv(w, index=False, float_format="%.6f")
 
-    with out_dir.joinpath("cluster.npy").open(mode="wb") as wb:
+    with out_dir.joinpath(f"{data_method}-cluster.npy").open(mode="wb") as wb:
         logger.info("Saving cluster data to %s", wb.name)
         np.save(wb, data.set_index("Cluster"))
-    with out_dir.joinpath("labels.npy").open("wb") as wb:
+    with out_dir.joinpath(f"{data_method}-labels.npy").open("wb") as wb:
         logger.info("Saving label data to %s", wb.name)
         np.save(wb, data["Cluster"])
 
-    with out_dir.joinpath("centroids.csv").open("w") as w:
+    with out_dir.joinpath(f"{data_method}-centroids.csv").open("w") as w:
         logger.info("Saving centroids to %s", w.name)
         centroids.reset_index().to_csv(w, float_format="%.6f", index=False)
-    with out_dir.joinpath("centroids.npy").open("wb") as wb:
+    with out_dir.joinpath(f"{data_method}-centroids.npy").open("wb") as wb:
         logger.info("Saving centroids to %s", wb.name)
         np.save(wb, centroids)
 
@@ -227,7 +233,7 @@ def cli(
             file_no: int = int(np.searchsorted(frames, idx))
             traj: md.Trajectory = md.load_frame(filenames[file_no], idx, top=topology)
 
-            filename = out_dir.joinpath(f"cluster{i}_frame{idx}.pdb")
+            filename = out_dir.joinpath(f"{data_method}-cluster{i}_frame{idx}.pdb")
             logger.info("Saving frame %d of cluster %d to %s", idx, i, filename)
             traj.save(filename.as_posix())
 
