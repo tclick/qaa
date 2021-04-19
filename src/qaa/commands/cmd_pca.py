@@ -193,7 +193,7 @@ def cli(
             logger.info(
                 "%d components cover %.1f%% of the explained variance",
                 component,
-                ratio.iloc[component] * 100,
+                ratio.iloc[component],
             )
 
     components = pd.DataFrame(pca.components_, index=projection.columns).T
