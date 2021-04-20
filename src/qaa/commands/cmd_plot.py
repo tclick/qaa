@@ -140,23 +140,19 @@ def cli(
     logger.info("Loading %s", in_file)
 
     index = "Cluster" if cluster else "Frame"
-    data = read_file(in_file, index=index)
-    if data is None:
-        raise SystemExit(f"Could not open {in_file}")
-    else:
-        data = data.set_index(index)
-        data.columns = (
-            [f"{data_method[:2].upper()}{_+1:d}" for _ in range(data.columns.size)]
-            if isinstance(data.columns, int)
-            else data.columns
-        )
-        data = data[features]
+    data = read_file(in_file, index=index).set_index(index)
+    data.columns = (
+        [f"{data_method[:2].upper()}{_+1:d}" for _ in range(data.columns.size)]
+        if isinstance(data.columns, int)
+        else data.columns
+    )
+    data = data[features].reset_index()
 
     # Load labels, if exists
     centroid_data: Optional[pd.DataFrame] = None
     if cluster:
         label_data = read_file(Path(label), index="Frame")
-        if data.index.name != "Cluster" and label_data is not None:
+        if "Cluster" not in data.columns and label_data is not None:
             label_data.columns = ["Cluster"]
             data = pd.concat([label_data, data], axis=1)
 
