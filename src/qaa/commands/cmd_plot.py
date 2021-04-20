@@ -75,6 +75,7 @@ from ..libs.figure import Figure
 )
 @click.option(
     "--axes",
+    metavar="AXES",
     nargs=3,
     default=(0, 1, 2),
     type=click.IntRange(min=0, clamp=True),
@@ -83,6 +84,7 @@ from ..libs.figure import Figure
 @click.option("--ica / --pca", "method", default=True, help="Type of data")
 @click.option(
     "--dpi",
+    metavar="DPI",
     default=600,
     show_default=True,
     type=click.IntRange(min=100, clamp=True),
@@ -91,6 +93,7 @@ from ..libs.figure import Figure
 @click.option(
     "--azim",
     "azimuth",
+    metavar="AZIMUTH",
     default=120,
     show_default=True,
     type=click.IntRange(min=0, max=359, clamp=True),
@@ -99,6 +102,7 @@ from ..libs.figure import Figure
 @click.option(
     "--elev",
     "elevation",
+    metavar="ELEVATION",
     default=30,
     show_default=True,
     type=click.IntRange(min=0, max=90, clamp=True),
