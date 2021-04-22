@@ -24,6 +24,7 @@ import click
 import holoviews as hv
 import numpy as np
 import pandas as pd
+from holoviews import opts
 from nptyping import Float
 from nptyping import NDArray
 from sklearn.decomposition import PCA
@@ -222,10 +223,15 @@ def cli(
     )
     logger.info("Saving explained variance ratio to %s", filename)
     curve = hv.Curve(ratio, "Component", "Percentage of Explained Variance")
-    layout = curve * hv.Scatter(curve)
+    points = hv.Points(ratio, ["Component", "Percentage of Explained Variance"])
+    overlay = curve * points
+    overlay.opts(
+        opts.Curve(linewidth=1.5, color="purple"),
+        opts.Points(s=1.5, marker=".", color="yellow"),
+    )
     hv.output(dpi=dpi)
     hv.save(
-        layout,
+        overlay,
         filename=filename,
         backend="matplotlib",
         title="Explained Variance Percentage",
