@@ -195,8 +195,7 @@ def cli(
     centroids.index.name = "Cluster"
 
     labels = pd.Series(clustering.predict(data), name="Cluster")
-    labels.index.name = "Frame"
-    data = pd.concat([labels, data], axis=1)
+    data = pd.concat([labels, data.reset_index()], axis=1)
 
     # Prepare dataframe
     with out_dir.joinpath(f"{data_method}-cluster.csv").open(mode="w") as w:
@@ -205,7 +204,7 @@ def cli(
 
     with out_dir.joinpath(f"{data_method}-cluster.npy").open(mode="wb") as wb:
         logger.info("Saving cluster data to %s", wb.name)
-        np.save(wb, data.set_index("Cluster"))
+        np.save(wb, data.drop(["Cluster", "Frame"], axis=1))
     with out_dir.joinpath(f"{data_method}-labels.npy").open("wb") as wb:
         logger.info("Saving label data to %s", wb.name)
         np.save(wb, data["Cluster"])
