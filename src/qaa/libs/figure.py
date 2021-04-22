@@ -14,19 +14,26 @@
 # --------------------------------------------------------------------------------------
 """Draw and save figures for QAA."""
 import itertools
+from pathlib import Path
 from typing import Optional
 
 import holoviews as hv
 import pandas as pd
-from holoviews import opts
+from colorcet import glasbey_cool
+from colorcet import glasbey_light
 
 from .. import PathLike
 
 hv.extension("matplotlib")
 
+_empty_dataframe = pd.DataFrame()
+
 
 class Figure:
     """Create a plot of 2D and 3D plots."""
+
+    _categories = {i: v for i, v in enumerate(glasbey_cool)}
+    _centroids = {i: v for i, v in enumerate(glasbey_light)}
 
     def __init__(
         self,
@@ -84,10 +91,10 @@ class Figure:
     def elevation(self) -> int:
         """Set elevation of the 3D scatter plot.
 
-        Parameters
-        ----------
-        elevation : int
-            Azimuth
+        Returns
+        -------
+        int
+            Elevation of the 3D plot
         """
         return self._elevation
 
@@ -107,7 +114,7 @@ class Figure:
         data: pd.DataFrame,
         /,
         *,
-        centers: Optional[pd.DataFrame] = None,
+        centers: pd.DataFrame = _empty_dataframe,
     ) -> None:
         """Draw the first three components in subplots.
 
@@ -126,85 +133,78 @@ class Figure:
         * component 2 vs. component 3
         * 3D plot
         """
-        try:
-            columns = data.drop("Cluster", axis=1).columns[:3].to_list()
-        except KeyError:
-            columns = data.columns[:3].to_list()
+        table = hv.Table(data)
+        kdims = table.data.columns[2:5].to_list()
+        vdims = table.data.columns[:2].to_list()
+        centroid = hv.Table(centers) if not centers.empty else hv.Table([])
 
-        if "Cluster" not in columns:
+        points = [
+            hv.Points(table, [i, j], vdims=vdims).opts(
+                show_legend=False,
+                marker=".",
+                s=5,
+                cmap=glasbey_cool,
+                color_index="Cluster",
+            )
+            for i, j in itertools.combinations(kdims, 2)
+        ]
+        if centroid:
             scatter = [
-                hv.Points(data, kdims=[i, j], vdims=[])
-                for i, j in itertools.combinations(columns, 2)
+                hv.Points(centroid, kdims=[i, j], vdims="Cluster").opts(
+                    show_legend=False,
+                    marker=".",
+                    s=15,
+                    cmap=glasbey_light,
+                    color_index="Cluster",
+                )
+                for i, j in itertools.combinations(kdims, 2)
             ]
-            self._figure = hv.Layout(scatter)
-            self._figure += hv.Scatter3D(data, kdims=columns, vdims=[])
-            self._figure.opts(
-                opts.Points(marker=".", s=10),
-                opts.Scatter3D(
-                    azimuth=self._azimuth, elevation=self._elevation, marker=".", s=10
-                ),
+            points = [i * j for i, j in zip(points, scatter)]
+        # for i, j in itertools.combinations(kdims, 2):
+        #     points = hv.Points(ds, [i, j], vdims=vdims)
+        #     if centroid:
+        #         points *= hv.Points(centroid, kdims=[i, j], vdims=vdims)
+        #     scatter.append(points)
+        self._figure = hv.Layout(points)
+
+        scatter3d = hv.Scatter3D(data, kdims, vdims=vdims).opts(
+            show_legend=False,
+            marker=".",
+            s=5,
+            cmap=glasbey_cool,
+            color_index="Cluster",
+        )
+        if centroid:
+            scatter3d *= hv.Scatter3D(centers, kdims=kdims, vdims="Cluster").opts(
+                show_legend=False,
+                marker=".",
+                s=25,
+                cmap=glasbey_light,
+                color_index="Cluster",
             )
-        else:
-            if centers is None:
-                scatter = [
-                    hv.Points(data, kdims=[i, j], vdims="Cluster")
-                    for i, j in itertools.combinations(columns, 2)
-                ]
-            else:
-                scatter = [
-                    (
-                        hv.Scatter(data, kdims=i, vdims=[j, "Cluster"])
-                        * hv.Scatter(centers, kdiims=i, vdims=[j, "Cluster"])
-                    )
-                    for i, j in itertools.combinations(columns, 2)
-                ]
-
-            self._figure = hv.Layout(scatter)
-            self._figure.opts(
-                opts.Points(
-                    show_legend=False,
-                    color_index="Cluster",
-                    color=hv.Palette("Dark2"),
-                    marker=".",
-                    s=10,
-                ),
-                opts.Points(
-                    show_legend=True,
-                    color_index="Cluster",
-                    color=hv.Palette("tab20"),
-                    marker=".",
-                    s=20,
-                ),
-                opts.Scatter3D(
-                    show_legend=False,
-                    color_index="Cluster",
-                    color=hv.Palette("Dark2"),
-                    azimuth=self._azimuth,
-                    elevation=self._elevation,
-                    marker=".",
-                    s=10,
-                ),
-            )
-
-        #         if centers is not None:
-        #             clusters = hv.Scatter(centers, kdiims=i, vdims=[j, "Cluster"])
-        #             clusters.opts(
-        #                 show_legend=False,
-        #                 color_index="Cluster",
-        #                 color=hv.Palette("tab20"),
-        #             )
-        #             fig *= clusters
-        #         scatter.append(fig)
-        #
-        # scatter3d = hv.Scatter3D(table, kdims=columns, vdims="Cluster")
-        # scatter3d.opts(opts.Scatter3D(azimuth=self._azimuth))
-
-        # if centers is not None:
-        #     scatter3d *= hv.Scatter3D(centers, kdims=columns, vdims="Cluster").opts(
-        #         show_legend=True, color_index="Cluster", color=hv.Palette("Dark2")
-        #     )
-
-        # self._figure = hv.Layout(scatter) + scatter3d
+        self._figure += scatter3d
+        # self._figure.opts(
+        #     opts.Points(
+        #         show_legend=False,
+        #         marker=".",
+        #         s=5,
+        #         color=hv.dim("Cluster").categorize(
+        #             {0: "orange", 1: "black", 2: "purple", 3: "yellow"}
+        #         ),
+        #     ),
+        #     opts.Points(
+        #         show_legend=True,
+        #         marker=".",
+        #         s=10,
+        #         color=hv.dim("Cluster").categorize(self._categories),
+        #     ),
+        #     opts.Scatter3D(
+        #         show_legend=False,
+        #         marker=".",
+        #         s=5,
+        #         color=hv.dim("Cluster").categorize(self._categories),
+        #     ),
+        # )
         self._figure.cols(2)
 
     def save(
@@ -225,6 +225,7 @@ class Figure:
         hv.save(
             self._figure,
             filename=filename,
+            fmt=Path(filename).suffix[1:],
             backend="matplotlib",
             title=title,
         )
