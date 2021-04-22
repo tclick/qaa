@@ -16,7 +16,6 @@
 import logging.config
 import time
 from pathlib import Path
-from typing import Optional
 from typing import Tuple
 
 import click
@@ -139,31 +138,43 @@ def cli(
     # Load data
     logger.info("Loading %s", in_file)
 
-    index = "Cluster" if cluster else "Frame"
-    data = read_file(in_file, index=index).set_index(index)
+    index = "Frame"
+    data = read_file(in_file, index=index)
+    if data.empty:
+        raise SystemExit(f"Unable to read {in_file}")
+
     data.columns = (
         [f"{data_method[:2].upper()}{_+1:d}" for _ in range(data.columns.size)]
-        if isinstance(data.columns, int)
+        if np.issubdtype(data.columns, int)
         else data.columns
     )
-    data = data[features].reset_index()
+    try:
+        data = pd.concat([data["Cluster"], data[features].reset_index()], axis=1)
+    except KeyError:
+        data = data[features].reset_index()
 
     # Load labels, if exists
-    centroid_data: Optional[pd.DataFrame] = None
+    centroid_data: pd.DataFrame = pd.DataFrame()
     if cluster:
-        label_data = read_file(Path(label), index="Frame")
-        if "Cluster" not in data.columns and label_data is not None:
+        label_data = read_file(Path(label))
+        if "Cluster" not in data.columns and not label_data.empty:
             label_data.columns = ["Cluster"]
             data = pd.concat([label_data, data], axis=1)
 
         # Load centroid data, if exists
         centroid_data = read_file(Path(centroid), index="Cluster")
-        if centroid_data is not None:
+        if not centroid_data.empty:
             centroid_data = centroid_data.set_index("Cluster")
             centroid_data.columns = features
+            centroid_data = centroid_data.reset_index()
+    else:
+        n_samples, _ = data.shape
+        label_data = pd.Series(np.zeros(n_samples, dtype=int), name="Cluster")
+        data = pd.concat([label_data, data], axis=1)
 
     # Prepare cluster analysis
     figure = Figure(azim=azimuth, elevation=elevation)
+    logger.info("Preparing figures")
     figure.draw(data, centers=centroid_data)
 
     logger.info("Saving visualization data to %s", outfile)
@@ -177,7 +188,7 @@ def cli(
         logger.info(f"Total execution time: {output}")
 
 
-def read_file(filename: Path, /, *, index: str = "") -> Optional[pd.DataFrame]:
+def read_file(filename: Path, /, *, index: str = "") -> pd.DataFrame:
     """Read a file and return a DataFrame.
 
     Parameters
@@ -201,5 +212,5 @@ def read_file(filename: Path, /, *, index: str = "") -> Optional[pd.DataFrame]:
         if not df.index.name:
             df.index.name = index
     except Exception:
-        df = None
+        df = pd.DataFrame()
     return df
