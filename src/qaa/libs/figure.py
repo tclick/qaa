@@ -160,11 +160,6 @@ class Figure:
                 for i, j in itertools.combinations(kdims, 2)
             ]
             points = [i * j for i, j in zip(points, scatter)]
-        # for i, j in itertools.combinations(kdims, 2):
-        #     points = hv.Points(ds, [i, j], vdims=vdims)
-        #     if centroid:
-        #         points *= hv.Points(centroid, kdims=[i, j], vdims=vdims)
-        #     scatter.append(points)
         self._figure = hv.Layout(points)
 
         scatter3d = hv.Scatter3D(data, kdims, vdims=vdims).opts(
@@ -183,28 +178,6 @@ class Figure:
                 color_index="Cluster",
             )
         self._figure += scatter3d
-        # self._figure.opts(
-        #     opts.Points(
-        #         show_legend=False,
-        #         marker=".",
-        #         s=5,
-        #         color=hv.dim("Cluster").categorize(
-        #             {0: "orange", 1: "black", 2: "purple", 3: "yellow"}
-        #         ),
-        #     ),
-        #     opts.Points(
-        #         show_legend=True,
-        #         marker=".",
-        #         s=10,
-        #         color=hv.dim("Cluster").categorize(self._categories),
-        #     ),
-        #     opts.Scatter3D(
-        #         show_legend=False,
-        #         marker=".",
-        #         s=5,
-        #         color=hv.dim("Cluster").categorize(self._categories),
-        #     ),
-        # )
         self._figure.cols(2)
 
     def save(
