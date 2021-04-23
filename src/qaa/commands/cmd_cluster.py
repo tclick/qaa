@@ -188,13 +188,12 @@ def cli(
             tol=tol,
         )
     )
-    clustering.fit_predict(data)
+    labels = pd.Series(clustering.fit_predict(data), name="Cluster")
     centroids = pd.DataFrame(
         clustering.means_ if cluster else clustering.cluster_centers_, columns=features
     )
     centroids.index.name = "Cluster"
 
-    labels = pd.Series(clustering.predict(data), name="Cluster")
     data = pd.concat([labels, data.reset_index()], axis=1)
 
     # Prepare dataframe
