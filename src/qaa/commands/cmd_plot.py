@@ -170,7 +170,10 @@ def cli(
     else:
         n_samples, _ = data.shape
         label_data = pd.Series(np.zeros(n_samples, dtype=int), name="Cluster")
-        data = pd.concat([label_data, data], axis=1)
+        if "Cluster" not in data.columns:
+            data = pd.concat([label_data, data], axis=1)
+        else:
+            data["Cluster"] = label_data.copy()
 
     # Prepare cluster analysis
     figure = Figure(azim=azimuth, elevation=elevation)
