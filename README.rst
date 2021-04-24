@@ -53,9 +53,10 @@ Requirements
 * numpy 1.20+
 * scipy 1.6+
 * matplotlib 3.3+
-* seaborn 0.11+
 * scikit-learn 0.24+
 * mdtraj 1.9+
+* nptyping 1.4+
+* holoviews 1.14+
 
 Installation
 ------------
