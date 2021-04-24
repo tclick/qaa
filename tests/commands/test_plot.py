@@ -19,6 +19,11 @@ from pathlib import Path
 
 from pytest_console_scripts import ScriptRunner
 
+from ..datafile import CENTNPY
+from ..datafile import CENTROID
+from ..datafile import CLUSTER
+from ..datafile import CLUSTNPY
+from ..datafile import LABELS
 from ..datafile import PROJ
 from ..datafile import PROJNP
 
@@ -152,3 +157,112 @@ class TestPlot:
         assert not result.success
         assert not logfile.exists()
         assert not outfile.exists()
+
+    def test_cluster_csv(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
+        """Test plot subcommand with CSV input file.
+
+        GIVEN a data file
+        WHEN invoking the plot subcommand with cluster option
+        THEN saves a plotted image to disk
+
+        Parameters
+        ----------
+        script_runner : ScriptRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        """
+        outfile = tmp_path.joinpath("pca-cluster.png")
+        logfile = tmp_path.joinpath("plot.log")
+        result = script_runner.run(
+            "qaa",
+            "plot",
+            "-i",
+            CLUSTER,
+            "-c",
+            CENTROID,
+            "-o",
+            outfile.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "--pca",
+            "--cluster",
+            "--verbose",
+        )
+        assert result.success
+        assert logfile.exists()
+        assert outfile.exists()
+        assert outfile.stat().st_size > 0
+
+    def test_cluster_npy(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
+        """Test plot subcommand with binary NumPy input file.
+
+        GIVEN a data file
+        WHEN invoking the plot subcommand with cluster option
+        THEN saves a plotted image to disk
+
+        Parameters
+        ----------
+        script_runner : ScriptRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        """
+        outfile = tmp_path.joinpath("pca-cluster.png")
+        logfile = tmp_path.joinpath("plot.log")
+        result = script_runner.run(
+            "qaa",
+            "plot",
+            "-i",
+            CLUSTNPY,
+            "-c",
+            CENTNPY,
+            "--label",
+            LABELS,
+            "-o",
+            outfile.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "--pca",
+            "--cluster",
+            "--verbose",
+        )
+        assert result.success
+        assert logfile.exists()
+        assert outfile.exists()
+        assert outfile.stat().st_size > 0
+
+    def test_no_cluster(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
+        """Test plot subcommand with CSV input file.
+
+        GIVEN a data file
+        WHEN invoking the plot subcommand with cluster option
+        THEN saves a plotted image to disk
+
+        Parameters
+        ----------
+        script_runner : ScriptRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        """
+        outfile = tmp_path.joinpath("pca-cluster.png")
+        logfile = tmp_path.joinpath("plot.log")
+        result = script_runner.run(
+            "qaa",
+            "plot",
+            "-i",
+            CLUSTER,
+            "-c",
+            CENTROID,
+            "-o",
+            outfile.as_posix(),
+            "-l",
+            logfile.as_posix(),
+            "--pca",
+            "--verbose",
+        )
+        assert result.success
+        assert logfile.exists()
+        assert outfile.exists()
+        assert outfile.stat().st_size > 0
