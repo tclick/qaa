@@ -19,7 +19,6 @@ import holoviews as hv
 import pandas as pd
 import pytest
 from numpy import random
-from pytest_mock import MockerFixture
 from qaa.libs import figure
 
 
@@ -77,7 +76,6 @@ class TestFigure:
         data: pd.DataFrame,
         fig: figure.Figure,
         tmp_path: Path,
-        mocker: MockerFixture,
     ) -> None:
         """Test save method.
 
@@ -93,11 +91,29 @@ class TestFigure:
             Figure object
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
         """
         filename: Path = tmp_path.joinpath("test.png")
         fig.draw(data)
         fig.save(filename.as_posix())
         assert filename.exists()
         assert filename.stat().st_size > 0
+
+    def test_properties(self, fig: figure.Figure) -> None:
+        """Test object properties.
+
+        GIVEN a Figure object
+        WHEN acessing setter properties
+        THEN changes should be reflected in the getter properties
+
+        Parameters
+        ----------
+        fig : figure.Figure
+            initialized figure object
+        """
+        assert fig.azimuth == 120
+        assert fig.elevation == 30
+
+        fig.azimuth = 90
+        fig.elevation = 90
+        assert fig.azimuth == 90
+        assert fig.elevation == 90
