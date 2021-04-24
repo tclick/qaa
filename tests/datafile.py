@@ -25,3 +25,20 @@ PROJNP = resource_filename(
 )
 TOPWW = resource_filename(__name__, Path().joinpath("data", "protein.parm7").as_posix())
 TRJWW = resource_filename(__name__, Path().joinpath("data", "protein.nc").as_posix())
+
+# Cluster data
+CENTROID = resource_filename(
+    __name__, Path().joinpath("data", "pca-centroid.csv").as_posix()
+)
+CENTNPY = resource_filename(
+    __name__, Path().joinpath("data", "pca-centroid.npy").as_posix()
+)
+CLUSTER = resource_filename(
+    __name__, Path().joinpath("data", "pca-cluster.csv").as_posix()
+)
+CENTNPY = resource_filename(
+    __name__, Path().joinpath("data", "pca-cluster.npy").as_posix()
+)
+LABELS = resource_filename(
+    __name__, Path().joinpath("data", "pca-labels.npy").as_posix()
+)
