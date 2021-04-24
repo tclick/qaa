@@ -17,7 +17,6 @@ import logging
 import sys
 from pathlib import Path
 
-import pytest
 from pytest_console_scripts import ScriptRunner
 from pytest_mock import MockerFixture
 
@@ -39,17 +38,6 @@ if not sys.warnoptions:
 
 class TestCluster:
     """Run test for cluster subcommand."""
-
-    @pytest.fixture
-    def n_modes(self) -> int:
-        """Return number of modes to compute.
-
-        Returns
-        -------
-        int
-            Number of components
-        """
-        return 5
 
     def test_help(self, script_runner: ScriptRunner) -> None:
         """Test help output.
