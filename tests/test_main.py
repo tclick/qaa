@@ -13,60 +13,70 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Test cases for the __main__ module."""
-import runpy
-
 import pytest
-
-import qaa
 import qaa.__main__
 import qaa.cli
+from pytest_console_scripts import ScriptRunner
 from qaa import create_logging_dict
 
 
 class TestMain:
-    def test_main_module(self):
-        """
-        GIVEN the main command-line module
-        WHEN the module is executed
-        THEN the `qaa` module should be present
-        """
-        sys_dict = runpy.run_module("qaa.__main__")
-        assert sys_dict["__name__"] == "qaa.__main__"
-        assert isinstance(sys_dict["main"], qaa.cli._ComplexCLI)
+    """Test the main module."""
 
     @pytest.mark.runner_setup
-    def test_main_help(self, cli_runner):
-        """
+    def test_main_help(self, script_runner: ScriptRunner) -> None:
+        """Test help option.
+
         GIVEN the main command-line interface
         WHEN the '-h' or '--help' argument is provided
         THEN the help screen should appear
-        """
-        result = cli_runner.invoke(qaa.cli.main, args=("-h",))
-        result2 = cli_runner.invoke(qaa.cli.main, args=("--help",))
 
-        assert "Usage:" in result.output
-        assert result.exit_code == 0
-        assert result.output == result2.output
+        Parameters
+        ----------
+        script_runner : ScriptRunner
+            Command-line runner
+        """
+        result = script_runner.run(
+            "qaa",
+            "-h",
+        )
+        result2 = script_runner.run(
+            "qaa",
+            "--help",
+        )
+
+        assert "Usage:" in result.stdout
+        assert result.success
+        assert result.stdout == result2.stdout
 
     @pytest.mark.runner_setup
-    def test_main_version(self, cli_runner):
-        """
+    def test_main_version(self, script_runner: ScriptRunner) -> None:
+        """Test version option.
+
         GIVEN the main command-line interface
         WHEN the '--version' argument is provided
         THEN the version should print to the screen
+
+        Parameters
+        ----------
+        script_runner : ScriptRunner
+            Command-line runner
         """
-        result = cli_runner.invoke(qaa.cli.main, args=("--version",))
-        assert qaa.__version__ in result.output
+        result = script_runner.run("qaa", "--version")
+        assert qaa.__version__ in result.stdout
 
 
 class TestLoggingDict:
-    def test_create_logging_dict(self):
+    """Test creation of logging dictionary."""
+
+    def test_create_logging_dict(self) -> None:
         """Check create_logging_dict return."""
         logfile = "test.log"
         assert isinstance(create_logging_dict(logfile), dict)
 
-    def test_create_logging_dict_error(self):
-        """
+    def test_create_logging_dict_error(self) -> None:
+        """Test whether an error is raised.
+
         GIVEN create_logging_dict function
         WHEN an empty string for a filename is provided
         THEN an exception is thrown

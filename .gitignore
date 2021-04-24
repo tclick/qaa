@@ -76,3 +76,7 @@ docs/_build
 
 # Mypy Cache
 .mypy_cache/
+
+# Jupyter notebook output subdirectory
+notebooks/output/
+notebooks/.ipynb_checkpoints/

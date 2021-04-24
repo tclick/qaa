@@ -8,6 +8,7 @@
    :hidden:
    :maxdepth: 1
 
+   quick_start
    usage
    reference
    contributing

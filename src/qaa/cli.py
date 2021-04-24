@@ -31,7 +31,9 @@ Why does this file exist, and why not put this in __main__?
 import logging
 import sys
 from pathlib import Path
-from typing import List, NoReturn, Tuple, Union
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import click
 from click import core
@@ -44,21 +46,21 @@ CONTEXT_SETTINGS = dict(
 logger = logging.getLogger()
 
 
-class _Context:
+class _Context(click.Context):
     """Context manager for click command-line interface."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.verbose = False
         self.home = Path.home()
 
-    def log(self, fmt: str, *messages: Tuple[str]) -> NoReturn:
-        """Logs a message to stderr."""
+    def log(self, fmt: str, *messages: Tuple[str]) -> None:
+        """Log a message to stderr."""
         if messages:
             fmt %= messages
         click.echo(fmt, file=sys.stderr)
 
-    def vlog(self, fmt: str, *messages: Tuple[str]) -> NoReturn:
-        """Logs a message to stderr only if verbose is enabled."""
+    def vlog(self, fmt: str, *messages: Tuple[str]) -> None:
+        """Log a message to stderr only if verbose is enabled."""
         if self.verbose:
             self.log(fmt, *messages)
 
@@ -68,18 +70,19 @@ cmd_folder = Path(__file__).parent.joinpath("commands").resolve()
 
 
 class _ComplexCLI(click.MultiCommand):
-    """Complex command-line options with subcommands for fluctmatch."""
+    """Complex command-line options with subcommands for qaa."""
 
-    def list_commands(self, ctx: _Context) -> List[str]:
+    def list_commands(self, ctx: click.Context) -> List[str]:
         """List available commands.
 
         Parameters
         ----------
-        ctx : :object:`Context`
+        ctx : Context
             click context
 
         Returns
         -------
+        List of str
             List of available commands
         """
         commands: List[str] = []
@@ -89,14 +92,12 @@ class _ComplexCLI(click.MultiCommand):
         commands.sort()
         return commands
 
-    def get_command(
-        self, ctx: _Context, cmd_name: str
-    ) -> Union[core.Command, NoReturn]:
-        """Run the selected command
+    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[core.Command]:
+        """Run the selected command.
 
         Parameters
         ----------
-        ctx : :class:`_Context`
+        ctx : Context
             click context
         cmd_name : str
             command name
@@ -110,12 +111,12 @@ class _ComplexCLI(click.MultiCommand):
                 cmd_name = cmd_name.encode("ascii", "replace")
             mod = __import__("qaa.commands.cmd_" + cmd_name, None, None, ["cli"])
         except ImportError:
-            return
+            return None
         return mod.cli
 
 
 @click.command(cls=_ComplexCLI, context_settings=CONTEXT_SETTINGS)
 @click.version_option(__version__)
-def main():
-    """Main command-line interface"""
+def main() -> None:
+    """Run main command-line interface."""
     pass

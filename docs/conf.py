@@ -10,6 +10,9 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_click",
     "sphinx_rtd_theme",
+    "sphinx_automodapi.automodapi",
 ]
 autodoc_typehints = "description"
 html_theme = "sphinx_rtd_theme"
+numpydoc_show_class_members = False
+automodapi_inheritance_diagram = False

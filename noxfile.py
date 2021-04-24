@@ -9,7 +9,9 @@ from nox_poetry import Session
 from nox_poetry import session
 
 package = "qaa"
-python_versions = ["3.10", "3.9", "3.8", "3.7"]
+python_versions = [
+    "3.9",
+]
 nox.options.sessions = (
     "pre-commit",
     "safety",
@@ -28,8 +30,10 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
     session's virtual environment. This allows pre-commit to locate hooks in
     that environment when invoked from git.
 
-    Args:
-        session: The Session object.
+    Parameters
+    ----------
+    session : Session
+        Poetry session
     """
     if session.bin is None:
         return
@@ -81,8 +85,10 @@ def precommit(session: Session) -> None:
         "darglint",
         "flake8",
         "flake8-bandit",
+        "flake8-black",
         "flake8-bugbear",
         "flake8-docstrings",
+        "flake8-import-order",
         "flake8-rst-docstrings",
         "pep8-naming",
         "pre-commit",
@@ -94,7 +100,7 @@ def precommit(session: Session) -> None:
         activate_virtualenv_in_precommit_hooks(session)
 
 
-@session(python="3.9")
+@session(python=python_versions)
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
@@ -107,7 +113,16 @@ def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or ["src", "tests", "docs/conf.py"]
     session.install(".")
-    session.install("mypy", "pytest")
+    session.install(
+        "mypy",
+        "pytest",
+        "pytest-random-order",
+        "pytest-mock",
+        "pytest-cache",
+        "pytest-console-scripts",
+        "pytest-cov",
+        "pytest-coverage",
+    )
     session.run("mypy", *args)
     if not session.posargs:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
@@ -117,9 +132,28 @@ def mypy(session: Session) -> None:
 def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
-    session.install("coverage[toml]", "pytest", "pygments")
+    session.install(
+        "coverage[toml]",
+        "pytest",
+        "pygments",
+        "pytest-random-order",
+        "pytest-mock",
+        "pytest-cache",
+        "pytest-console-scripts",
+        "pytest-cov",
+        "pytest-coverage",
+    )
     try:
-        session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
+        session.run(
+            "coverage",
+            "run",
+            "--parallel",
+            "-m",
+            "pytest",
+            "--random-order",
+            "--script-launch-mode=subprocess",
+            *session.posargs,
+        )
     finally:
         if session.interactive:
             session.notify("coverage")
@@ -133,17 +167,34 @@ def coverage(session: Session) -> None:
     has_args = session.posargs and nsessions == 1
     args = session.posargs if has_args else ["report"]
 
-    session.install_("coverage[toml]", "codecov")
-    session.run("coverage", "xml", "--fail-under=0")
-    session.run("codecov", *session.posargs)
+    session.install("coverage[toml]")
+
+    if not has_args and any(Path().glob(".coverage.*")):
+        session.run("coverage", "combine")
+
+    session.run("coverage", *args)
 
 
 @session(python=python_versions)
 def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
-    session.install("pytest", "typeguard", "pygments")
-    session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
+    session.install(
+        "pytest",
+        "typeguard",
+        "pygments",
+        "pytest-random-order",
+        "pytest-mock",
+        "pytest-cache",
+        "pytest-console-scripts",
+    )
+    session.run(
+        "pytest",
+        f"--typeguard-packages={package}",
+        "--random-order",
+        "--script-launch-mode=subprocess",
+        *session.posargs,
+    )
 
 
 @session(python=python_versions)
@@ -155,12 +206,17 @@ def xdoctest(session: Session) -> None:
     session.run("python", "-m", "xdoctest", package, *args)
 
 
-@session(name="docs-build", python="3.8")
+@session(name="docs-build", python="3.9")
 def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
     session.install(".")
-    session.install("sphinx", "sphinx-click", "sphinx-rtd-theme")
+    session.install(
+        "sphinx",
+        "sphinx-click",
+        "sphinx-rtd-theme",
+        "sphinx_automodapi",
+    )
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():
@@ -169,12 +225,18 @@ def docs_build(session: Session) -> None:
     session.run("sphinx-build", *args)
 
 
-@session(python="3.8")
+@session(python="3.9")
 def docs(session: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
     session.install(".")
-    session.install("sphinx", "sphinx-autobuild", "sphinx-click", "sphinx-rtd-theme")
+    session.install(
+        "sphinx",
+        "sphinx-autobuild",
+        "sphinx-click",
+        "sphinx-rtd-theme",
+        "sphinx_automodapi",
+    )
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():

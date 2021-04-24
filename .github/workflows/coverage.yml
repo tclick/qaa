@@ -4,13 +4,20 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.8'
-        architecture: x64
-    - run: pip install nox==2020.12.31
-    - run: pip install poetry==1.1.5
-    - run: nox --sessions tests-3.8 coverage
-      env:
-        CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: "3.9"
+          architecture: x64
+      - run: pip install nox==2020.12.31
+      - run: pip install poetry==1.1.5
+      - run: pip install nox-poetry==0.8.4
+      - run: nox --sessions tests-3.9 coverage
+        env:
+          CODECOV_TOKEN: 4e8d6d99-1098-4fa8-9c06-fabbfd0bdcfe
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: 4e8d6d99-1098-4fa8-9c06-fabbfd0bdcfe

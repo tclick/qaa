@@ -14,37 +14,47 @@
 # --------------------------------------------------------------------------------------
 """Quasi-Anharmonic Analysis."""
 import logging
+import os
+from typing import Any
 from typing import Dict
+from typing import TYPE_CHECKING
+from typing import TypeVar
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+if TYPE_CHECKING:
+    PathLike = TypeVar("PathLike", str, os.PathLike[str])
+else:
+    PathLike = TypeVar("PathLike", str, os.PathLike)
+
 __version__: str = "1.0.0"
 
-_MASK: Dict = dict(
+_MASK: Dict[str, str] = dict(
     ca="protein and name CA",
-    cab="protein and name CA,CB",
-    back="protein and name N,CA,C",
-    noh="protein and not name H*",
+    cab="protein and name =~ 'C[AB]'",
+    back="protein and backbone",
+    side="protein and not backbone and not (element =~ 'H')",
+    noh="protein and not (element =~ 'H')",
     all="all",
 )
 
 
-def create_logging_dict(logfile: str) -> Dict:
+def create_logging_dict(logfile: PathLike) -> Dict[str, Any]:
     """Configure the logger.
 
     Parameters
     ----------
-    logfile : str
+    logfile : PathLike
         Filename for log output.
 
     Returns
     -------
-    dict
+    Dict
         Configuration data for logging.
 
     Raises
-    -------
+    ------
     ValueError
         If a filename is not defined.
     """

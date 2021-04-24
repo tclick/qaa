@@ -13,14 +13,32 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Various data files for testing."""
-
 from pathlib import Path
 
 from pkg_resources import resource_filename
 
-__all__ = ["TOPWW", "TRJWW"]
+__all__ = ["PROJ", "PROJNP", "TOPWW", "TRJWW"]
 
-TOPWW = resource_filename(
-    __name__, Path().joinpath("data", "rnase2_nowat.parm7").as_posix()
+PROJ = resource_filename(__name__, Path().joinpath("data", "projection.csv").as_posix())
+PROJNP = resource_filename(
+    __name__, Path().joinpath("data", "projection.npy").as_posix()
 )
+TOPWW = resource_filename(__name__, Path().joinpath("data", "protein.parm7").as_posix())
 TRJWW = resource_filename(__name__, Path().joinpath("data", "protein.nc").as_posix())
+
+# Cluster data
+CENTROID = resource_filename(
+    __name__, Path().joinpath("data", "pca-centroid.csv").as_posix()
+)
+CENTNPY = resource_filename(
+    __name__, Path().joinpath("data", "pca-centroid.npy").as_posix()
+)
+CLUSTER = resource_filename(
+    __name__, Path().joinpath("data", "pca-cluster.csv").as_posix()
+)
+CLUSTNPY = resource_filename(
+    __name__, Path().joinpath("data", "pca-cluster.npy").as_posix()
+)
+LABELS = resource_filename(
+    __name__, Path().joinpath("data", "pca-labels.npy").as_posix()
+)

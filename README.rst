@@ -32,18 +32,31 @@ Quasi-Anharmonic Analysis
    :target: https://github.com/psf/black
    :alt: Black
 
-
 Features
 --------
 
-* TODO
+`qaa` analyzes molecular dynamics (MD) trajectories by using joint
+diagonalization (JADE) to separate the information. The JADE [1]_ and QAA [2]_
+code are based on the original code written in Matlab.
 
+.. [1] Cardoso, J. F.; Souloumiac, A. "Blind Beamforming for Non-Gaussian
+       Signals." IEE Proc F Radar Signal Process 1993, 140 (6), 362.
+.. [2] Ramanathan, A.; Savol, A. J.; Langmead, C. J.; Agarwal, P. K.;
+       Chennubhotla, C. S. "Discovering Conformational Sub-States Relevant to Protein
+       Function." Plos One 2011, 6 (1), e15827.
 
 Requirements
 ------------
 
-* TODO
-
+* Python 3.8+
+* click 7.0+
+* numpy 1.20+
+* scipy 1.6+
+* matplotlib 3.3+
+* scikit-learn 0.24+
+* mdtraj 1.9+
+* nptyping 1.4+
+* holoviews 1.14+
 
 Installation
 ------------
@@ -53,6 +66,13 @@ You can install *Quasi-Anharmonic Analysis* via pip_ from PyPI_:
 .. code:: console
 
    $ pip install qaa
+
+If you want to visualize the tutorial notebooks, you can install the extra
+dependencies via pip_ from PyPI_:
+
+.. code:: console
+
+   $ pip install qaa[jupyter]
 
 
 Usage
@@ -71,7 +91,7 @@ To learn more, see the `Contributor Guide`_.
 License
 -------
 
-Distributed under the terms of the `MIT license`_,
+Distributed under the terms of the `BSD 3 Clause license`_,
 *Quasi-Anharmonic Analysis* is free and open source software.
 
 
@@ -89,7 +109,7 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 
 .. _@cjolowicz: https://github.com/cjolowicz
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _MIT license: https://opensource.org/licenses/MIT
+.. _BSD 3 Clause license: https://opensource.org/licenses/BSD-3-Clause
 .. _PyPI: https://pypi.org/
 .. _Hypermodern Python Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _file an issue: https://github.com/tclick/qaa/issues
