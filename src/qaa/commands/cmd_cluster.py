@@ -42,7 +42,7 @@ from .. import PathLike
     metavar="FILE",
     default=Path.cwd().joinpath("input.top"),
     show_default=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
+    type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
     help="Topology",
 )
 @click.option(
@@ -55,7 +55,7 @@ from .. import PathLike
     ],
     show_default=True,
     multiple=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
+    type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
     help="Trajectory",
 )
 @click.option(
