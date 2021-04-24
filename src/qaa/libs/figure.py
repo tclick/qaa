@@ -32,9 +32,6 @@ _empty_dataframe = pd.DataFrame()
 class Figure:
     """Create a plot of 2D and 3D plots."""
 
-    _categories = {i: v for i, v in enumerate(glasbey_cool)}
-    _centroids = {i: v for i, v in enumerate(glasbey_light)}
-
     def __init__(
         self,
         *,
