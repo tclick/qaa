@@ -36,7 +36,7 @@ CENTNPY = resource_filename(
 CLUSTER = resource_filename(
     __name__, Path().joinpath("data", "pca-cluster.csv").as_posix()
 )
-CENTNPY = resource_filename(
+CLUSTNPY = resource_filename(
     __name__, Path().joinpath("data", "pca-cluster.npy").as_posix()
 )
 LABELS = resource_filename(
