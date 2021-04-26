@@ -11,7 +11,6 @@ from nox_poetry import session
 package = "qaa"
 python_versions = [
     "3.9",
-    "3.8",
 ]
 nox.options.sessions = (
     "pre-commit",
