@@ -20,7 +20,7 @@ jobs:
           - { python-version: 3.9, os: windows-latest, session: "tests" }
           - { python-version: 3.9, os: ubuntu-latest, session: "typeguard" }
           - { python-version: 3.9, os: ubuntu-latest, session: "xdoctest" }
-          - { python-version: 3.8, os: ubuntu-latest, session: "docs-build" }
+          - { python-version: 3.9, os: ubuntu-latest, session: "docs-build" }
 
     env:
       NOXSESSION: ${{ matrix.session }}
@@ -136,4 +136,4 @@ jobs:
         with:
           fail_ci_if_error: true
         env:
-          CODECOV_TOKEN: 4e8d6d99-1098-4fa8-9c06-fabbfd0bdcfe
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
