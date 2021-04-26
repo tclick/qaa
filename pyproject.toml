@@ -18,13 +18,10 @@ Changelog = "https://github.com/tclick/qaa/releases"
 [tool.poetry.dependencies]
 python = ">=3.8, <4.0"
 click = "^7.0"
-numpy = "^1.20"
-scipy = "^1.6"
-matplotlib = "^3.3"
-scikit-learn = "^0.24"
+holoviews = { extras = ["recommended"], version = "^1.14.3" }
 mdtraj = "^1.9"
 nptyping = "^1.4"
-holoviews = "^1.14.3"
+scikit-learn = "^0.24"
 
 # Optional installs for usage with notebooks
 jupyter = { version = "^1.0.0", optional = true }
@@ -41,7 +38,6 @@ pytest-cache = "^1.0"
 pytest-console-scripts = "^1.1"
 pytest-cov = "^2.11"
 pytest-flake8 = "^1.0"
-pytest-mock = "^3.5"
 pytest-pep8 = "^1.0"
 pytest-mypy = "^0.8"
 pytest-coverage = "^0.0"
@@ -79,7 +75,8 @@ sphinx-automodapi = "^0.13"
 
 [tool.poetry.extras]
 jupyter = ["jupyter", "jupyterlab", "jupyterlab-code-formatter",
-    "jupyterlab-mathjax3", "nglview", "holoviews", "ipykernal", "plotly"]
+    "jupyterlab-mathjax3", "nglview", "ipykernal", "plotly"]
+
 [tool.poetry.scripts]
 qaa = "qaa.__main__:main"
 
