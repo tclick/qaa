@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "qaa"
-version = "1.0.0-alpha.0"
+version = "1.0.0-rc1"
 description = "Quasi-Anharmonic Analysis"
 authors = ["Timothy H. Click <tclick@okstate.edu>"]
 license = "BSD-3-Clause"
