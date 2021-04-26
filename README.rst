@@ -16,9 +16,9 @@ Quasi-Anharmonic Analysis
 .. |License| image:: https://img.shields.io/pypi/l/qaa
    :target: https://opensource.org/licenses/BSD-3-Clause
    :alt: License
-.. |Read the Docs| image:: https://img.shields.io/readthedocs/qaa/latest.svg?label=Read%20the%20Docs
-   :target: https://pyqaa.readthedocs.io/
-   :alt: Read the documentation at https://pyqaa.readthedocs.io/
+.. |Read the Docs| image:: https://readthedocs.org/projects/pyqaa/badge/?version=latest
+   :target: https://pyqaa.readthedocs.io/en/latest/?badge=latest
+   :alt: ReDocumentation Status
 .. |Tests| image:: https://github.com/tclick/qaa/workflows/Tests/badge.svg
    :target: https://github.com/tclick/qaa/actions?workflow=Tests
    :alt: Tests
