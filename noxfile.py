@@ -132,16 +132,16 @@ def tests(session: Session) -> None:
         "pytest",
         "pygments",
         "pytest-random-order",
-        "pytest-cache",
         "pytest-console-scripts",
-        "pytest-cov",
     )
     try:
         session.run(
+            "coverage",
+            "run",
+            "--parallel",
+            "-m",
             "pytest",
             "--random-order",
-            "--cov=qaa",
-            "--cov-report=xml",
             "--script-launch-mode=subprocess",
             *session.posargs,
         )
@@ -175,7 +175,6 @@ def typeguard(session: Session) -> None:
         "typeguard",
         "pygments",
         "pytest-random-order",
-        "pytest-cache",
         "pytest-console-scripts",
     )
     session.run(
