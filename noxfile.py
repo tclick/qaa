@@ -117,12 +117,6 @@ def mypy(session: Session) -> None:
     session.install(
         "mypy",
         "pytest",
-        "pytest-random-order",
-        "pytest-mock",
-        "pytest-cache",
-        "pytest-console-scripts",
-        "pytest-cov",
-        "pytest-coverage",
     )
     session.run("mypy", *args)
     if not session.posargs:
@@ -138,20 +132,15 @@ def tests(session: Session) -> None:
         "pytest",
         "pygments",
         "pytest-random-order",
-        "pytest-mock",
         "pytest-cache",
         "pytest-console-scripts",
         "pytest-cov",
-        "pytest-coverage",
     )
     try:
         session.run(
-            "coverage",
-            "run",
-            "--parallel",
-            "-m",
             "pytest",
             "--random-order",
+            "--cov=qaa",
             "--script-launch-mode=subprocess",
             *session.posargs,
         )
@@ -185,7 +174,6 @@ def typeguard(session: Session) -> None:
         "typeguard",
         "pygments",
         "pytest-random-order",
-        "pytest-mock",
         "pytest-cache",
         "pytest-console-scripts",
     )
