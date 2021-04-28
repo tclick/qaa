@@ -141,6 +141,7 @@ def tests(session: Session) -> None:
             "pytest",
             "--random-order",
             "--cov=qaa",
+            "--cov-report=xml",
             "--script-launch-mode=subprocess",
             *session.posargs,
         )
