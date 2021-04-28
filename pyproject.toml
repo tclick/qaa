@@ -72,6 +72,7 @@ nox-poetry = "^0.8"
 numpydoc = "^1.1"
 codecov = "^2.1"
 sphinx-automodapi = "^0.13"
+importlib-metadata = { version = "ˆ4.0", python = "3.7" }
 
 [tool.poetry.extras]
 jupyter = ["jupyter", "jupyterlab", "jupyterlab-code-formatter",
