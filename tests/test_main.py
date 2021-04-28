@@ -23,7 +23,6 @@ from qaa import create_logging_dict
 class TestMain:
     """Test the main module."""
 
-    @pytest.mark.runner_setup
     def test_main_help(self, script_runner: ScriptRunner) -> None:
         """Test help option.
 
@@ -49,7 +48,6 @@ class TestMain:
         assert result.success
         assert result.stdout == result2.stdout
 
-    @pytest.mark.runner_setup
     def test_main_version(self, script_runner: ScriptRunner) -> None:
         """Test version option.
 
