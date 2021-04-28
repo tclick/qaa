@@ -10,6 +10,7 @@ from nox_poetry import session
 
 package = "qaa"
 python_versions = [
+    "3.7",
     "3.9",
 ]
 nox.options.sessions = (
@@ -100,7 +101,7 @@ def precommit(session: Session) -> None:
         activate_virtualenv_in_precommit_hooks(session)
 
 
-@session(python="3.9")
+@session(python="3.7")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
