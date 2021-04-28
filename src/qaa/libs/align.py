@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 def align_trajectory(
     mobile: NDArray[(Any, ...), Float],
     reference: NDArray[(Any, ...), Float],
-    /,
     *,
     tol: float = 1e-6,
     verbose: bool = True,

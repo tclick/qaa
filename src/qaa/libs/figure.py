@@ -109,7 +109,6 @@ class Figure:
     def draw(
         self,
         data: pd.DataFrame,
-        /,
         *,
         centers: pd.DataFrame = _empty_dataframe,
     ) -> None:
@@ -178,7 +177,7 @@ class Figure:
         self._figure.cols(2)
 
     def save(
-        self, filename: PathLike, /, *, dpi: int = 600, title: Optional[str] = None
+        self, filename: PathLike, *, dpi: int = 600, title: Optional[str] = None
     ) -> None:
         """Save the image to disk.
 

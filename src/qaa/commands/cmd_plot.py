@@ -191,7 +191,7 @@ def cli(
         logger.info(f"Total execution time: {output}")
 
 
-def read_file(filename: Path, /, *, index: str = "") -> pd.DataFrame:
+def read_file(filename: Path, *, index: str = "") -> pd.DataFrame:
     """Read a file and return a DataFrame.
 
     Parameters

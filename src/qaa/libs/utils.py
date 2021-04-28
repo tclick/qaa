@@ -30,7 +30,6 @@ from .. import PathLike
 def get_average_structure(
     topology: PathLike,
     trajectory: List[str],
-    /,
     *,
     mask: str = "all",
     stride: Optional[int] = None,
@@ -83,7 +82,6 @@ def get_average_structure(
 def get_positions(
     topology: PathLike,
     trajectory: List[str],
-    /,
     *,
     mask: str = "all",
     stride: Optional[int] = None,
