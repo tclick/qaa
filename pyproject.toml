@@ -16,7 +16,7 @@ classifiers = [
 Changelog = "https://github.com/tclick/qaa/releases"
 
 [tool.poetry.dependencies]
-python = ">=3.8, <4.0"
+python = "^3.7, !=3.8, <4.0"
 click = "^7.0"
 holoviews = { extras = ["recommended"], version = "^1.14.3" }
 mdtraj = "^1.9"
