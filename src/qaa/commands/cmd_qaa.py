@@ -158,7 +158,9 @@ def cli(
     n_components: int = n_modes if n_modes > 0 else min(n_samples, n_features)
 
     logger.info("Calculating PCA")
-    logger.warn("Depending upon the size of the trajectory, this could take a while.")
+    logger.warning(
+        "Depending upon the size of the trajectory, this could take a while."
+    )
 
     qaa_method = "Jade" if method else "Fast"
     logger.info("Running QAA using %sICA", qaa_method)

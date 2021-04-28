@@ -159,7 +159,9 @@ def cli(
     n_components: Optional[int] = n_modes if n_modes > 0 else None
 
     logger.info("Calculating PCA")
-    logger.warn("Depending upon the size of the trajectory, this could take a while.")
+    logger.warning(
+        "Depending upon the size of the trajectory, this could take a while."
+    )
     pca = PCA(n_components=n_components, svd_solver="full", whiten=whiten)
 
     projection = pd.DataFrame(pca.fit_transform(positions))
