@@ -40,7 +40,6 @@ pytest-cov = "^2.11"
 pytest-flake8 = "^1.0"
 pytest-pep8 = "^1.0"
 pytest-mypy = "^0.8"
-pytest-coverage = "^0.0"
 pytest-random-order = "^1.0"
 coverage = { extras = ["toml"], version = "^5.4" }
 safety = "^1.10.3"
