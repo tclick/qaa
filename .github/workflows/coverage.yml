@@ -14,10 +14,10 @@ jobs:
       - run: pip install nox-poetry==0.8.4
       - run: nox --sessions tests-3.9 coverage
         env:
-          CODECOV_TOKEN: 4e8d6d99-1098-4fa8-9c06-fabbfd0bdcfe
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v1
         with:
           fail_ci_if_error: true
         env:
-          CODECOV_TOKEN: 4e8d6d99-1098-4fa8-9c06-fabbfd0bdcfe
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 else:
     PathLike = TypeVar("PathLike", str, os.PathLike)
 
-__version__: str = "1.0.0"
+__version__: str = "1.0.0-rc1"
 
 _MASK: Dict[str, str] = dict(
     ca="protein and name CA",

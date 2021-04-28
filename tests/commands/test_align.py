@@ -18,7 +18,6 @@ import sys
 from pathlib import Path
 
 from pytest_console_scripts import ScriptRunner
-from pytest_mock import MockerFixture
 
 from ..datafile import TOPWW
 from ..datafile import TRJWW
@@ -58,9 +57,7 @@ class TestAlign:
         assert "Usage:" in result.stdout
         assert result.success
 
-    def test_align(
-        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
-    ) -> None:
+    def test_align(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
         """Test align subcommand.
 
         GIVEN a trajectory file
@@ -73,8 +70,6 @@ class TestAlign:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
         """
         logfile = tmp_path.joinpath("align.log")
         result = script_runner.run(
@@ -97,9 +92,7 @@ class TestAlign:
         assert result.success
         assert logfile.exists()
 
-    def test_align_verbose(
-        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
-    ) -> None:
+    def test_align_verbose(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
         """Test align subcommand with verbose option.
 
         GIVEN a trajectory file
@@ -112,8 +105,6 @@ class TestAlign:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
         """
         logfile = tmp_path.joinpath("align.log")
         result = script_runner.run(

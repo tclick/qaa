@@ -18,7 +18,6 @@ import sys
 from pathlib import Path
 
 from pytest_console_scripts import ScriptRunner
-from pytest_mock import MockerFixture
 
 from ..datafile import PROJ
 from ..datafile import PROJNP
@@ -60,9 +59,7 @@ class TestCluster:
         assert "Usage:" in result.stdout
         assert result.success
 
-    def test_cluster_csv(
-        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
-    ) -> None:
+    def test_cluster_csv(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
         """Test cluster subcommand with CSV input file.
 
         GIVEN a data file
@@ -75,8 +72,6 @@ class TestCluster:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
         """
         logfile = tmp_path.joinpath("cluster.log")
         result = script_runner.run(
@@ -98,9 +93,7 @@ class TestCluster:
         assert result.success
         assert logfile.exists()
 
-    def test_cluster_npy(
-        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
-    ) -> None:
+    def test_cluster_npy(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
         """Test cluster subcommand with binary Numpy input file.
 
         GIVEN a data file
@@ -113,8 +106,6 @@ class TestCluster:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
         """
         logfile = tmp_path.joinpath("cluster.log")
         result = script_runner.run(
@@ -135,9 +126,7 @@ class TestCluster:
         assert result.success
         assert logfile.exists()
 
-    def test_cluster_save(
-        self, script_runner: ScriptRunner, tmp_path: Path, mocker: MockerFixture
-    ) -> None:
+    def test_cluster_save(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
         """Test save option.
 
         GIVEN trajectory, topology and data files
@@ -150,8 +139,6 @@ class TestCluster:
             Command-line runner
         tmp_path : Path
             Temporary directory
-        mocker : MockerFixture
-            Mock object
         """
         logfile = tmp_path.joinpath("cluster.log")
         result = script_runner.run(
