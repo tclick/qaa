@@ -1,14 +1,15 @@
 [tool.poetry]
 name = "qaa"
-version = "1.0.0-rc1"
+version = "3.0.0-rc2"
 description = "Quasi-Anharmonic Analysis"
 authors = ["Timothy H. Click <tclick@okstate.edu>"]
 license = "BSD-3-Clause"
 readme = "README.rst"
 homepage = "https://github.com/tclick/qaa"
 repository = "https://github.com/tclick/qaa"
-documentation = "https://qaa.readthedocs.io"
+documentation = "https://pyqaa.readthedocs.io"
 classifiers = [
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.9",
 ]
 
