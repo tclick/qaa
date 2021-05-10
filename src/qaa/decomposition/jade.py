@@ -28,7 +28,7 @@ import numpy as np
 from nptyping import Float
 from nptyping import NDArray
 from numpy import float64
-from numpy import linalg
+from scipy import linalg
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
 from sklearn.utils.validation import check_array
@@ -111,7 +111,7 @@ def _jade(
     arr = np.matrix(arr.astype(float64))
 
     # GB: n is number of input signals, T is number of samples
-    n_features, n_samples = arr.shape
+    n_samples, n_features = arr.shape
 
     if n_components is None:
         n_components = n_features  # Number of sources defaults to # of sensors
@@ -120,33 +120,35 @@ def _jade(
 
     logger.info("jade -> Looking for %d sources", n_components)
     logger.info("jade -> Removing the mean value")
-    arr -= arr.mean(axis=1)
+    arr -= arr.mean(axis=0)
 
     # whitening & projection onto signal subspace
     # ===========================================
     logger.info("jade -> Whitening the data")
     # An eigen basis for the sample covariance matrix
-    D, U = linalg.eig((arr * arr.T) / n_samples)
-    k = D.argsort()
-    Ds = D[k]  # Sort by increasing variances
-    PCs = np.arange(
-        n_features - 1, n_features - n_components - 1, -1
-    )  # The m most significant princip. comp. by decreasing variance
+    # D, U = linalg.eigh(np.cov(arr, bias=True))
+    # k = D.argsort()
+    # Ds = D[k]  # Sort by increasing variances
+    # The m most significant princip. comp. by decreasing variance
+    # PCs = np.arange(n_features - 1, n_features - n_components - 1, -1)
 
     # --- PCA  ----------------------------------------------------------
-    B = U[:, k[PCs]].T  # % At this stage, B does the PCA on m components
+    # B = np.matrix(U[:, k[PCs]].T)  # % At this stage, B does the PCA on m components
+    u, s, vh = linalg.svd(arr, full_matrices=False)
+    u, s, vh = u[:, :n_components], s[:n_components], vh[:n_components]
+    B = np.matrix(vh.T @ linalg.inv(np.diag(s))).T * np.sqrt(n_samples)
+    arr = np.matrix(u * np.sqrt(n_samples))
 
     # --- Scaling  ------------------------------------------------------
-    scales = np.sqrt(Ds[PCs])  # The scales of the principal components .
-    B = np.diag(1.0 / scales) * B  # Now, B does PCA followed by a rescaling = sphering
+    # scales = np.sqrt(Ds[PCs])  # The scales of the principal components .
+    # B = np.diag(1.0 / scales) * B  # Now, B does PCA followed by a rescaling = sphering
     # B[-1,:] = -B[-1,:] # GB: to make it compatible with octave
     # --- Sphering ------------------------------------------------------
-    arr = (
-        B * arr
-    )  # %% We have done the easy part: B is a whitening matrix and X is white.
-
-    del U, D, Ds, k, PCs, scales
-
+    # %% We have done the easy part: B is a whitening matrix and X is white.
+    # arr = B * arr
+    #
+    # del U, D, Ds, k, PCs, scales
+    del u, s, vh
     # NOTE: At this stage, X is a PCA analysis in m components of the real data, except
     # that all its entries now have unit variance.  Any further rotation of X will
     # preserve the property that X is a vector of uncorrelated components.  It remains
@@ -165,17 +167,15 @@ def _jade(
     logger.info("jade -> Estimating cumulant matrices")
 
     # Reshaping of the data, hoping to speed up things a little bit...
-    arr = arr.T
-    dimsymm = int(
-        (n_components * (n_components + 1)) / 2
-    )  # Dim. of the space of real symm matrices
+    # arr = arr.T
+    # Dim. of the space of real symm matrices
+    dimsymm = int((n_components * (n_components + 1)) / 2)
     nbcm = dimsymm  # number of cumulant matrices
     # Storage for cumulant matrices
     CM = np.matrix(np.zeros([n_components, n_components * nbcm], dtype=np.float64))
     R = np.matrix(np.eye(n_components, dtype=np.float64))
-    Qij = np.matrix(
-        np.zeros([n_components, n_components], dtype=np.float64)
-    )  # Temp for a cum. matrix
+    # Temp for a cum. matrix
+    Qij = np.matrix(np.zeros([n_components, n_components], dtype=np.float64))
     Xim = np.zeros(n_components, dtype=np.float64)  # Temp
     Xijm = np.zeros(n_components, dtype=np.float64)  # Temp
     # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
@@ -183,9 +183,8 @@ def _jade(
 
     # I am using a symmetry trick to save storage.  I should write a short note one of
     # these days explaining what is going on here.
-    Range = np.arange(
-        n_components
-    )  # will index the columns of CM where to store the cum. mats.
+    # will index the columns of CM where to store the cum. mats.
+    Range = np.arange(n_components)
 
     for im in range(n_components):
         Xim = arr[:, im]
@@ -222,9 +221,8 @@ def _jade(
         Range = Range + n_components
     Off = (np.multiply(CM, CM).sum(axis=0)).sum(axis=0) - On
 
-    seuil = 1.0e-6 / np.sqrt(
-        n_samples
-    )  # % A statistically scaled threshold on `small" angles
+    # % A statistically scaled threshold on `small" angles
+    seuil = 1.0e-6 / np.sqrt(n_samples)
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
@@ -298,9 +296,8 @@ def _jade(
     logger.info("jade -> Sorting the components")
 
     A = linalg.pinv(B)
-    keys = np.array(np.argsort(np.multiply(A, A).sum(axis=0)[0]))[0]
+    keys = np.argsort(np.multiply(A, A).sum(axis=0)).flatten()[::-1]
     B = B[keys, :]
-    B = B[::-1, :]  # % Is this smart ?
 
     logger.info("jade -> Fixing the signs")
     b = B[:, 0]
@@ -471,7 +468,7 @@ class JadeICA(TransformerMixin, BaseEstimator):
         self
         """
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr.T, n_components=self.n_components)
+        self.components_ = _jade(arr, n_components=self.n_components)
         return self
 
     def transform(self, arr: NDArray[(Any, ...), Float]) -> NDArray[(Any, ...), Float]:
@@ -516,7 +513,7 @@ class JadeICA(TransformerMixin, BaseEstimator):
             Unmixed signal array
         """
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr.T, n_components=self.n_components)
+        self.components_ = _jade(arr, n_components=self.n_components)
 
         arr -= self.mean_
         signal: NDArray[(Any, ...), Float] = self.components_ @ arr.T
