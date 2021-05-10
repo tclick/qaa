@@ -151,7 +151,7 @@ def _jade(
     logger.info("jade -> Estimating cumulant matrices")
 
     # Dim. of the space of real symm matrices
-    dimsymm = int((n_components * (n_components + 1)) / 2)
+    dimsymm = n_components * (n_components + 1) // 2
     nbcm = dimsymm  # number of cumulant matrices
     # Storage for cumulant matrices
     CM = np.matrix(np.zeros([n_components, n_components * nbcm], dtype=float))
