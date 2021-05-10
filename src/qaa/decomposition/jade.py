@@ -125,29 +125,13 @@ def _jade(
     # whitening & projection onto signal subspace
     # ===========================================
     logger.info("jade -> Whitening the data")
-    # An eigen basis for the sample covariance matrix
-    # D, U = linalg.eigh(np.cov(arr, bias=True))
-    # k = D.argsort()
-    # Ds = D[k]  # Sort by increasing variances
-    # The m most significant princip. comp. by decreasing variance
-    # PCs = np.arange(n_features - 1, n_features - n_components - 1, -1)
 
     # --- PCA  ----------------------------------------------------------
-    # B = np.matrix(U[:, k[PCs]].T)  # % At this stage, B does the PCA on m components
     u, s, vh = linalg.svd(arr, full_matrices=False)
     u, s, vh = u[:, :n_components], s[:n_components], vh[:n_components]
     B = np.matrix(vh.T @ linalg.inv(np.diag(s))).T * np.sqrt(n_samples)
     arr = np.matrix(u * np.sqrt(n_samples))
 
-    # --- Scaling  ------------------------------------------------------
-    # scales = np.sqrt(Ds[PCs])  # The scales of the principal components .
-    # B = np.diag(1.0 / scales) * B  # Now, B does PCA followed by a rescaling = sphering
-    # B[-1,:] = -B[-1,:] # GB: to make it compatible with octave
-    # --- Sphering ------------------------------------------------------
-    # %% We have done the easy part: B is a whitening matrix and X is white.
-    # arr = B * arr
-    #
-    # del U, D, Ds, k, PCs, scales
     del u, s, vh
     # NOTE: At this stage, X is a PCA analysis in m components of the real data, except
     # that all its entries now have unit variance.  Any further rotation of X will
@@ -166,8 +150,6 @@ def _jade(
     # ====================================
     logger.info("jade -> Estimating cumulant matrices")
 
-    # Reshaping of the data, hoping to speed up things a little bit...
-    # arr = arr.T
     # Dim. of the space of real symm matrices
     dimsymm = int((n_components * (n_components + 1)) / 2)
     nbcm = dimsymm  # number of cumulant matrices
