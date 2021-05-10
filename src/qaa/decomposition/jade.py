@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 def _jade(
-    arr: NDArray[(Any, ...), Float], m: Optional[int] = None
+    arr: NDArray[(Any, ...), Float], n_components: Optional[int] = None
 ) -> NDArray[(Any, ...), Float]:
     """Blind separation of real signals with JADE.
 
@@ -53,7 +53,7 @@ def _jade(
     ----------
     arr : NDArray
         a data matrix (n_features, n_samples)
-    m : int, default=None
+    n_components : int, default=None
         output matrix B has size mxn so that only m sources are extracted.  This is done
         by restricting the operation of jadeR to the m first principal components.
         Defaults to None, in which case :math:`m = n`.
@@ -110,14 +110,15 @@ def _jade(
     origtype = arr.dtype  # remember to return matrix B of the same type
     arr = np.matrix(arr.astype(float64))
 
-    n, T = arr.shape  # GB: n is number of input signals, T is number of samples
+    # GB: n is number of input signals, T is number of samples
+    n_features, n_samples = arr.shape
 
-    if m is None:
-        m = n  # Number of sources defaults to # of sensors
-    if m > n:
-        raise IndexError(f"More sources ({m}) than sensors ({n})")
+    if n_components is None:
+        n_components = n_features  # Number of sources defaults to # of sensors
+    if n_components > n_features:
+        raise IndexError(f"More sources ({n_components}) than sensors ({n_features})")
 
-    logger.info("jade -> Looking for %d sources", m)
+    logger.info("jade -> Looking for %d sources", n_components)
     logger.info("jade -> Removing the mean value")
     arr -= arr.mean(axis=1)
 
@@ -125,11 +126,11 @@ def _jade(
     # ===========================================
     logger.info("jade -> Whitening the data")
     # An eigen basis for the sample covariance matrix
-    D, U = linalg.eig((arr * arr.T) / T)
+    D, U = linalg.eig((arr * arr.T) / n_samples)
     k = D.argsort()
     Ds = D[k]  # Sort by increasing variances
     PCs = np.arange(
-        n - 1, n - m - 1, -1
+        n_features - 1, n_features - n_components - 1, -1
     )  # The m most significant princip. comp. by decreasing variance
 
     # --- PCA  ----------------------------------------------------------
@@ -165,57 +166,65 @@ def _jade(
 
     # Reshaping of the data, hoping to speed up things a little bit...
     arr = arr.T
-    dimsymm = int((m * (m + 1)) / 2)  # Dim. of the space of real symm matrices
+    dimsymm = int(
+        (n_components * (n_components + 1)) / 2
+    )  # Dim. of the space of real symm matrices
     nbcm = dimsymm  # number of cumulant matrices
     # Storage for cumulant matrices
-    CM = np.matrix(np.zeros([m, m * nbcm], dtype=np.float64))
-    R = np.matrix(np.eye(m, dtype=np.float64))
-    Qij = np.matrix(np.zeros([m, m], dtype=np.float64))  # Temp for a cum. matrix
-    Xim = np.zeros(m, dtype=np.float64)  # Temp
-    Xijm = np.zeros(m, dtype=np.float64)  # Temp
+    CM = np.matrix(np.zeros([n_components, n_components * nbcm], dtype=np.float64))
+    R = np.matrix(np.eye(n_components, dtype=np.float64))
+    Qij = np.matrix(
+        np.zeros([n_components, n_components], dtype=np.float64)
+    )  # Temp for a cum. matrix
+    Xim = np.zeros(n_components, dtype=np.float64)  # Temp
+    Xijm = np.zeros(n_components, dtype=np.float64)  # Temp
     # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
     # GB: we don't translate that one because NumPy doesn't need Tony's rule
 
     # I am using a symmetry trick to save storage.  I should write a short note one of
     # these days explaining what is going on here.
-    Range = np.arange(m)  # will index the columns of CM where to store the cum. mats.
+    Range = np.arange(
+        n_components
+    )  # will index the columns of CM where to store the cum. mats.
 
-    for im in range(m):
+    for im in range(n_components):
         Xim = arr[:, im]
         Xijm = np.multiply(Xim, Xim)
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
         Qij = (
-            np.multiply(Xijm, arr).T * arr / float(T)
+            np.multiply(Xijm, arr).T * arr / float(n_samples)
             - R
             - 2 * np.dot(R[:, im], R[:, im].T)
         )
         CM[:, Range] = Qij
-        Range = Range + m
+        Range = Range + n_components
         for jm in range(im):
             Xijm = np.multiply(Xim, arr[:, jm])
             Qij = (
-                np.sqrt(2) * np.multiply(Xijm, arr).T * arr / float(T)
+                np.sqrt(2) * np.multiply(Xijm, arr).T * arr / float(n_samples)
                 - R[:, im] * R[:, jm].T
                 - R[:, jm] * R[:, im].T
             )
             CM[:, Range] = Qij
-            Range = Range + m
+            Range = Range + n_components
 
     # Now we have nbcm = m(m+1)/2 cumulants matrices stored in a big m x m*nbcm array.
 
-    V = np.matrix(np.eye(m, dtype=np.float64))
+    V = np.matrix(np.eye(n_components, dtype=np.float64))
 
-    Diag = np.zeros(m, dtype=np.float64)
+    Diag = np.zeros(n_components, dtype=np.float64)
     On = 0.0
-    Range = np.arange(m)
+    Range = np.arange(n_components)
     for _ in range(nbcm):
         Diag = np.diag(CM[:, Range])
         On = On + (Diag * Diag).sum(axis=0)
-        Range = Range + m
+        Range = Range + n_components
     Off = (np.multiply(CM, CM).sum(axis=0)).sum(axis=0) - On
 
-    seuil = 1.0e-6 / np.sqrt(T)  # % A statistically scaled threshold on `small" angles
+    seuil = 1.0e-6 / np.sqrt(
+        n_samples
+    )  # % A statistically scaled threshold on `small" angles
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
@@ -241,11 +250,11 @@ def _jade(
         upds = 0
         # Vkeep = V
 
-        for p in range(m - 1):
-            for q in range(p + 1, m):
+        for p in range(n_components - 1):
+            for q in range(p + 1, n_components):
 
-                Ip = np.arange(p, m * nbcm, m)
-                Iq = np.arange(q, m * nbcm, m)
+                Ip = np.arange(p, n_components * nbcm, n_components)
+                Iq = np.arange(q, n_components * nbcm, n_components)
 
                 # computation of Givens angle
                 g = np.concatenate([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
@@ -462,7 +471,7 @@ class JadeICA(TransformerMixin, BaseEstimator):
         self
         """
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr.T, m=self.n_components)
+        self.components_ = _jade(arr.T, n_components=self.n_components)
         return self
 
     def transform(self, arr: NDArray[(Any, ...), Float]) -> NDArray[(Any, ...), Float]:
@@ -507,7 +516,7 @@ class JadeICA(TransformerMixin, BaseEstimator):
             Unmixed signal array
         """
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr.T, m=self.n_components)
+        self.components_ = _jade(arr.T, n_components=self.n_components)
 
         arr -= self.mean_
         signal: NDArray[(Any, ...), Float] = self.components_ @ arr.T
