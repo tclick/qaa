@@ -154,12 +154,12 @@ def _jade(
     dimsymm = int((n_components * (n_components + 1)) / 2)
     nbcm = dimsymm  # number of cumulant matrices
     # Storage for cumulant matrices
-    CM = np.matrix(np.zeros([n_components, n_components * nbcm], dtype=np.float64))
-    R = np.matrix(np.eye(n_components, dtype=np.float64))
+    CM = np.matrix(np.zeros([n_components, n_components * nbcm], dtype=float))
+    R = np.matrix(np.eye(n_components, dtype=float))
     # Temp for a cum. matrix
-    Qij = np.matrix(np.zeros([n_components, n_components], dtype=np.float64))
-    Xim = np.zeros(n_components, dtype=np.float64)  # Temp
-    Xijm = np.zeros(n_components, dtype=np.float64)  # Temp
+    Qij = np.matrix(np.zeros([n_components, n_components], dtype=float))
+    Xim = np.zeros(n_components, dtype=float)  # Temp
+    Xijm = np.zeros(n_components, dtype=float)  # Temp
     # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
     # GB: we don't translate that one because NumPy doesn't need Tony's rule
 
@@ -192,9 +192,9 @@ def _jade(
 
     # Now we have nbcm = m(m+1)/2 cumulants matrices stored in a big m x m*nbcm array.
 
-    V = np.matrix(np.eye(n_components, dtype=np.float64))
+    V = np.matrix(np.eye(n_components, dtype=float))
 
-    Diag = np.zeros(n_components, dtype=np.float64)
+    Diag = np.zeros(n_components, dtype=float)
     On = 0.0
     Range = np.arange(n_components)
     for _ in range(nbcm):
@@ -209,9 +209,9 @@ def _jade(
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
     upds = 0  # % Number of rotations in a given seep
-    g = np.zeros([2, nbcm], dtype=np.float64)
-    gg = np.zeros([2, 2], dtype=np.float64)
-    G = np.zeros([2, 2], dtype=np.float64)
+    g = np.zeros([2, nbcm], dtype=float)
+    gg = np.zeros([2, 2], dtype=float)
+    G = np.zeros([2, 2], dtype=float)
     c = 0
     s = 0
     ton = 0
