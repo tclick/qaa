@@ -129,7 +129,7 @@ def _jade(
     # --- PCA  ----------------------------------------------------------
     u, s, vh = linalg.svd(arr, full_matrices=False)
     u, s, vh = u[:, :n_components], s[:n_components], vh[:n_components]
-    B = np.matrix(vh.T @ linalg.inv(np.diag(s))).T * np.sqrt(n_samples)
+    B = np.matrix(linalg.inv(np.diag(s)) @ vh) * np.sqrt(n_samples)
     arr = np.matrix(u * np.sqrt(n_samples))
 
     del u, s, vh
