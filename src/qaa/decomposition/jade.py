@@ -154,10 +154,10 @@ def _jade(
     dimsymm = n_components * (n_components + 1) // 2
     nbcm = dimsymm  # number of cumulant matrices
     # Storage for cumulant matrices
-    CM = np.matrix(np.zeros([n_components, n_components * nbcm], dtype=float))
+    CM = np.matrix(np.zeros((n_components, n_components * nbcm), dtype=float))
     R = np.matrix(np.eye(n_components, dtype=float))
     # Temp for a cum. matrix
-    Qij = np.matrix(np.zeros([n_components, n_components], dtype=float))
+    Qij = np.matrix(np.zeros((n_components, n_components), dtype=float))
     Xim = np.zeros(n_components, dtype=float)  # Temp
     Xijm = np.zeros(n_components, dtype=float)  # Temp
     # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
@@ -209,9 +209,9 @@ def _jade(
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
     upds = 0  # % Number of rotations in a given seep
-    g = np.zeros([2, nbcm], dtype=float)
-    gg = np.zeros([2, 2], dtype=float)
-    G = np.zeros([2, 2], dtype=float)
+    g = np.zeros((2, nbcm), dtype=float)
+    gg = np.zeros((2, 2), dtype=float)
+    G = np.zeros((2, 2), dtype=float)
     c = 0
     s = 0
     ton = 0
