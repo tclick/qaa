@@ -206,7 +206,6 @@ def _jade(
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
-    upds = 0  # % Number of rotations in a given seep
     g = np.zeros((2, nbcm), dtype=float)
     gg = np.zeros((2, 2), dtype=float)
     G = np.zeros((2, 2), dtype=float)
@@ -226,9 +225,8 @@ def _jade(
     while encore:
         encore = False
         logger.info("jade -> Sweep #%3d", sweep)
-        sweep = sweep + 1
-        upds = 0
-        # Vkeep = V
+        sweep += 1
+        upds = 0  # % Number of rotations in a given seep
 
         for p, q in counters:
             Ip = np.arange(p, n_components * nbcm, n_components)
@@ -245,20 +243,20 @@ def _jade(
             # Givens update
             if abs(theta) > seuil:
                 encore = True
-                upds = upds + 1
+                upds += 1
                 c = np.cos(theta)
                 s = np.sin(theta)
                 G = np.matrix([[c, -s], [s, c]])
                 pair = np.array([p, q])
-                V[:, pair] = V[:, pair] * G
+                V[:, pair] *= G
                 CM[pair, :] = G.T * CM[pair, :]
                 CM[:, np.concatenate([Ip, Iq])] = np.append(
                     c * CM[:, Ip] + s * CM[:, Iq],
                     -s * CM[:, Ip] + c * CM[:, Iq],
                     axis=1,
                 )
-                On = On + Gain
-                Off = Off - Gain
+                On += Gain
+                Off -= Gain
 
         logger.info("completed in %d rotations", upds)
         updates = updates + upds
