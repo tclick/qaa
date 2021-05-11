@@ -128,8 +128,8 @@ def _jade(
     # --- PCA  ----------------------------------------------------------
     u, s, vh = linalg.svd(arr, full_matrices=False)
     u, s, vh = u[:, :n_components], s[:n_components], vh[:n_components]
-    B = np.matrix(linalg.inv(np.diag(s)) @ vh) * np.sqrt(n_samples)
-    arr = np.matrix(u * np.sqrt(n_samples))
+    B = linalg.inv(np.diag(s)) @ vh * np.sqrt(n_samples)
+    arr = u * np.sqrt(n_samples)
 
     del u, s, vh
     # NOTE: At this stage, X is a PCA analysis in m components of the real data, except
@@ -168,21 +168,17 @@ def _jade(
     Range = np.arange(n_components)
 
     for im in range(n_components):
-        Xim = arr[:, im]
-        Xijm = np.multiply(Xim, Xim)
+        Xim = np.vstack(arr[:, im])
+        Xijm = Xim ** 2
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
-        Qij = (
-            np.multiply(Xijm, arr).T * arr / float(n_samples)
-            - R
-            - 2 * np.dot(R[:, im], R[:, im].T)
-        )
+        Qij = (Xijm * arr).T @ arr / n_samples - R - 2 * np.dot(R[:, im], R[:, im].T)
         CM[:, Range] = Qij
         Range = Range + n_components
         for jm in range(im):
-            Xijm = np.multiply(Xim, arr[:, jm])
+            Xijm = Xim * np.vstack(arr[:, jm])
             Qij = (
-                np.sqrt(2) * np.multiply(Xijm, arr).T * arr / float(n_samples)
+                np.sqrt(2) * (Xijm * arr).T @ arr / n_samples
                 - R[:, im] * R[:, jm].T
                 - R[:, jm] * R[:, im].T
             )
