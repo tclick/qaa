@@ -153,7 +153,7 @@ def _jade(
     dimsymm = n_components * (n_components + 1) // 2
     nbcm = dimsymm  # number of cumulant matrices
     # Storage for cumulant matrices
-    CM = np.matrix(np.zeros((n_components, n_components * nbcm), dtype=float))
+    CM = np.zeros((n_components, n_components * nbcm), dtype=float)
     R = np.matrix(np.eye(n_components, dtype=float))
     # Temp for a cum. matrix
     Qij = np.matrix(np.zeros((n_components, n_components), dtype=float))
@@ -229,7 +229,7 @@ def _jade(
             Iq = np.arange(q, n_components * nbcm, n_components)
 
             # computation of Givens angle
-            g = np.concatenate([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
+            g = np.vstack([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
             gg = np.dot(g, g.T)
             ton = gg[0, 0] - gg[1, 1]
             toff = gg[0, 1] + gg[1, 0]
