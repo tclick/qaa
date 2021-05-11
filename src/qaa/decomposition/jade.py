@@ -27,7 +27,6 @@ from typing import Optional
 import numpy as np
 from nptyping import Float
 from nptyping import NDArray
-from numpy import float64
 from scipy import linalg
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
@@ -107,8 +106,8 @@ def _jade(
     # avoid messing with the original input. We also require double precision (float64)
     # and a numpy matrix type for X.
     origtype = arr.dtype  # remember to return matrix B of the same type
-    arr = check_array(arr)
-    arr = np.matrix(arr.astype(float64))
+    arr = check_array(arr, dtype=float)
+    arr = np.matrix(arr)
 
     # GB: n is number of input signals, T is number of samples
     n_samples, n_features = arr.shape
