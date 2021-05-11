@@ -165,7 +165,7 @@ def cli(
     qaa_method = "Jade" if method else "Fast"
     logger.info("Running QAA using %sICA", qaa_method)
     logger.warning(
-        "Depending upon the size of your system and number of modes,"
+        "Depending upon the size of your system and number of modes, "
         "this could take a while..."
     )
     qaa: Union[JadeICA, FastICA] = (
