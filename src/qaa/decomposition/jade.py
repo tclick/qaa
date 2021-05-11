@@ -106,8 +106,8 @@ def _jade(
     # GB: we do some checking of the input arguments and copy data to new variables to
     # avoid messing with the original input. We also require double precision (float64)
     # and a numpy matrix type for X.
-    arr = check_array(arr)
     origtype = arr.dtype  # remember to return matrix B of the same type
+    arr = check_array(arr)
     arr = np.matrix(arr.astype(float64))
 
     # GB: n is number of input signals, T is number of samples
