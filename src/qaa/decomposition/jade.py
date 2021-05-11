@@ -193,17 +193,16 @@ def _jade(
 
     V = np.matrix(np.eye(n_components, dtype=float))
 
-    Diag = np.zeros(n_components, dtype=float)
     On = 0.0
     Range = np.arange(n_components)
     for _ in range(nbcm):
-        Diag = np.diag(CM[:, Range])
-        On = On + (Diag * Diag).sum(axis=0)
-        Range = Range + n_components
+        diag = np.diag(CM[:, Range])
+        On += (diag * diag).sum(axis=0)
+        Range += n_components
     Off = (np.multiply(CM, CM).sum(axis=0)).sum(axis=0) - On
 
     # % A statistically scaled threshold on `small" angles
-    seuil = 1.0e-6 / np.sqrt(n_samples)
+    seuil = 1e-6 / np.sqrt(n_samples)
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
@@ -211,17 +210,19 @@ def _jade(
     g = np.zeros((2, nbcm), dtype=float)
     gg = np.zeros((2, 2), dtype=float)
     G = np.zeros((2, 2), dtype=float)
-    c = 0
-    s = 0
-    ton = 0
-    toff = 0
-    theta = 0
-    Gain = 0
+    c = 0.0
+    s = 0.0
+    ton = 0.0
+    toff = 0.0
+    theta = 0.0
+    Gain = 0.0
 
     # Joint diagonalization proper
-
     logger.info("jade -> Contrast optimization by joint diagonalization")
 
+    counters = tuple(
+        (p, q) for p in range(n_components - 1) for q in range(p + 1, n_components)
+    )
     while encore:
         encore = False
         logger.info("jade -> Sweep #%3d", sweep)
@@ -229,37 +230,35 @@ def _jade(
         upds = 0
         # Vkeep = V
 
-        for p in range(n_components - 1):
-            for q in range(p + 1, n_components):
+        for p, q in counters:
+            Ip = np.arange(p, n_components * nbcm, n_components)
+            Iq = np.arange(q, n_components * nbcm, n_components)
 
-                Ip = np.arange(p, n_components * nbcm, n_components)
-                Iq = np.arange(q, n_components * nbcm, n_components)
+            # computation of Givens angle
+            g = np.concatenate([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
+            gg = np.dot(g, g.T)
+            ton = gg[0, 0] - gg[1, 1]
+            toff = gg[0, 1] + gg[1, 0]
+            theta = 0.5 * np.arctan2(toff, ton + np.sqrt(ton * ton + toff * toff))
+            Gain = (np.sqrt(ton * ton + toff * toff) - ton) / 4.0
 
-                # computation of Givens angle
-                g = np.concatenate([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
-                gg = np.dot(g, g.T)
-                ton = gg[0, 0] - gg[1, 1]
-                toff = gg[0, 1] + gg[1, 0]
-                theta = 0.5 * np.arctan2(toff, ton + np.sqrt(ton * ton + toff * toff))
-                Gain = (np.sqrt(ton * ton + toff * toff) - ton) / 4.0
-
-                # Givens update
-                if abs(theta) > seuil:
-                    encore = True
-                    upds = upds + 1
-                    c = np.cos(theta)
-                    s = np.sin(theta)
-                    G = np.matrix([[c, -s], [s, c]])
-                    pair = np.array([p, q])
-                    V[:, pair] = V[:, pair] * G
-                    CM[pair, :] = G.T * CM[pair, :]
-                    CM[:, np.concatenate([Ip, Iq])] = np.append(
-                        c * CM[:, Ip] + s * CM[:, Iq],
-                        -s * CM[:, Ip] + c * CM[:, Iq],
-                        axis=1,
-                    )
-                    On = On + Gain
-                    Off = Off - Gain
+            # Givens update
+            if abs(theta) > seuil:
+                encore = True
+                upds = upds + 1
+                c = np.cos(theta)
+                s = np.sin(theta)
+                G = np.matrix([[c, -s], [s, c]])
+                pair = np.array([p, q])
+                V[:, pair] = V[:, pair] * G
+                CM[pair, :] = G.T * CM[pair, :]
+                CM[:, np.concatenate([Ip, Iq])] = np.append(
+                    c * CM[:, Ip] + s * CM[:, Iq],
+                    -s * CM[:, Ip] + c * CM[:, Iq],
+                    axis=1,
+                )
+                On = On + Gain
+                Off = Off - Gain
 
         logger.info("completed in %d rotations", upds)
         updates = updates + upds
