@@ -115,7 +115,7 @@ def _jade(
 
     if n_components is None:
         n_components = n_features  # Number of sources defaults to # of sensors
-    if n_components > n_features:
+    elif n_components > n_features:
         raise IndexError(f"More sources ({n_components}) than sensors ({n_features})")
 
     logger.info("jade -> Looking for %d sources", n_components)
