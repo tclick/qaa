@@ -180,7 +180,7 @@ def _jade(
 
     # Now we have nbcm = m(m+1)/2 cumulants matrices stored in a big m x m*nbcm array.
 
-    V = np.matrix(np.eye(n_components))
+    V = np.eye(n_components)
 
     On = 0.0
     Range = np.arange(n_components)
@@ -228,7 +228,7 @@ def _jade(
                 s = np.sin(theta)
                 G = np.matrix([[c, -s], [s, c]])
                 pair = np.array([p, q])
-                V[:, pair] *= G
+                V[:, pair] = V[:, pair] * G
                 CM[pair, :] = G.T * CM[pair, :]
                 CM[:, np.concatenate([Ip, Iq])] = np.append(
                     c * CM[:, Ip] + s * CM[:, Iq],
@@ -244,8 +244,7 @@ def _jade(
 
     # A separating matrix
     # ===================
-
-    B = V.T * B
+    B = V.T @ B
 
     # Permute the rows of the separating matrix B to get the most energetic components
     # first. Here the **signals** are normalized to unit variance.  Therefore, the sort
@@ -259,8 +258,8 @@ def _jade(
 
     logger.info("jade -> Fixing the signs")
     b = B[:, 0]
-    signs = np.array(np.sign(np.sign(b) + 0.1).T)[0]  # just a trick to deal with sign=0
-    B = np.diag(signs) * B
+    signs = np.sign(np.sign(b) + 0.1)  # just a trick to deal with sign=0
+    B = np.diag(signs) @ B
 
     return np.asarray(B.astype(origtype))
 
