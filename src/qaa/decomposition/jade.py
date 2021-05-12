@@ -195,15 +195,6 @@ def _jade(
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
-    g = np.zeros((2, nbcm))
-    gg = np.zeros((2, 2))
-    G = np.zeros((2, 2))
-    c = 0.0
-    s = 0.0
-    ton = 0.0
-    toff = 0.0
-    theta = 0.0
-    Gain = 0.0
 
     # Joint diagonalization proper
     logger.info("jade -> Contrast optimization by joint diagonalization")
