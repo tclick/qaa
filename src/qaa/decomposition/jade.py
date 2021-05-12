@@ -155,12 +155,6 @@ def _jade(
     # Storage for cumulant matrices
     CM = np.zeros((n_components, n_components * nbcm))
     R = np.matrix(np.eye(n_components))
-    # Temp for a cum. matrix
-    Qij = np.matrix(np.zeros((n_components, n_components)))
-    Xim = np.zeros(n_components)  # Temp
-    Xijm = np.zeros(n_components)  # Temp
-    # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
-    # GB: we don't translate that one because NumPy doesn't need Tony's rule
 
     # I am using a symmetry trick to save storage.  I should write a short note one of
     # these days explaining what is going on here.
