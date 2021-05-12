@@ -106,7 +106,7 @@ def _jade(
     # avoid messing with the original input. We also require double precision (float64)
     # and a numpy matrix type for X.
     origtype = arr.dtype  # remember to return matrix B of the same type
-    arr = check_array(arr, dtype=float)
+    arr = check_array(arr)
     arr = np.matrix(arr)
 
     # GB: n is number of input signals, T is number of samples
@@ -153,12 +153,12 @@ def _jade(
     dimsymm = n_components * (n_components + 1) // 2
     nbcm = dimsymm  # number of cumulant matrices
     # Storage for cumulant matrices
-    CM = np.zeros((n_components, n_components * nbcm), dtype=float)
-    R = np.matrix(np.eye(n_components, dtype=float))
+    CM = np.zeros((n_components, n_components * nbcm))
+    R = np.matrix(np.eye(n_components))
     # Temp for a cum. matrix
-    Qij = np.matrix(np.zeros((n_components, n_components), dtype=float))
-    Xim = np.zeros(n_components, dtype=float)  # Temp
-    Xijm = np.zeros(n_components, dtype=float)  # Temp
+    Qij = np.matrix(np.zeros((n_components, n_components)))
+    Xim = np.zeros(n_components)  # Temp
+    Xijm = np.zeros(n_components)  # Temp
     # Uns = numpy.ones([1,m], dtype=numpy.uint32)    # for convenience
     # GB: we don't translate that one because NumPy doesn't need Tony's rule
 
@@ -187,7 +187,7 @@ def _jade(
 
     # Now we have nbcm = m(m+1)/2 cumulants matrices stored in a big m x m*nbcm array.
 
-    V = np.matrix(np.eye(n_components, dtype=float))
+    V = np.matrix(np.eye(n_components))
 
     On = 0.0
     Range = np.arange(n_components)
@@ -202,9 +202,9 @@ def _jade(
     encore = True
     sweep = 0  # % sweep number
     updates = 0  # % Total number of rotations
-    g = np.zeros((2, nbcm), dtype=float)
-    gg = np.zeros((2, 2), dtype=float)
-    G = np.zeros((2, 2), dtype=float)
+    g = np.zeros((2, nbcm))
+    gg = np.zeros((2, 2))
+    G = np.zeros((2, 2))
     c = 0.0
     s = 0.0
     ton = 0.0
