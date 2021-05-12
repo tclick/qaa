@@ -171,12 +171,11 @@ def _jade(
         Range = Range + n_components
         for jm in range(im):
             Xijm = Xim * np.vstack(arr[:, jm])
-            Qij = (
+            CM[:, Range] = (
                 np.sqrt(2) * (Xijm * arr).T @ arr / n_samples
                 - R[:, im] * R[:, jm].T
                 - R[:, jm] * R[:, im].T
             )
-            CM[:, Range] = Qij
             Range = Range + n_components
 
     # Now we have nbcm = m(m+1)/2 cumulants matrices stored in a big m x m*nbcm array.
