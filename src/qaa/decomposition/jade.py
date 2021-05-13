@@ -106,8 +106,7 @@ def _jade(
     # avoid messing with the original input. We also require double precision (float64)
     # and a numpy matrix type for X.
     origtype = arr.dtype  # remember to return matrix B of the same type
-    arr = check_array(arr)
-    arr = np.matrix(arr)
+    arr = check_array(arr, dtype=float)
 
     # GB: n is number of input signals, T is number of samples
     n_samples, n_features = arr.shape
@@ -261,7 +260,7 @@ def _jade(
     signs = np.sign(np.sign(b) + 0.1)  # just a trick to deal with sign=0
     B = np.diag(signs) @ B
 
-    return np.asarray(B.astype(origtype))
+    return B.astype(origtype)
 
     # Revision history of MATLAB code:
     #
