@@ -226,10 +226,10 @@ def _jade(
                 upds += 1
                 c = np.cos(theta)
                 s = np.sin(theta)
-                G = np.matrix([[c, -s], [s, c]])
+                G = np.array([[c, -s], [s, c]])
                 pair = np.array([p, q])
-                V[:, pair] = V[:, pair] * G
-                CM[pair, :] = G.T * CM[pair, :]
+                V[:, pair] = V[:, pair] @ G
+                CM[pair, :] = G.T @ CM[pair, :]
                 CM[:, np.concatenate([Ip, Iq])] = np.append(
                     c * CM[:, Ip] + s * CM[:, Iq],
                     -s * CM[:, Ip] + c * CM[:, Iq],
