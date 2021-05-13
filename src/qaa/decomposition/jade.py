@@ -153,7 +153,7 @@ def _jade(
     nbcm = dimsymm  # number of cumulant matrices
     # Storage for cumulant matrices
     CM = np.zeros((n_components, n_components * nbcm))
-    R = np.matrix(np.eye(n_components))
+    R = np.eye(n_components)
 
     # I am using a symmetry trick to save storage.  I should write a short note one of
     # these days explaining what is going on here.
@@ -165,15 +165,17 @@ def _jade(
         Xijm = Xim ** 2
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
-        Qij = (Xijm * arr).T @ arr / n_samples - R - 2 * np.dot(R[:, im], R[:, im].T)
+        Rim = np.vstack(R[:, im])
+        Qij = (Xijm * arr).T @ arr / n_samples - R - 2 * (Rim @ Rim.T)
         CM[:, Range] = Qij
         Range = Range + n_components
         for jm in range(im):
             Xijm = Xim * np.vstack(arr[:, jm])
+            Rjm = np.vstack(R[:, jm])
             CM[:, Range] = (
                 np.sqrt(2) * (Xijm * arr).T @ arr / n_samples
-                - R[:, im] * R[:, jm].T
-                - R[:, jm] * R[:, im].T
+                - Rim @ Rjm.T
+                - Rjm @ Rim.T
             )
             Range = Range + n_components
 
@@ -187,7 +189,7 @@ def _jade(
         diag = np.diag(CM[:, Range])
         On += (diag * diag).sum(axis=0)
         Range += n_components
-    Off = (np.multiply(CM, CM).sum(axis=0)).sum(axis=0) - On
+    Off = ((CM * CM).sum(axis=0)).sum(axis=0) - On
 
     # % A statistically scaled threshold on `small" angles
     seuil = 1e-6 / np.sqrt(n_samples)
@@ -213,7 +215,7 @@ def _jade(
 
             # computation of Givens angle
             g = np.vstack([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
-            gg = np.dot(g, g.T)
+            gg = g @ g.T
             ton = gg[0, 0] - gg[1, 1]
             toff = gg[0, 1] + gg[1, 0]
             theta = 0.5 * np.arctan2(toff, ton + np.sqrt(ton * ton + toff * toff))
@@ -252,7 +254,7 @@ def _jade(
     logger.info("jade -> Sorting the components")
 
     A = linalg.pinv(B)
-    keys = np.argsort(np.multiply(A, A).sum(axis=0)).flatten()[::-1]
+    keys = np.argsort((A * A).sum(axis=0))[::-1]
     B = B[keys, :]
 
     logger.info("jade -> Fixing the signs")
