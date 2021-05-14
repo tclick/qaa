@@ -445,8 +445,8 @@ class JadeICA(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         arr -= self.mean_
-        signal: NDArray[(Any, ...), Float] = self.components_ @ arr.T
-        return signal.T
+        signal: NDArray[(Any, ...), Float] = arr @ self.components_.T
+        return signal
 
     def fit_transform(
         self,
@@ -474,8 +474,8 @@ class JadeICA(TransformerMixin, BaseEstimator):
         self.components_ = _jade(arr, n_components=self.n_components)
 
         arr -= self.mean_
-        signal: NDArray[(Any, ...), Float] = self.components_ @ arr.T
-        return signal.T
+        signal: NDArray[(Any, ...), Float] = arr @ self.components_.T
+        return signal
 
     def inverse_transform(
         self, arr: NDArray[(Any, ...), Float]
