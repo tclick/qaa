@@ -142,23 +142,21 @@ def _jade(
     # these days explaining what is going on here.
     # will index the columns of CM where to store the cum. mats.
     Range = np.arange(n_components)
+    sqrt2 = np.sqrt(2)
 
     for im in range(n_components):
-        Xim = np.vstack(arr[:, im])
+        Xim = np.c_[arr[:, im]]
         Xijm = Xim ** 2
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
-        Rim = np.vstack(R[:, im])
-        Qij = (Xijm * arr).T @ arr / n_samples - R - 2 * (Rim @ Rim.T)
-        CM[:, Range] = Qij
-        Range = Range + n_components
+        Rim = np.c_[R[:, im]]
+        CM[:, Range] = (Xijm * arr).T @ arr / n_samples - R - 2 * (Rim @ Rim.T)
+        Range += n_components
         for jm in range(im):
-            Xijm = Xim * np.vstack(arr[:, jm])
-            Rjm = np.vstack(R[:, jm])
+            Xijm = Xim * np.c_[arr[:, jm]]
+            Rjm = np.c_[R[:, jm]]
             CM[:, Range] = (
-                np.sqrt(2) * (Xijm * arr).T @ arr / n_samples
-                - Rim @ Rjm.T
-                - Rjm @ Rim.T
+                sqrt2 * (Xijm * arr).T @ arr / n_samples - Rim @ Rjm.T - Rjm @ Rim.T
             )
             Range = Range + n_components
 
@@ -166,13 +164,13 @@ def _jade(
 
     V = np.eye(n_components)
 
-    On = 0.0
+    On = np.zeros(CM.shape[0])
     Range = np.arange(n_components)
     for _ in range(nbcm):
         diag = np.diag(CM[:, Range])
-        On += (diag * diag).sum(axis=0)
+        On += np.sum(diag ** 2, axis=0)
         Range += n_components
-    Off = ((CM * CM).sum(axis=0)).sum(axis=0) - On
+    Off = np.sum(CM ** 2) - On
 
     # % A statistically scaled threshold on `small" angles
     seuil = 1e-6 / np.sqrt(n_samples)
@@ -195,7 +193,7 @@ def _jade(
             Iq = np.arange(q, n_components * nbcm, n_components)
 
             # computation of Givens angle
-            g = np.vstack([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
+            g = np.c_[[CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]]]
             gg = g @ g.T
             ton = gg[0, 0] - gg[1, 1]
             toff = gg[0, 1] + gg[1, 0]
@@ -212,11 +210,9 @@ def _jade(
                 pair = np.array([p, q])
                 V[:, pair] = V[:, pair] @ G
                 CM[pair, :] = G.T @ CM[pair, :]
-                CM[:, np.concatenate([Ip, Iq])] = np.append(
-                    c * CM[:, Ip] + s * CM[:, Iq],
-                    -s * CM[:, Ip] + c * CM[:, Iq],
-                    axis=1,
-                )
+                cIp = np.c_[CM[:, Ip]]
+                cIq = np.c_[CM[:, Iq]]
+                CM[:, np.r_[Ip, Iq]] = np.c_[c * cIp + s * cIq, -s * cIp + c * cIq]
                 On += Gain
                 Off -= Gain
 
