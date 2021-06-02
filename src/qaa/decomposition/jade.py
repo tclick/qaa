@@ -21,6 +21,7 @@ https://github.com/gvacaliuc/jade_c/blob/master/jade.py
 from __future__ import annotations
 
 import logging
+from itertools import combinations
 from typing import Any
 from typing import Optional
 
@@ -37,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 def _jade(
-    arr: NDArray[(Any, ...), Float], n_components: Optional[int] = None
+    arr: NDArray[(Any, ...), Float], n_components: int = 1
 ) -> NDArray[(Any, ...), Float]:
     """Blind separation of real signals with JADE.
 
@@ -52,7 +53,7 @@ def _jade(
     ----------
     arr : NDArray
         a data matrix (n_features, n_samples)
-    n_components : int, default=None
+    n_components : int
         output matrix B has size mxn so that only m sources are extracted.  This is done
         by restricting the operation of jadeR to the m first principal components.
         Defaults to None, in which case :math:`m = n`.
@@ -66,11 +67,6 @@ def _jade(
         :math:`pinv(B)` are in order of decreasing norm; this has the effect that the
         `most energetically significant` components appear first in the rows of
         :math:`Y = B * X`.
-
-    Raises
-    ------
-    IndexError
-        if :math:`m > n_features`
 
     Notes
     -----
@@ -102,22 +98,9 @@ def _jade(
     Copyright original Matlab code : Jean-Francois Cardoso <cardoso@sig.enst.fr>
     Copyright Numpy translation : Gabriel Beckers <gabriel@gbeckers.nl>
     """
-    # GB: we do some checking of the input arguments and copy data to new variables to
-    # avoid messing with the original input. We also require double precision (float64)
-    # and a numpy matrix type for X.
-    origtype = arr.dtype  # remember to return matrix B of the same type
-    arr = check_array(arr, dtype=float)
-
-    # GB: n is number of input signals, T is number of samples
-    n_samples, n_features = arr.shape
-
-    if n_components is None:
-        n_components = n_features  # Number of sources defaults to # of sensors
-    elif n_components > n_features:
-        raise IndexError(f"More sources ({n_components}) than sensors ({n_features})")
-
     logger.info("jade -> Looking for %d sources", n_components)
     logger.info("jade -> Removing the mean value")
+    n_samples, _ = arr.shape
     arr -= arr.mean(axis=0)
 
     # whitening & projection onto signal subspace
@@ -159,23 +142,21 @@ def _jade(
     # these days explaining what is going on here.
     # will index the columns of CM where to store the cum. mats.
     Range = np.arange(n_components)
+    sqrt2 = np.sqrt(2)
 
     for im in range(n_components):
-        Xim = np.vstack(arr[:, im])
+        Xim = np.c_[arr[:, im]]
         Xijm = Xim ** 2
         # Note to myself: the -R on next line can be removed: it does not affect
         # the joint diagonalization criterion
-        Rim = np.vstack(R[:, im])
-        Qij = (Xijm * arr).T @ arr / n_samples - R - 2 * (Rim @ Rim.T)
-        CM[:, Range] = Qij
-        Range = Range + n_components
+        Rim = np.c_[R[:, im]]
+        CM[:, Range] = (Xijm * arr).T @ arr / n_samples - R - 2 * (Rim @ Rim.T)
+        Range += n_components
         for jm in range(im):
-            Xijm = Xim * np.vstack(arr[:, jm])
-            Rjm = np.vstack(R[:, jm])
+            Xijm = Xim * np.c_[arr[:, jm]]
+            Rjm = np.c_[R[:, jm]]
             CM[:, Range] = (
-                np.sqrt(2) * (Xijm * arr).T @ arr / n_samples
-                - Rim @ Rjm.T
-                - Rjm @ Rim.T
+                sqrt2 * (Xijm * arr).T @ arr / n_samples - Rim @ Rjm.T - Rjm @ Rim.T
             )
             Range = Range + n_components
 
@@ -183,13 +164,13 @@ def _jade(
 
     V = np.eye(n_components)
 
-    On = 0.0
+    On = np.zeros(CM.shape[0])
     Range = np.arange(n_components)
     for _ in range(nbcm):
         diag = np.diag(CM[:, Range])
-        On += (diag * diag).sum(axis=0)
+        On += np.sum(diag ** 2, axis=0)
         Range += n_components
-    Off = ((CM * CM).sum(axis=0)).sum(axis=0) - On
+    Off = np.sum(CM ** 2) - On
 
     # % A statistically scaled threshold on `small" angles
     seuil = 1e-6 / np.sqrt(n_samples)
@@ -200,9 +181,7 @@ def _jade(
     # Joint diagonalization proper
     logger.info("jade -> Contrast optimization by joint diagonalization")
 
-    counters = tuple(
-        (p, q) for p in range(n_components - 1) for q in range(p + 1, n_components)
-    )
+    counters = list(combinations(range(n_components), 2))
     while encore:
         encore = False
         logger.info("jade -> Sweep #%3d", sweep)
@@ -214,7 +193,7 @@ def _jade(
             Iq = np.arange(q, n_components * nbcm, n_components)
 
             # computation of Givens angle
-            g = np.vstack([CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]])
+            g = np.c_[[CM[p, Ip] - CM[q, Iq], CM[p, Iq] + CM[q, Ip]]]
             gg = g @ g.T
             ton = gg[0, 0] - gg[1, 1]
             toff = gg[0, 1] + gg[1, 0]
@@ -231,11 +210,9 @@ def _jade(
                 pair = np.array([p, q])
                 V[:, pair] = V[:, pair] @ G
                 CM[pair, :] = G.T @ CM[pair, :]
-                CM[:, np.concatenate([Ip, Iq])] = np.append(
-                    c * CM[:, Ip] + s * CM[:, Iq],
-                    -s * CM[:, Ip] + c * CM[:, Iq],
-                    axis=1,
-                )
+                cIp = np.c_[CM[:, Ip]]
+                cIq = np.c_[CM[:, Iq]]
+                CM[:, np.r_[Ip, Iq]] = np.c_[c * cIp + s * cIq, -s * cIp + c * cIq]
                 On += Gain
                 Off -= Gain
 
@@ -262,7 +239,7 @@ def _jade(
     signs = np.sign(np.sign(b) + 0.1)  # just a trick to deal with sign=0
     B = np.diag(signs) @ B
 
-    return B.astype(origtype)
+    return B
 
     # Revision history of MATLAB code:
     #
@@ -424,9 +401,30 @@ class JadeICA(TransformerMixin, BaseEstimator):
         Returns
         -------
         self
+
+        Raises
+        ------
+        IndexError
+            if :math:`m > n_features`
         """
+        # GB: we do some checking of the input arguments and copy data to new variables to
+        # avoid messing with the original input. We also require double precision (float64)
+        # and a numpy matrix type for X.
+        origtype = arr.dtype  # remember to return matrix B of the same type
+        arr = check_array(arr, dtype=float)
+
+        # GB: n is number of input signals, T is number of samples
+        _, n_features = arr.shape
+
+        if self.n_components is None:
+            self.n_components = n_features  # Number of sources defaults to # of sensors
+        elif self.n_components > n_features:
+            raise IndexError(
+                f"More sources ({self.n_components}) than sensors ({n_features})"
+            )
+
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr, n_components=self.n_components)
+        self.components_ = _jade(arr, n_components=self.n_components).astype(origtype)
         return self
 
     def transform(self, arr: NDArray[(Any, ...), Float]) -> NDArray[(Any, ...), Float]:
@@ -469,9 +467,30 @@ class JadeICA(TransformerMixin, BaseEstimator):
         -------
         NDArray
             Unmixed signal array
+
+        Raises
+        ------
+        IndexError
+            if :math:`m > n_features`
         """
+        # GB: we do some checking of the input arguments and copy data to new variables to
+        # avoid messing with the original input. We also require double precision (float64)
+        # and a numpy matrix type for X.
+        origtype = arr.dtype  # remember to return matrix B of the same type
+        arr1 = check_array(arr, dtype=float)
+
+        # GB: n is number of input signals, T is number of samples
+        _, n_features = arr.shape
+
+        if self.n_components is None:
+            self.n_components = n_features  # Number of sources defaults to # of sensors
+        elif self.n_components > n_features:
+            raise IndexError(
+                f"More sources ({self.n_components}) than sensors ({n_features})"
+            )
+
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr, n_components=self.n_components)
+        self.components_ = _jade(arr1, n_components=self.n_components).astype(origtype)
 
         arr -= self.mean_
         signal: NDArray[(Any, ...), Float] = arr @ self.components_.T
