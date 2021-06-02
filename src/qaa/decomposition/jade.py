@@ -21,6 +21,7 @@ https://github.com/gvacaliuc/jade_c/blob/master/jade.py
 from __future__ import annotations
 
 import logging
+from itertools import combinations
 from typing import Any
 from typing import Optional
 
@@ -182,9 +183,7 @@ def _jade(
     # Joint diagonalization proper
     logger.info("jade -> Contrast optimization by joint diagonalization")
 
-    counters = tuple(
-        (p, q) for p in range(n_components - 1) for q in range(p + 1, n_components)
-    )
+    counters = list(combinations(range(n_components), 2))
     while encore:
         encore = False
         logger.info("jade -> Sweep #%3d", sweep)
