@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 def _jade(
-    arr: NDArray[(Any, ...), Float], n_components: Optional[int] = None
+    arr: NDArray[(Any, ...), Float], n_components: int = 1
 ) -> NDArray[(Any, ...), Float]:
     """Blind separation of real signals with JADE.
 
@@ -52,7 +52,7 @@ def _jade(
     ----------
     arr : NDArray
         a data matrix (n_features, n_samples)
-    n_components : int, default=None
+    n_components : int
         output matrix B has size mxn so that only m sources are extracted.  This is done
         by restricting the operation of jadeR to the m first principal components.
         Defaults to None, in which case :math:`m = n`.
@@ -66,11 +66,6 @@ def _jade(
         :math:`pinv(B)` are in order of decreasing norm; this has the effect that the
         `most energetically significant` components appear first in the rows of
         :math:`Y = B * X`.
-
-    Raises
-    ------
-    IndexError
-        if :math:`m > n_features`
 
     Notes
     -----
@@ -102,22 +97,9 @@ def _jade(
     Copyright original Matlab code : Jean-Francois Cardoso <cardoso@sig.enst.fr>
     Copyright Numpy translation : Gabriel Beckers <gabriel@gbeckers.nl>
     """
-    # GB: we do some checking of the input arguments and copy data to new variables to
-    # avoid messing with the original input. We also require double precision (float64)
-    # and a numpy matrix type for X.
-    origtype = arr.dtype  # remember to return matrix B of the same type
-    arr = check_array(arr, dtype=float)
-
-    # GB: n is number of input signals, T is number of samples
-    n_samples, n_features = arr.shape
-
-    if n_components is None:
-        n_components = n_features  # Number of sources defaults to # of sensors
-    elif n_components > n_features:
-        raise IndexError(f"More sources ({n_components}) than sensors ({n_features})")
-
     logger.info("jade -> Looking for %d sources", n_components)
     logger.info("jade -> Removing the mean value")
+    n_samples, _ = arr.shape
     arr -= arr.mean(axis=0)
 
     # whitening & projection onto signal subspace
@@ -262,7 +244,7 @@ def _jade(
     signs = np.sign(np.sign(b) + 0.1)  # just a trick to deal with sign=0
     B = np.diag(signs) @ B
 
-    return B.astype(origtype)
+    return B
 
     # Revision history of MATLAB code:
     #
@@ -424,9 +406,30 @@ class JadeICA(TransformerMixin, BaseEstimator):
         Returns
         -------
         self
+
+        Raises
+        ------
+        IndexError
+            if :math:`m > n_features`
         """
+        # GB: we do some checking of the input arguments and copy data to new variables to
+        # avoid messing with the original input. We also require double precision (float64)
+        # and a numpy matrix type for X.
+        origtype = arr.dtype  # remember to return matrix B of the same type
+        arr = check_array(arr, dtype=float)
+
+        # GB: n is number of input signals, T is number of samples
+        _, n_features = arr.shape
+
+        if self.n_components is None:
+            self.n_components = n_features  # Number of sources defaults to # of sensors
+        elif self.n_components > n_features:
+            raise IndexError(
+                f"More sources ({self.n_components}) than sensors ({n_features})"
+            )
+
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr, n_components=self.n_components)
+        self.components_ = _jade(arr, n_components=self.n_components).astype(origtype)
         return self
 
     def transform(self, arr: NDArray[(Any, ...), Float]) -> NDArray[(Any, ...), Float]:
@@ -469,9 +472,30 @@ class JadeICA(TransformerMixin, BaseEstimator):
         -------
         NDArray
             Unmixed signal array
+
+        Raises
+        ------
+        IndexError
+            if :math:`m > n_features`
         """
+        # GB: we do some checking of the input arguments and copy data to new variables to
+        # avoid messing with the original input. We also require double precision (float64)
+        # and a numpy matrix type for X.
+        origtype = arr.dtype  # remember to return matrix B of the same type
+        arr1 = check_array(arr, dtype=float)
+
+        # GB: n is number of input signals, T is number of samples
+        _, n_features = arr.shape
+
+        if self.n_components is None:
+            self.n_components = n_features  # Number of sources defaults to # of sensors
+        elif self.n_components > n_features:
+            raise IndexError(
+                f"More sources ({self.n_components}) than sensors ({n_features})"
+            )
+
         self.mean_ = arr.mean(axis=0)
-        self.components_ = _jade(arr, n_components=self.n_components)
+        self.components_ = _jade(arr1, n_components=self.n_components).astype(origtype)
 
         arr -= self.mean_
         signal: NDArray[(Any, ...), Float] = arr @ self.components_.T
