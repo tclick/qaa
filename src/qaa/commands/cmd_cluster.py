@@ -179,6 +179,7 @@ def cli(
         GaussianMixture(
             n_components=n_clusters,
             covariance_type="spherical",
+            n_init=10,
             max_iter=max_iter,
             tol=tol,
         )
