@@ -200,7 +200,7 @@ def cli(
     unique_clusters = data["Cluster"].unique()
     for _ in unique_clusters:
         cluster_frames = data.where(data["Cluster"] == _).dropna(axis="rows")["Frame"]
-        filename = out_dir.joinpath(f"{data_method}-cluster{_}_frames.csv")
+        filename = out_dir.joinpath(f"{data_method}_cluster{_}_frames.csv")
         with filename.open(mode="w") as w:
             np.savetxt(filename.as_posix(), cluster_frames.values, delimiter=",")
 
