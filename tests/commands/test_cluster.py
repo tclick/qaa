@@ -161,3 +161,4 @@ class TestCluster:
         assert result.success
         assert logfile.exists()
         assert len(tuple(tmp_path.glob("*.pdb"))) == 3
+        assert len(tuple(tmp_path.glob("pca_cluster*_frames.csv"))) == 3

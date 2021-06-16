@@ -42,3 +42,4 @@ CLUSTNPY = resource_filename(
 LABELS = resource_filename(
     __name__, Path().joinpath("data", "pca-labels.npy").as_posix()
 )
+FRAMES = resource_filename(__name__, Path().joinpath("data", "frames.csv").as_posix())
