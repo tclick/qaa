@@ -198,10 +198,13 @@ def cli(
 
     data = pd.concat([labels, data.reset_index()], axis=1)
     unique_clusters = data["Cluster"].unique()
-    for _ in unique_clusters:
-        cluster_frames = data.where(data["Cluster"] == _).dropna(axis="rows")["Frame"]
-        filename = out_dir.joinpath(f"{data_method}_cluster{_}_frames.csv")
+    for clustnum in unique_clusters:
+        cluster_frames = data.where(data["Cluster"] == clustnum).dropna(axis="rows")
+        cluster_frames = cluster_frames["Frame"]
+        filename = out_dir.joinpath(f"{data_method}_cluster{clustnum}_frames.csv")
+        logger.info("Cluster %d has %d frames.", clustnum, cluster_frames.size)
         with filename.open(mode="w") as w:
+            logger.info("Saving frame data for cluster %d to %s", clustnum, filename)
             np.savetxt(
                 filename.as_posix(), cluster_frames.astype(int).values, delimiter=","
             )
