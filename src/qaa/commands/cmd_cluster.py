@@ -202,7 +202,9 @@ def cli(
         cluster_frames = data.where(data["Cluster"] == _).dropna(axis="rows")["Frame"]
         filename = out_dir.joinpath(f"{data_method}_cluster{_}_frames.csv")
         with filename.open(mode="w") as w:
-            np.savetxt(filename.as_posix(), cluster_frames.values, delimiter=",")
+            np.savetxt(
+                filename.as_posix(), cluster_frames.astype(int).values, delimiter=","
+            )
 
     # Prepare dataframe
     with out_dir.joinpath(f"{data_method}-cluster.csv").open(mode="w") as w:
