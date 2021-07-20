@@ -15,6 +15,7 @@
 """Draw and save figures for QAA."""
 import itertools
 from pathlib import Path
+from typing import List
 from typing import Optional
 
 import holoviews as hv
@@ -37,6 +38,7 @@ class Figure:
         *,
         azim: int = 120,
         elevation: int = 30,
+        cmap: List[List[float, ...]] = glasbey_cool,
     ) -> None:
         """Visualize data via a graphical image.
 
@@ -46,10 +48,13 @@ class Figure:
             Azimuth rotation for 3D plot
         elevation : int
             Elevation of 3D plot
+        cmap : List[List[float, ...]
+            Colormap
         """
         self._figure: Optional[hv.Layout] = None
         self._azimuth: int = azim
         self._elevation: int = elevation
+        self._cmap: List[List[float, ...]] = cmap
 
     @property
     def figure(self) -> hv.Layout:
@@ -139,7 +144,7 @@ class Figure:
                 show_legend=False,
                 marker=".",
                 s=5,
-                cmap=glasbey_cool,
+                cmap=self._cmap,
                 color_index="Cluster",
             )
             for i, j in itertools.combinations(kdims, 2)
