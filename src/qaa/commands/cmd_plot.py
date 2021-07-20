@@ -19,8 +19,11 @@ from pathlib import Path
 from typing import Tuple
 
 import click
+import holoviews as hv
 import numpy as np
 import pandas as pd
+from colorcet import glasbey
+from colorcet import glasbey_cool
 
 from .. import create_logging_dict
 from .. import PathLike
@@ -62,6 +65,15 @@ from ..libs.figure import Figure
     show_default=True,
     type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
     help="Image file",
+)
+@click.option(
+    "-r",
+    "--rxnfile",
+    metavar="FILE",
+    default=Path.cwd().joinpath("rxncoord.dat"),
+    show_default=True,
+    type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
+    help="Reaction coordinate file",
 )
 @click.option(
     "-l",
@@ -108,12 +120,22 @@ from ..libs.figure import Figure
     help="Elevation of 3D plot",
 )
 @click.option("--cluster", is_flag=True, help="Cluster analysis")
+@click.option("--rxn", is_flag=True, help="Reaction coordinate analysis")
+@click.option(
+    "--nbins",
+    metavar="NBINS",
+    default=50,
+    show_default=True,
+    type=click.IntRange(min=1, clamp=True),
+    help="Number of bins for reaction coordinate histogram",
+)
 @click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
     infile: PathLike,
     label: PathLike,
     centroid: PathLike,
     outfile: PathLike,
+    rxnfile: PathLike,
     logfile: PathLike,
     axes: Tuple[int, int, int],
     method: bool,
@@ -121,6 +143,8 @@ def cli(
     azimuth: int,
     elevation: int,
     cluster: bool,
+    rxn: bool,
+    nbins: int,
     verbose: bool,
 ) -> None:
     """Visualize the data."""
@@ -167,6 +191,30 @@ def cli(
             centroid_data = centroid_data.set_index("Cluster")
             centroid_data.columns = features
             centroid_data = centroid_data.reset_index()
+    elif rxn:
+        # Read reaction coordinates
+        rxn_coord = np.loadtxt(rxnfile)
+        frequencies, edges = np.histogram(rxn_coord, bins=nbins)
+        frequencies = frequencies / frequencies.sum()
+
+        # Plot histograms
+        hist = hv.Histogram((frequencies, edges))
+        hist_log = hv.Histogram((np.log10(frequencies), edges))
+        hist_graph = hist + hist_log
+        hv.output(dpi=dpi)
+        hv.save(
+            hist_graph,
+            filename=f"rxncoord_hist{Path(outfile).suffix}",
+            fmt=Path(outfile).suffix[1:],
+            backend="matplotlib",
+            title="Histogram of reaction coordinates",
+        )
+
+        # Create clusters
+        binwidth = edges[1] - edges[0]
+        centers = (edges[1:] + edges[:-1]) / 2 - binwidth
+        cluster = np.floor((rxn_coord - centers[0]) / binwidth).astype(int)
+        data["Cluster"] = cluster.copy()
     else:
         n_samples, _ = data.shape
         label_data = pd.Series(np.zeros(n_samples, dtype=int), name="Cluster")
@@ -176,7 +224,8 @@ def cli(
             data["Cluster"] = label_data.copy()
 
     # Prepare cluster analysis
-    figure = Figure(azim=azimuth, elevation=elevation)
+    cmap = glasbey_cool if cluster else glasbey
+    figure = Figure(azim=azimuth, elevation=elevation, cmap=cmap)
     logger.info("Preparing figures")
     figure.draw(data, centers=centroid_data)
 
