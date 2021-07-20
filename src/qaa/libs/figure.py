@@ -38,7 +38,7 @@ class Figure:
         *,
         azim: int = 120,
         elevation: int = 30,
-        cmap: List[List[float, ...]] = glasbey_cool,
+        cmap: List[List[float]] = glasbey_cool,
     ) -> None:
         """Visualize data via a graphical image.
 
@@ -48,13 +48,13 @@ class Figure:
             Azimuth rotation for 3D plot
         elevation : int
             Elevation of 3D plot
-        cmap : List[List[float, ...]
+        cmap : List[List[float]
             Colormap
         """
         self._figure: Optional[hv.Layout] = None
         self._azimuth: int = azim
         self._elevation: int = elevation
-        self._cmap: List[List[float, ...]] = cmap
+        self._cmap: List[List[float]] = cmap
 
     @property
     def figure(self) -> hv.Layout:
