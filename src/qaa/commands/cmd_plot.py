@@ -213,8 +213,8 @@ def cli(
         # Create clusters
         binwidth = edges[1] - edges[0]
         centers = (edges[1:] + edges[:-1]) / 2 - binwidth
-        cluster = np.floor((rxn_coord - centers[0]) / binwidth).astype(int)
-        data["Cluster"] = cluster.copy()
+        bins = np.floor((rxn_coord - centers[0]) / binwidth).astype(int)
+        data["Cluster"] = bins.copy()
     else:
         n_samples, _ = data.shape
         label_data = pd.Series(np.zeros(n_samples, dtype=int), name="Cluster")
