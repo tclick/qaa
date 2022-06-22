@@ -18,15 +18,15 @@ import os
 from typing import Any
 from typing import Dict
 from typing import TYPE_CHECKING
-from typing import TypeVar
+from typing import Union
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 if TYPE_CHECKING:
-    PathLike = TypeVar("PathLike", str, os.PathLike[str])
+    PathLike = Union[str, bytes, os.PathLike[str]]
 else:
-    PathLike = TypeVar("PathLike", str, os.PathLike)
+    PathLike = Union[str, bytes, os.PathLike]
 
 __version__: str = "3.0.0-rc3"
 
@@ -40,7 +40,7 @@ _MASK: Dict[str, str] = dict(
 )
 
 
-def create_logging_dict(logfile: PathLike) -> Dict[str, Any]:
+def create_logging_dict(logfile: PathLike, level: int) -> Dict[str, Any]:
     """Configure the logger.
 
     Parameters
@@ -78,13 +78,13 @@ def create_logging_dict(logfile: PathLike) -> Dict[str, Any]:
         handlers=dict(
             console={
                 "class": "logging.StreamHandler",
-                "level": "INFO",
+                "level": level,
                 "formatter": "standard",
             },
             file={
                 "class": "logging.FileHandler",
                 "filename": logfile,
-                "level": "INFO",
+                "level": level,
                 "mode": "w",
                 "formatter": "detailed",
             },
