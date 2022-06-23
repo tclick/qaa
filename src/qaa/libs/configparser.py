@@ -17,6 +17,7 @@ import logging
 from collections import Counter
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Optional
 
 import pylibyaml
@@ -37,15 +38,32 @@ class ConfigParser:
             name of configuration file
         """
         self._filename: PathLike = filename
-        self._config: Optional[Dict[str, Any]] = None
+        self._config: Dict[str, Any] = {}
+        self.trajfiles: List[str] = []
+        self.trajform: List[str] = []
 
     def load(self) -> None:
         with open(self._filename) as config_file:
             self._config = yaml.safe_load(config_file)
             if "_config" not in locals():
                 IOError(
-                    f"Issue opening and reading configuration file: {self._filename}"
+                    "Issue opening and reading configuration file: {!r}".format(
+                        self._filename
+                    )
                 )
 
     def parse(self) -> None:
         """Parse the configuration file."""
+        for key, value in self._config.items():
+            setattr(self, key, value)
+
+        if self.trajform:
+            filename = self.trajform[0]
+            start, stop = self.trajform[1].split("-")
+            values = Counter(filename)
+            padval = values["*"]
+            prefix, suffix = filename.split("*" * padval)
+            self.trajfiles = [
+                "{}{:0{}d}{}".format(prefix, _, padval, suffix)
+                for _ in range(int(start), int(stop) + 1)
+            ]
