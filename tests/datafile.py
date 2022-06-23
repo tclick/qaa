@@ -43,3 +43,15 @@ LABELS = resource_filename(
     __name__, Path().joinpath("data", "pca-labels.npy").as_posix()
 )
 FRAMES = resource_filename(__name__, Path().joinpath("data", "frames.csv").as_posix())
+
+TRAJFORM = resource_filename(
+    __name__, Path().joinpath("data", "config-trajform.yaml").as_posix()
+)
+
+TRAJFILES = resource_filename(
+    __name__, Path().joinpath("data", "config-trajfiles.yaml").as_posix()
+)
+
+BAD_CONFIG = resource_filename(
+    __name__, Path().joinpath("data", "config-bad.yaml").as_posix()
+)
