@@ -36,7 +36,8 @@ class Trajectory:
         trajectory: PathLike,
         skip: int = 1,
         mask: str = "protein and name CA",
-        reslist: str = "1:10",
+        start_res: int = 1,
+        end_res: int = 10
     ):
         """Molecular dynamics (MD) trajectory
 
@@ -50,11 +51,13 @@ class Trajectory:
             number of frames to skip
         mask : str
             atom selection
-        reslist : str
-            range of residues for calculations
+        start_res : int
+            first residue number of the protein
+        end_res : int
+            final residue number of the protein
         """
         self._universe: mda.Universe = mda.Universe(topology, trajectory)
-        self._mask: str = f"{mask} and resnum {reslist.replace('-', ':')}"
+        self._mask: str = f"{mask} and resnum {start_res}:{end_res}"
         self._selection: mda.AtomGroup = self._universe.select_atoms(self._mask)
         self._skip: int = skip
 
