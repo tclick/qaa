@@ -57,6 +57,12 @@ class ConfigParser:
         for key, value in self._config.items():
             setattr(self, key, value)
 
+        if self.trajform and self.trajfiles:
+            raise ValueError(
+                "You cannot have both 'trajform' and 'trajfiles' "
+                "defined in your configuration file. Please edit your file."
+            )
+
         if self.trajform:
             filename = self.trajform[0]
             start, stop = self.trajform[1].split("-")
