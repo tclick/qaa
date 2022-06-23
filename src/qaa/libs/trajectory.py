@@ -37,7 +37,7 @@ class Trajectory:
         skip: int = 1,
         mask: str = "protein and name CA",
         start_res: int = 1,
-        end_res: int = 10
+        end_res: int = 10,
     ):
         """Molecular dynamics (MD) trajectory
 
