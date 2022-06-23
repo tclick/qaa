@@ -1,0 +1,25 @@
+analysis: "coordinate" # Can either be 'coordinate' or 'dihedral'
+verbose: False # Verbose output
+debug: False # Ouput debugging information
+graph: False # Save graphical data
+
+# Runs setup calculations: Cum. Sum. of cov. spectrum and unit radius neighbor search.
+setup: False
+
+# Topology and trajectory files
+topology: "pentapeptide/init-ww-penta.pdb"
+# Define trajectory filenames using regular expressions and zero-padded numbers
+trajform:
+    - "pnas2013-native-1-protein-***.dcd"
+    - "1-10"
+
+pname: "pentapeptide" # name of protein
+startRes: 1 # Starting residue number
+endRes: 5 # Final residue number
+icaDim: 8 # Number of dimensions calculated
+sliceVal: 1 # Number of frames to use
+
+# Locations of output data
+saveDir: "savefiles/" # Output subdirectory
+logfile: "log/log.txt"
+figDir: "savefiles/figures/" # Figure subdirectory if 'graph: True'
