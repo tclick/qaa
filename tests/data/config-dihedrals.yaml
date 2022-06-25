@@ -1,4 +1,4 @@
-analysis: "coordinate" # Can either be 'coordinate' or 'dihedral'
+analysis: "dihedrals" # Can either be 'coordinate' or 'dihedral'
 verbose: False # Verbose output
 debug: False # Ouput debugging information
 graph: False # Save graphical data
@@ -13,8 +13,8 @@ trajfiles:
   - "protein.nc"
 
 pname: "protein" # name of protein
-startRes: 1 # Starting residue number
-endRes: 133 # Final residue number
+startRes: 2 # Starting residue number
+endRes: 132 # Final residue number
 icaDim: 8 # Number of dimensions calculated
 sliceVal: 1 # Number of frames to use
 
