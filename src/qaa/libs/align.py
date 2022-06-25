@@ -14,25 +14,23 @@
 # --------------------------------------------------------------------------------------
 """Functions to align coordinate files."""
 import logging
-from typing import Any
 
 import numpy as np
-from nptyping import Float
-from nptyping import NDArray
+import numpy.typing as npt
+from sklearn.metrics import mean_squared_error
 
 from .kabsch import Kabsch
-from .utils import rmse
 
 logger = logging.getLogger(__name__)
 
 
 def align_trajectory(
-    mobile: NDArray[(Any, ...), Float],
-    reference: NDArray[(Any, ...), Float],
+    mobile: npt.NDArray[np.float_],
+    reference: npt.NDArray[np.float_],
     *,
     tol: float = 1e-6,
     verbose: bool = True,
-) -> NDArray[(Any, ...), Float]:
+) -> npt.NDArray[np.float_]:
     """Align `mobile` to `reference` using the Kabsch method.
 
     Parameters
@@ -57,8 +55,8 @@ def align_trajectory(
     while error >= tol:
         kabsch = Kabsch(verbose=verbose)
         mobile = np.asarray([kabsch.fit_transform(_, reference) for _ in mobile])
-        new_reference: NDArray[(Any, ...), Float] = mobile.mean(axis=0)
-        error = rmse(new_reference, reference)
+        new_reference: npt.NDArray[np.float_] = mobile.mean(axis=0)
+        error = mean_squared_error(new_reference, reference, squared=False)
         reference = new_reference.copy()
 
         iter += 1
