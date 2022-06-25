@@ -18,6 +18,7 @@ The class will access the molecular dynamics trajectory and offer access to the
 coordinates or calculate the dihedral angles.
 """
 import logging
+from typing import Sequence
 
 import MDAnalysis as mda
 import numpy as np
@@ -33,7 +34,7 @@ class Trajectory:
     def __init__(
         self,
         topology: PathLike,
-        trajectory: PathLike,
+        *trajectory: Sequence[PathLike],
         skip: int = 1,
         mask: str = "protein and name CA",
         start_res: int = 1,
