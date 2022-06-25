@@ -26,11 +26,12 @@ from typing import Any
 from typing import Optional
 from typing import Tuple
 
-from nptyping import Float
-from nptyping import NDArray
+import numpy as np
+import numpy.typing as npt
 from scipy import linalg
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
+from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.validation import check_array
 from sklearn.utils.validation import check_is_fitted
@@ -51,13 +52,15 @@ class Kabsch(TransformerMixin, BaseEstimator):
         verbose : bool
             Print data to the log
         """
-        self.rotation_: NDArray[(Any, ...), Float]
-        self.translation_: NDArray[(Any, ...), Float]
+        self.rotation_: npt.NDArray[Any, np.float_]
+        self.translation_: npt.NDArray[Any, np.float_]
         self.error: float
         self.verbose = verbose
 
     def fit(
-        self, mobile: NDArray[(Any, ...), Float], reference: NDArray[(Any, ...), Float]
+        self,
+        mobile: npt.NDArray[Any, np.float_],
+        reference: npt.NDArray[Any, np.float_],
     ) -> Kabsch:
         """Center and fit `mobile` onto `reference` using the Kabsch method.
 
@@ -82,9 +85,9 @@ class Kabsch(TransformerMixin, BaseEstimator):
 
     def transform(
         self,
-        mobile: NDArray[(Any, ...), Float],
-        reference: Optional[NDArray[(Any, ...), Float]] = None,
-    ) -> NDArray[(Any, ...), Float]:
+        mobile: npt.NDArray[Any, np.float_],
+        reference: Optional[npt.NDArray[Any, np.float_]] = None,
+    ) -> npt.NDArray[Any, np.float_]:
         """Align `mobile` to `reference`.
 
         Parameters
@@ -100,29 +103,31 @@ class Kabsch(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         mobile = StandardScaler(with_std=False).fit_transform(mobile)
-        new_mobile: NDArray[(Any, ...), Float] = (
+        new_mobile: npt.NDArray[Any, np.float_] = (
             mobile @ self.rotation_ + self.translation_
         )
-        self.error = rmse(mobile, new_mobile)
+        self.error = mean_squared_error(mobile, new_mobile, squared=False)
         return new_mobile
 
     def _center(
-        self, positions: NDArray[(Any, ...), Float]
-    ) -> Tuple[NDArray[(Any, ...), Float], NDArray[(Any, ...), Float]]:
+        self, positions: npt.NDArray[Any, np.float_]
+    ) -> Tuple[npt.NDArray[Any, np.float_], npt.NDArray[Any, np.float_]]:
         scale = StandardScaler(with_std=False)
-        new_positions: NDArray[(Any, ...), Float] = scale.fit_transform(positions)
+        new_positions: npt.NDArray[Any, np.float_] = scale.fit_transform(positions)
         return new_positions, scale.mean_
 
     def _fit(
-        self, mobile: NDArray[(Any, ...), Float], reference: NDArray[(Any, ...), Float]
-    ) -> NDArray[(Any, ...), Float]:
+        self,
+        mobile: npt.NDArray[Any, np.float_],
+        reference: npt.NDArray[Any, np.float_],
+    ) -> npt.NDArray[Any, np.float_]:
         """Align `mobile` to `reference` using the Kabsch algorithm.
 
         For more info see https://en.wikipedia.org/wiki/Kabsch_algorithm
 
         Parameters
         ----------
-        mobile, reference : NDArray[(Any, ...), Float]
+        mobile, reference : npt.NDArray[Any, np.float_]
             Arrays with shape (n_points, 3)
 
         Returns
@@ -142,7 +147,7 @@ class Kabsch(TransformerMixin, BaseEstimator):
         * computation of the optimal rotation matrix `rot_matrix`
         """
         # Computation of the covariance matrix
-        covar: NDArray[(Any, ...), Float] = mobile.T @ reference
+        covar: npt.NDArray[Any, np.float_] = mobile.T @ reference
 
         # Computation of the optimal rotation matrix
         # This can be done using singular value decomposition (SVD)
