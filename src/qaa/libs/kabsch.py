@@ -22,7 +22,6 @@ https://github.com/charnley/rmsd/blob/master/rmsd/calculate_rmsd.py
 from __future__ import annotations
 
 import logging
-from typing import Any
 from typing import Optional
 from typing import Tuple
 
@@ -50,15 +49,15 @@ class Kabsch(TransformerMixin, BaseEstimator):
         verbose : bool
             Print data to the log
         """
-        self.rotation_: npt.NDArray[Any, np.float_]
-        self.translation_: npt.NDArray[Any, np.float_]
+        self.rotation_: npt.NDArray[np.float_]
+        self.translation_: npt.NDArray[np.float_]
         self.error: float
         self.verbose = verbose
 
     def fit(
         self,
-        mobile: npt.NDArray[Any, np.float_],
-        reference: npt.NDArray[Any, np.float_],
+        mobile: npt.NDArray[np.float_],
+        reference: npt.NDArray[np.float_],
     ) -> Kabsch:
         """Center and fit `mobile` onto `reference` using the Kabsch method.
 
@@ -83,9 +82,9 @@ class Kabsch(TransformerMixin, BaseEstimator):
 
     def transform(
         self,
-        mobile: npt.NDArray[Any, np.float_],
-        reference: Optional[npt.NDArray[Any, np.float_]] = None,
-    ) -> npt.NDArray[Any, np.float_]:
+        mobile: npt.NDArray[np.float_],
+        reference: Optional[npt.NDArray[np.float_]] = None,
+    ) -> npt.NDArray[np.float_]:
         """Align `mobile` to `reference`.
 
         Parameters
@@ -101,31 +100,31 @@ class Kabsch(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         mobile = StandardScaler(with_std=False).fit_transform(mobile)
-        new_mobile: npt.NDArray[Any, np.float_] = (
+        new_mobile: npt.NDArray[np.float_] = (
             mobile @ self.rotation_ + self.translation_
         )
         self.error = mean_squared_error(mobile, new_mobile, squared=False)
         return new_mobile
 
     def _center(
-        self, positions: npt.NDArray[Any, np.float_]
-    ) -> Tuple[npt.NDArray[Any, np.float_], npt.NDArray[Any, np.float_]]:
+        self, positions: npt.NDArray[np.float_]
+    ) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.float_]]:
         scale = StandardScaler(with_std=False)
-        new_positions: npt.NDArray[Any, np.float_] = scale.fit_transform(positions)
+        new_positions: npt.NDArray[np.float_] = scale.fit_transform(positions)
         return new_positions, scale.mean_
 
     def _fit(
         self,
-        mobile: npt.NDArray[Any, np.float_],
-        reference: npt.NDArray[Any, np.float_],
-    ) -> npt.NDArray[Any, np.float_]:
+        mobile: npt.NDArray[np.float_],
+        reference: npt.NDArray[np.float_],
+    ) -> npt.NDArray[np.float_]:
         """Align `mobile` to `reference` using the Kabsch algorithm.
 
         For more info see https://en.wikipedia.org/wiki/Kabsch_algorithm
 
         Parameters
         ----------
-        mobile, reference : npt.NDArray[Any, np.float_]
+        mobile, reference : npt.NDArray[np.float_]
             Arrays with shape (n_points, 3)
 
         Returns
@@ -145,7 +144,7 @@ class Kabsch(TransformerMixin, BaseEstimator):
         * computation of the optimal rotation matrix `rot_matrix`
         """
         # Computation of the covariance matrix
-        covar: npt.NDArray[Any, np.float_] = mobile.T @ reference
+        covar: npt.NDArray[np.float_] = mobile.T @ reference
 
         # Computation of the optimal rotation matrix
         # This can be done using singular value decomposition (SVD)
