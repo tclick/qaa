@@ -100,9 +100,7 @@ class Kabsch(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         mobile = StandardScaler(with_std=False).fit_transform(mobile)
-        new_mobile: npt.NDArray[np.float_] = (
-            mobile @ self.rotation_ + self.translation_
-        )
+        new_mobile: npt.NDArray[np.float_] = mobile @ self.rotation_ + self.translation_
         self.error = mean_squared_error(mobile, new_mobile, squared=False)
         return new_mobile
 
