@@ -97,6 +97,10 @@ class ConfigParser:
         for key, value in self._config.items():
             setattr(self, key, value)
 
+        if not self.analysis == "coordinates" or not self.analysis == "dihedrals":
+            raise ValueError(
+                "Analysis type must either be 'coordinates' or 'dihedrals'"
+            )
         if self.trajform and self.trajfiles:
             raise ValueError(
                 "You cannot have both 'trajform' and 'trajfiles' "
