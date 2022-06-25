@@ -19,6 +19,6 @@ icaDim: 8 # Number of dimensions calculated
 sliceVal: 1 # Number of frames to use
 
 # Locations of output data
-saveDir: "savefiles/" # Output subdirectory
-logfile: "log/log.txt"
-figDir: "savefiles/figures/" # Figure subdirectory if 'graph: True'
+saveDir: "/tmp/qaa/savefiles/" # Output subdirectory
+logfile: "/tmp/qaa/log/log.txt"
+figDir: "/tmp/qaa/savefiles/figures/" # Figure subdirectory if 'graph: True'
