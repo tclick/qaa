@@ -36,8 +36,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils.validation import check_array
 from sklearn.utils.validation import check_is_fitted
 
-from .utils import rmse
-
 logger: logging.Logger = logging.getLogger(__name__)
 
 
