@@ -13,13 +13,10 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Test align module."""
-from typing import Any
-
-import mdtraj as md
+import MDAnalysis as mda
 import numpy as np
+import numpy.typing as npt
 import pytest
-from nptyping import Float
-from nptyping import NDArray
 from numpy import testing
 from qaa.libs import align
 
@@ -31,7 +28,7 @@ class TestAlign:
     """Test alignment function."""
 
     @pytest.fixture
-    def mobile(self) -> NDArray[(Any, ...), Float]:
+    def mobile(self) -> npt.NDArray[np.float_]:
         """Load coordinates from a trajectory file.
 
         Returns
@@ -39,15 +36,13 @@ class TestAlign:
         NDArray
             Trajectory
         """
-        topology = md.load_topology(TOPWW)
-        indices = topology.select("protein and name CA")
-        universe = md.load(TRJWW, top=topology).atom_slice(indices)
-        return universe.xyz
+        universe = mda.Universe(TOPWW, TRJWW, in_memory=True)
+        selection = universe.select_atoms("protein and name CA")
+        positions = np.array([selection.positions for _ in universe.trajectory])
+        return positions
 
     @pytest.fixture
-    def centered(
-        self, mobile: NDArray[(Any, ...), Float]
-    ) -> NDArray[(Any, ...), Float]:
+    def centered(self, mobile: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
         """Center coordinates by their mean.
 
         Parameters
@@ -63,9 +58,7 @@ class TestAlign:
         return mobile - mobile.mean(axis=1)[:, np.newaxis]
 
     @pytest.fixture
-    def reference(
-        self, mobile: NDArray[(Any, ...), Float]
-    ) -> NDArray[(Any, ...), Float]:
+    def reference(self, mobile: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
         """Generate the reference coordinates from the mean of the mobile coordinates.
 
         Parameters
@@ -84,8 +77,8 @@ class TestAlign:
 
     def test_align_trajectory(
         self,
-        centered: NDArray[(Any, ...), Float],
-        reference: NDArray[(Any, ...), Float],
+        centered: npt.NDArray[np.float_],
+        reference: npt.NDArray[np.float_],
     ) -> None:
         """Test alignment of trajectory.
 
