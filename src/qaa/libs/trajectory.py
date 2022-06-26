@@ -23,6 +23,7 @@ from typing import Sequence
 import MDAnalysis as mda
 import numpy as np
 import numpy.typing as npt
+from align import align_trajectory
 from MDAnalysis.analysis import dihedrals
 
 from .. import PathLike
@@ -62,8 +63,13 @@ class Trajectory:
         self._selection: mda.AtomGroup = self._universe.select_atoms(self._mask)
         self._skip: int = skip
 
-    def get_positions(self) -> npt.NDArray[np.float_]:
+    def get_positions(self, align: bool = True) -> npt.NDArray[np.float_]:
         """Return a 2D matrix with shape (n_frames, 3 :math:`\times` n_atoms)
+
+        Parameters
+        ----------
+        align : bool
+            Recenter the trajectory according to the Kabsch method
 
         Returns
         -------
@@ -76,6 +82,9 @@ class Trajectory:
                 for _ in self._universe.trajectory[:: self._skip]
             ]
         )
+        if align:
+            align_trajectory(positions, positions[0])
+
         n_frames, n_dims, n_atoms = positions.shape
         positions = positions.reshape((n_frames, n_dims * n_atoms))
 
