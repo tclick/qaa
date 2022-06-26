@@ -52,6 +52,10 @@ TRAJFILES = resource_filename(
     __name__, Path().joinpath("data", "config-trajfiles.yaml").as_posix()
 )
 
+TRAJDIH = resource_filename(
+    __name__, Path().joinpath("data", "config-dihedrals.yaml").as_posix()
+)
+
 BAD_CONFIG = resource_filename(
     __name__, Path().joinpath("data", "config-bad.yaml").as_posix()
 )
