@@ -17,70 +17,41 @@
 A trajectory will be read, and the selected frames will be extracted into a new file for
 further processing.
 """
-import glob
 import logging.config
 import time
 from pathlib import Path
-from typing import List
 
 import click
-import mdtraj as md
 import numpy as np
 
-from .. import _MASK
-from .. import create_logging_dict
-from .. import PathLike
+from .. import _MASK, create_logging_dict
+from ..libs import configparser, trajectory
 
 
 @click.command("extract", short_help="Extract frames from a trajectory")
 @click.option(
-    "-s",
-    "--top",
-    "topology",
-    metavar="FILE",
-    default=Path.cwd().joinpath("input.top").as_posix(),
-    show_default=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
-    help="Topology",
-)
-@click.option(
-    "-f",
-    "--traj",
-    "trajectory",
+    "-c",
+    "--config",
+    "configfile",
     metavar="FILE",
     default=[
-        Path.cwd().joinpath("input.nc").as_posix(),
+        Path.cwd().joinpath("config.yaml").as_posix(),
     ],
     show_default=True,
-    multiple=True,
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
-    help="Trajectory",
+    help="Config file",
 )
 @click.option(
-    "-x",
-    "--framefile",
-    default=Path.cwd().joinpath("frames.csv").as_posix(),
-    show_default=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
-    help="Frames to extract",
-)
-@click.option(
-    "-o",
-    "--outfile",
+    "-i",
+    "--input",
+    "input",
     metavar="FILE",
-    default=Path.cwd().joinpath("aligned.nc").as_posix(),
+    default=[
+        Path.cwd().joinpath("positions.npy").as_posix(),
+    ],
     show_default=True,
     type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
-    help="Aligned trajectory",
-)
-@click.option(
-    "-l",
-    "--logfile",
-    metavar="LOG",
-    show_default=True,
-    default=Path.cwd().joinpath("align_traj.log").as_posix(),
-    type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
-    help="Log file",
+    help="Pre-existing data file",
 )
 @click.option(
     "-m",
@@ -90,43 +61,56 @@ from .. import PathLike
     type=click.Choice(_MASK.keys()),
     help="Atom selection",
 )
-@click.option("-v", "--verbose", is_flag=True, help="Noisy output")
 def cli(
-    topology: PathLike,
-    trajectory: List[str],
-    framefile: PathLike,
-    outfile: PathLike,
-    logfile: PathLike,
+    config: str,
     mask: str,
-    verbose: bool,
 ) -> None:
     """Write extracted frames to a new file."""
     start_time: float = time.perf_counter()
 
+    config_data = configparser.ConfigParser(config)
+    config_data.load()
+    config_data.parse()
+
+    # Create subdirectories
+    Path(config_data.saveDir).mkdir(exist_ok=True)
+    Path(config_data.figDir).mkdir(exist_ok=True)
+    Path(config_data.logfile).parent.mkdir(exist_ok=True)
+
     # Setup logging
-    logging.config.dictConfig(create_logging_dict(logfile))
+    level = logging.WARNING
+    if config_data.verbose:
+        level = logging.INFO
+    elif config_data.debug:
+        level = logging.DEBUG
+
+    logging.config.dictConfig(create_logging_dict(config_data.logfile, level))
     logger: logging.Logger = logging.getLogger(__name__)
 
-    top: md.Topology = md.load_topology(topology)
-    selection = top.select(_MASK[mask]) if mask != "all" else None
-    filenames = (
-        glob.iglob(*trajectory)
-        if len(trajectory) == 1 and "*" in "".join(trajectory)
-        else trajectory
+    logger.info(f"Using Configuration File: {config}")
+
+    # Extract aligned coordinates or calculate dihedrals.
+    traj = trajectory.Trajectory(
+        topology=config_data.topology,
+        trajectory=config_data.trajfiles,
+        skip=config_data.stepVal,
+        mask=_MASK[mask],
+        start_res=config_data.startRes,
+        end_res=config_data.endRes,
     )
 
-    logger.info("Loading frame indices from %s", framefile)
-    frames = np.loadtxt(framefile, delimiter=",", dtype=int)
+    analysis = config_data.analysis
+    data = traj.get_positions() if analysis == "coordinates" else traj.get_dihedrals()
 
-    multiverse = [md.load(_, top=top, atom_indices=selection) for _ in filenames]
-    universe = md.join(multiverse).slice(frames)
+    # Save data to binary file.
+    outfile = Path(config_data.saveDir) / Path(analysis).with_stem(".npy")
+    with open(outfile, "wb") as out:
+        logging.info(f"Saving {analysis} to {outfile}")
+        np.save(out, data)
 
-    logger.info("Saving sliced trajectory to %s", outfile)
-    universe.save(outfile)
-
+    # Calculate total execution time
     stop_time: float = time.perf_counter()
     dt: float = stop_time - start_time
     struct_time: time.struct_time = time.gmtime(dt)
-    if verbose:
-        output: str = time.strftime("%H:%M:%S", struct_time)
-        logger.info(f"Total execution time: {output}")
+    output: str = time.strftime("%H:%M:%S", struct_time)
+    logger.info(f"Total execution time: {output}")
