@@ -15,12 +15,9 @@
 """Parse a configuration file."""
 import logging
 from collections import Counter
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List
 
-import pylibyaml
+import pylibyaml  # noqa: F401
 import yaml
 
 from .. import PathLike
@@ -29,6 +26,8 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ConfigParser:
+    """Parse a configuration file."""
+
     def __init__(self, filename: PathLike):
         """Initialize the config parser.
 
@@ -43,6 +42,7 @@ class ConfigParser:
         self.trajform: List[str] = []
 
     def load(self) -> None:
+        """Load configuration file."""
         with open(self._filename) as config_file:
             self._config = yaml.safe_load(config_file)
             if "_config" not in locals():
@@ -62,7 +62,8 @@ class ConfigParser:
 
         Notes
         -----
-        The configuration file should look something like the following example:
+        The configuration file should look something like the following example. Use
+        either 'trajfiles' or 'trajform' but not both.
 
         analysis: "coordinate" # Can either be 'coordinate' or 'dihedral'
         verbose: False # Verbose output
@@ -79,9 +80,9 @@ class ConfigParser:
           - "pentapeptide/job1-protein.dcd"
           - "pentapeptide/job2-protein.dcd"
         # Define trajectory filenames using regular expressions and zero-padded numbers
-        #trajform:
-        #    - "pnas2013-native-1-protein-***.dcd"
-        #    - "1-10"
+        trajform:
+          - "pnas2013-native-1-protein-***.dcd" # noqa: RST210, RST213
+          - "1-10"
 
         pname: "pentapeptide" # name of protein
         startRes: 1 # Starting residue number
