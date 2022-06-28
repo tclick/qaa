@@ -102,11 +102,11 @@ def cli(
     analysis = config_data.analysis
     data = traj.get_positions() if analysis == "coordinates" else traj.get_dihedrals()
 
-    # Save data to binary file.
+    # Save trabsoised data to binary file.
     outfile = Path(config_data.saveDir) / Path(analysis).with_stem(".npy")
     with open(outfile, "wb") as out:
         logging.info(f"Saving {analysis} to {outfile}")
-        np.save(out, data)
+        np.save(out, data.T)
 
     # Calculate total execution time
     stop_time: float = time.perf_counter()
