@@ -32,6 +32,8 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Trajectory:
+    """Class for molecular dynamics trajectories."""
+
     def __init__(
         self,
         topology: PathLike,
@@ -41,7 +43,7 @@ class Trajectory:
         start_res: int = 1,
         end_res: int = 10,
     ):
-        """Molecular dynamics (MD) trajectory
+        """Molecular dynamics (MD) trajectory.
 
         Parameters
         ----------
@@ -64,7 +66,7 @@ class Trajectory:
         self._skip: int = skip
 
     def get_positions(self, align: bool = True) -> npt.NDArray[np.float_]:
-        """Return a 2D matrix with shape (n_frames, 3 :math:`\times` n_atoms)
+        """Return a 2D matrix with shape (n_frames, 3n_atoms).
 
         Parameters
         ----------
@@ -91,7 +93,7 @@ class Trajectory:
         return positions
 
     def get_dihedrals(self) -> npt.NDArray[np.float_]:
-        """Return a 2D matrix with shape (n_frames, 4 :math:`\times` n_atoms)
+        r"""Return a 2D matrix with shape (n_frames, 4n_atoms).
 
         The backbone dihedral angles are calculated and then transformed into their
         trigonometric parts (:math:`\sin` and :math:`\cos`).
