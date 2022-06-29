@@ -42,18 +42,6 @@ from ..libs import configparser, trajectory
     help="Config file",
 )
 @click.option(
-    "-i",
-    "--input",
-    "input",
-    metavar="FILE",
-    default=[
-        Path.cwd().joinpath("positions.npy").as_posix(),
-    ],
-    show_default=True,
-    type=click.Path(exists=False, file_okay=True, dir_okay=False, resolve_path=True),
-    help="Pre-existing data file",
-)
-@click.option(
     "-m",
     "--mask",
     default="ca",
