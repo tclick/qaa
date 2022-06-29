@@ -23,10 +23,10 @@ from typing import Sequence
 import MDAnalysis as mda
 import numpy as np
 import numpy.typing as npt
-from align import align_trajectory
 from MDAnalysis.analysis import dihedrals
 
 from .. import PathLike
+from .align import align_trajectory
 
 logger: logging.Logger = logging.getLogger(__name__)
 
