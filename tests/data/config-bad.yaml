@@ -1,4 +1,4 @@
-analysis: "coordinate" # Can either be 'coordinate' or 'dihedral'
+analysis: "coordinates" # Can either be 'coordinate' or 'dihedral'
 verbose: False # Verbose output
 debug: False # Ouput debugging information
 graph: False # Save graphical data
@@ -14,8 +14,8 @@ trajfiles:
   - "pentapeptide/job2-protein.dcd"
 # Define trajectory filenames using regular expressions and zero-padded numbers
 trajform:
-    - "pnas2013-native-1-protein-***.dcd"
-    - "1-10"
+  - "pnas2013-native-1-protein-***.dcd"
+  - "1-10"
 
 pname: "pentapeptide" # name of protein
 startRes: 1 # Starting residue number

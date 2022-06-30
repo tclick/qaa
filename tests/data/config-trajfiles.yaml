@@ -1,4 +1,4 @@
-analysis: "coordinate" # Can either be 'coordinate' or 'dihedral'
+analysis: "coordinates" # Can either be 'coordinate' or 'dihedral'
 verbose: False # Verbose output
 debug: False # Ouput debugging information
 graph: False # Save graphical data
