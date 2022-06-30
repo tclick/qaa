@@ -14,7 +14,7 @@
 # --------------------------------------------------------------------------------------
 """Parse a configuration file."""
 import logging
-from collections import Counter
+from collections import Counter, UserDict
 from typing import Any, Dict, List
 
 import pylibyaml  # noqa: F401
@@ -23,6 +23,138 @@ import yaml
 from .. import PathLike
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+class Config(UserDict[str, Any]):
+    """Configuration data."""
+
+    def _validate_key(self, key: str) -> None:
+        """Validate the configuration key.
+
+        Parameters
+        ----------
+        key : str
+            Configuration key
+
+        Raises
+        ------
+        AttributeError
+            If the key already exists
+        ValueError
+            If the key is invalid
+        """
+        if key in dir(self):
+            raise AttributeError(f"'{key}' is a protected dictionary attribute")
+        elif isinstance(key, str) and not key.isidentifier():
+            raise ValueError(f"'{key}' is not a valid attribute")
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Create a configuration class.
+
+        Parameters
+        ----------
+        args
+            Positional arguments
+        kwargs
+            Keyword arguments
+
+        Raises
+        ------
+        AttributeError
+            If `data` exists in the passed data
+        """
+        kwargs = dict(*args, **kwargs)
+        if "data" in kwargs.keys():
+            raise AttributeError("'data' is a protected dictionary attribute")
+        self.__dict__["data"] = {}
+        self.update(kwargs)
+
+    def __setitem__(self, key: str, item: Any) -> None:
+        """Set data according to a provided key.
+
+        Parameters
+        ----------
+        key : str
+            configuration key
+        item : Any
+            data
+        """
+        self._validate_key(key)
+        super().__setitem__(key, item)
+
+    def __setattr__(self, attr: str, val: Any) -> None:
+        """Set attribute data.
+
+        Parameters
+        ----------
+        attr : str
+            attribute
+        val : Any
+            data
+        """
+        if attr == "data":
+            super().__setattr__(attr, val)
+        else:
+            self.__setitem__(attr, val)
+
+    def __getattr__(self, attr: str) -> Any:
+        """Return data.
+
+        Parameters
+        ----------
+        attr : str
+            configuration key
+
+        Returns
+        -------
+        Data
+
+        Raises
+        ------
+        AttributeError
+            If key does not exist
+        """
+        try:
+            return self[attr]
+        except KeyError as err:
+            raise AttributeError(f"'Config' object has no attribute '{attr}'") from err
+
+    def __delattr__(self, attr: str) -> None:
+        """Remove the key and data.
+
+        Parameters
+        ----------
+        attr : str
+            configuration key
+
+        Raises
+        ------
+        AttributeError
+            If key does not exist
+        """
+        try:
+            del self[attr]
+        except KeyError as err:
+            raise AttributeError(f"'Config' object has no attribute '{attr}'") from err
+
+    def __getstate__(self) -> Dict[str, Any]:
+        """Return the underlying data.
+
+        Returns
+        -------
+        dictionary of underlying data
+        """
+        return self.data
+
+    def __setstate__(self, state: Dict[str, Any]) -> None:
+        """Set the state of the configuration class.
+
+        Parameters
+        ----------
+        state : Dict
+            data
+        """
+        self.data = state
 
 
 class ConfigParser:
@@ -37,23 +169,22 @@ class ConfigParser:
             name of configuration file
         """
         self._filename: PathLike = filename
-        self._config: Dict[str, Any] = {}
+        self._config = Config()
         self.trajfiles: List[str] = []
         self.trajform: List[str] = []
 
     def load(self) -> None:
         """Load configuration file."""
         with open(self._filename) as config_file:
-            self._config = yaml.safe_load(config_file)
-            if "_config" not in locals():
-                IOError(
-                    "Issue opening and reading configuration file: {!r}".format(
-                        self._filename
-                    )
-                )
+            self._config.update(yaml.safe_load(config_file))
 
-    def parse(self) -> None:
+    def parse(self) -> Config:
         """Parse the configuration file.
+
+        Returns
+        -------
+        Config
+            configuration data
 
         Raises
         ------
@@ -95,26 +226,27 @@ class ConfigParser:
         logfile: "log/log.txt"
         figDir: "savefiles/figures/" # Figure subdirectory if 'graph: True'
         """
-        for key, value in self._config.items():
-            setattr(self, key, value)
-
-        if not self.analysis == "coordinates" or not self.analysis == "dihedrals":
+        if (
+            self._config.analysis != "coordinates"
+            and self._config.analysis != "dihedrals"
+        ):
             raise ValueError(
                 "Analysis type must either be 'coordinates' or 'dihedrals'"
             )
-        if self.trajform and self.trajfiles:
+        if hasattr(self._config, "trajform") and hasattr(self._config, "trajfiles"):
             raise ValueError(
                 "You cannot have both 'trajform' and 'trajfiles' "
                 "defined in your configuration file. Please edit your file."
             )
 
-        if self.trajform:
-            filename = self.trajform[0]
-            start, stop = self.trajform[1].split("-")
-            values = Counter(filename)
-            padval = values["*"]
+        if hasattr(self._config, "trajform"):
+            filename = self._config.trajform[0]
+            start, stop = self._config.trajform[1].split("-")
+            padval = Counter(filename)["*"]
             prefix, suffix = filename.split("*" * padval)
-            self.trajfiles = [
+            self._config.trajfiles = [
                 "{}{:0{}d}{}".format(prefix, _, padval, suffix)
                 for _ in range(int(start), int(stop) + 1)
             ]
+
+        return self._config
