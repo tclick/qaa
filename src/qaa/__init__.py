@@ -15,10 +15,7 @@
 """Quasi-Anharmonic Analysis."""
 import logging
 import os
-from typing import Any
-from typing import Dict
-from typing import TYPE_CHECKING
-from typing import Union
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -32,10 +29,10 @@ __version__: str = "3.0.0-rc3"
 
 _MASK: Dict[str, str] = dict(
     ca="protein and name CA",
-    cab="protein and name =~ 'C[AB]'",
-    back="protein and backbone",
-    side="protein and not backbone and not (element =~ 'H')",
-    noh="protein and not (element =~ 'H')",
+    cab="protein and name C[AB]",
+    backbone="backbone",
+    sidechain="protein and not backbone and not element H*)",
+    noh="protein and not element H*)",
     all="all",
 )
 
