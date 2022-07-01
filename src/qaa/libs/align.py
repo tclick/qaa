@@ -54,7 +54,7 @@ def align_trajectory(
 
     while error >= tol:
         kabsch = Kabsch(verbose=verbose)
-        mobile = np.asarray([kabsch.fit_transform(_, reference) for _ in mobile])
+        mobile[:] = np.asarray([kabsch.fit_transform(_, reference) for _ in mobile])
         new_reference: npt.NDArray[np.float_] = mobile.mean(axis=0)
         error = mean_squared_error(new_reference, reference, squared=False)
         reference = new_reference.copy()
