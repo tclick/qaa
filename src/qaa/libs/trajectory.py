@@ -18,12 +18,12 @@ The class will access the molecular dynamics trajectory and offer access to the
 coordinates or calculate the dihedral angles.
 """
 import logging
-from typing import Sequence
+from typing import List, Sequence
 
 import MDAnalysis as mda
 import numpy as np
 import numpy.typing as npt
-from MDAnalysis.analysis import dihedrals
+from MDAnalysis.lib.distances import calc_dihedrals
 
 from .. import PathLike
 from .align import align_trajectory
@@ -61,15 +61,19 @@ class Trajectory:
             final residue number of the protein
         """
         self._universe: mda.Universe = mda.Universe(topology, trajectory)
-        self._mask: str = f"{mask} and resnum {start_res}:{end_res}"
-        self._selection: mda.AtomGroup = self._universe.select_atoms(self._mask)
+        self._mask: str = mask
+        self._select: str = f"{mask} and resnum {start_res}:{end_res}"
         self._skip: int = skip
 
-    def get_positions(self, align: bool = True) -> npt.NDArray[np.float_]:
+    def get_positions(
+        self, filename: PathLike, align: bool = True
+    ) -> npt.NDArray[np.float_]:
         """Return a 2D matrix with shape (n_frames, 3n_atoms).
 
         Parameters
         ----------
+        filename: PathLike
+            location for memory-mapped array
         align : bool
             Recenter the trajectory according to the Kabsch method
 
@@ -78,50 +82,106 @@ class Trajectory:
         NDArray
             2D array of coordinates
         """
-        positions = np.array(
-            [
-                self._selection.positions
-                for _ in self._universe.trajectory[:: self._skip]
-            ]
+        selection = self._universe.select_atoms(self._select)
+        n_frames = self._universe.trajectory.n_frames // self._skip
+        n_atoms = selection.n_atoms
+
+        data = np.memmap(
+            filename, dtype=np.float_, shape=(n_frames, n_atoms, 3), mode="w+"
         )
+        for i, _ in enumerate(self._universe.trajectory[:: self._skip]):
+            data[i, :] = selection.positions
         if align:
-            align_trajectory(positions, positions[0])
+            logger.info("Aligning coordinates.")
+            align_trajectory(data, data[0])
 
-        n_frames, n_dims, n_atoms = positions.shape
-        positions = positions.reshape((n_frames, n_dims * n_atoms))
+        n_frames, n_dims, n_atoms = data.shape
+        data.resize(n_frames, n_dims * n_atoms)
+        data.flush()
+        logger.info(f"Saved coordinates to {filename}")
 
-        return positions
+        return data
 
-    def get_dihedrals(self) -> npt.NDArray[np.float_]:
+    def get_dihedrals(self, filename: PathLike) -> npt.NDArray[np.float_]:
         r"""Return a 2D matrix with shape (n_frames, 4n_atoms).
 
         The backbone dihedral angles are calculated and then transformed into their
         trigonometric parts (:math:`\sin` and :math:`\cos`).
+
+        Parameters
+        ----------
+        filename: PathLike
+            location for memory-mapped array
 
         Returns
         -------
         NDArray
             2D array of :math:`\phi`/:math:`\psi` dihedrals
         """
-        try:
-            phi = self._selection.residues.phi_selections()
-            phi_angles = dihedrals.Dihedral(phi).run(step=self._skip).results["angles"]
-            phi_angles = np.deg2rad(phi_angles)
-            n_frames, n_residues = phi_angles.shape
-        except AttributeError:
-            logging.error("A phi angle does not exist. Please check residue selection.")
+        if "backbone" not in self._mask:
+            logger.info(f"Changing mask from '{self._mask}' to 'backbone'")
+            self._select = self._select.replace(self._mask, "backbone")
 
-        try:
-            psi = self._selection.residues.psi_selections()
-            psi_angles = dihedrals.Dihedral(psi).run(step=self._skip).results["angles"]
-            psi_angles = np.deg2rad(psi_angles)
-        except AttributeError:
-            logging.error("A psi angle does not exist. Please check residue selection.")
+        selection = self._universe.select_atoms(self._select)
+        n_frames = self._universe.trajectory.n_frames // self._skip
+        n_residues = selection.residues.n_residues
 
-        angles = np.empty((n_frames, 4 * n_residues), dtype=np.float_)
-        angles[:, 0::4] = np.sin(phi_angles)
-        angles[:, 1::4] = np.cos(phi_angles)
-        angles[:, 2::4] = np.sin(psi_angles)
-        angles[:, 3::4] = np.cos(psi_angles)
+        data = np.memmap(
+            filename, dtype=np.float_, shape=(n_frames, n_residues * 4), mode="w+"
+        )
 
-        return angles
+        phi: List[mda.AtomGroup] = selection.residues.phi_selections()
+        psi: List[mda.AtomGroup] = selection.residues.psi_selections()
+
+        # Calculate phi/psi angles
+        for i, _ in enumerate(self._universe.trajectory[:: self._skip]):
+            # Calculate phi angles
+            phi_angle = np.empty(n_residues, dtype=np.float_)
+            try:
+                phi_pos = np.array(
+                    [
+                        (atom1.position, atom2.position, atom3.position, atom4.position)
+                        for atom1, atom2, atom3, atom4 in phi
+                    ]
+                )
+                calc_dihedrals(
+                    phi_pos[:, 0],
+                    phi_pos[:, 1],
+                    phi_pos[:, 2],
+                    phi_pos[:, 3],
+                    result=phi_angle,
+                    backend="OpenMP",
+                )
+            except TypeError:
+                pass
+
+            # Calculate psi angles
+            psi_angle = np.empty(n_residues, dtype=np.float_)
+
+            try:
+                psi_pos = np.array(
+                    [
+                        (atom1.position, atom2.position, atom3.position, atom4.position)
+                        for atom1, atom2, atom3, atom4 in psi
+                    ]
+                )
+                calc_dihedrals(
+                    psi_pos[:, 0],
+                    psi_pos[:, 1],
+                    psi_pos[:, 2],
+                    psi_pos[:, 3],
+                    result=psi_angle,
+                    backend="OpenMP",
+                )
+            except TypeError:
+                pass
+
+            data[i, 0::4] = np.sin(phi_angle)
+            data[i, 1::4] = np.cos(phi_angle)
+            data[i, 2::4] = np.sin(psi_angle)
+            data[i, 3::4] = np.cos(psi_angle)
+
+        data.flush()
+        logger.info(f"Saved dihedrals to {filename}")
+
+        return data
