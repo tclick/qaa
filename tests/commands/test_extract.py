@@ -17,13 +17,11 @@ import logging
 import sys
 from pathlib import Path
 
-import mdtraj as md
+import MDAnalysis as mda
 import numpy as np
 from pytest_console_scripts import ScriptRunner
 
-from ..datafile import FRAMES
-from ..datafile import TOPWW
-from ..datafile import TRJWW
+from ..datafile import TOPWW, TRAJDIH, TRAJFILES, TRJWW
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 LOGGER = logging.getLogger(name="ambgen.commands.cmd_extract")
@@ -36,7 +34,7 @@ if not sys.warnoptions:
     os.environ["PYTHONWARNINGS"] = "default"  # Also affect subprocesses
 
 
-class TestAlign:
+class TestExtract:
     """Run test for extract subcommand."""
 
     def test_help(self, script_runner: ScriptRunner) -> None:
@@ -60,8 +58,8 @@ class TestAlign:
         assert "Usage:" in result.stdout
         assert result.success
 
-    def test_extract(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
-        """Test extract subcommand.
+    def test_extract_coords(self, script_runner: ScriptRunner, tmp_path: Path) -> None:
+        """Test extract subcommand for coordinates.
 
         GIVEN a trajectory file
         WHEN invoking the extract subcommand
@@ -74,28 +72,86 @@ class TestAlign:
         tmp_path : Path
             Temporary directory
         """
-        logfile = tmp_path.joinpath("extract.log")
-        OUTFILE = tmp_path.joinpath("extract.nc").as_posix()
+        # Paths
+        saveDir = tmp_path / "qaa"
+        saveDir.mkdir(exist_ok=True)
+        logfile = saveDir / "log.txt"
+        output = saveDir / "coordinates.npy"
+
         result = script_runner.run(
             "qaa",
             "extract",
-            "-s",
+            "-c",
+            TRAJFILES,
+            "-p",
             TOPWW,
             "-f",
             TRJWW,
             "-o",
-            OUTFILE,
+            saveDir,
             "-l",
-            logfile.as_posix(),
-            "-m",
-            "all",
-            "-x",
-            FRAMES,
+            logfile,
+            "--debug",
         )
-
-        universe = md.load(OUTFILE, top=TOPWW)
-        frames = np.loadtxt(FRAMES, delimiter=",")
+        universe = mda.Universe(TOPWW, TRJWW)
+        n_atoms = universe.select_atoms("protein and name CA").n_atoms
+        n_frames = universe.trajectory.n_frames
+        size = n_frames * n_atoms * 3
 
         assert result.success
         assert logfile.exists()
-        assert universe.n_frames == frames.size
+        assert output.exists()
+
+        data = np.memmap(output, mode="r", dtype=np.float_)
+        assert data.size == size
+
+    def test_extract_dihedrals(
+        self, script_runner: ScriptRunner, tmp_path: Path
+    ) -> None:
+        """Test extract subcommand for dihedrals.
+
+        GIVEN a trajectory file
+        WHEN invoking the extract subcommand
+        THEN a trajectory file will be written
+
+        Parameters
+        ----------
+        script_runner : ScriptRunner
+            Command-line runner
+        tmp_path : Path
+            Temporary directory
+        """
+        # Paths
+        saveDir = tmp_path / "qaa"
+        saveDir.mkdir(exist_ok=True)
+        logfile = saveDir / "log.txt"
+        output = saveDir / "dihedrals.npy"
+
+        result = script_runner.run(
+            "qaa",
+            "extract",
+            "-c",
+            TRAJDIH,
+            "-p",
+            TOPWW,
+            "-f",
+            TRJWW,
+            "-o",
+            saveDir,
+            "-l",
+            logfile,
+            "--debug",
+        )
+        universe = mda.Universe(TOPWW, TRJWW)
+        n_residues = universe.select_atoms(
+            "backbone and resnum 2:132"
+        ).residues.n_residues
+        n_frames = universe.trajectory.n_frames
+        size = n_frames * n_residues * 4
+
+        assert result.success
+        assert logfile.exists()
+        assert output.exists()
+
+        data = np.memmap(output, mode="r", dtype=np.float_)
+        assert data.size == size
