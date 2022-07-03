@@ -3,9 +3,6 @@ verbose: False # Verbose output
 debug: False # Ouput debugging information
 graph: False # Save graphical data
 
-# Runs setup calculations: Cum. Sum. of cov. spectrum and unit radius neighbor search.
-setup: False
-
 # Topology and trajectory files
 topology: "protein.parm7"
 # Explicit list of trajectory files
@@ -13,12 +10,12 @@ trajfiles:
   - "protein.nc"
 
 pname: "protein" # name of protein
-startRes: 2 # Starting residue number
-endRes: 132 # Final residue number
-icaDim: 8 # Number of dimensions calculated
-sliceVal: 1 # Number of frames to use
+startres: 2 # Starting residue number
+endres: 132 # Final residue number
+icadim: 8 # Number of dimensions calculated
+skip: 1 # Number of frames to use
 
 # Locations of output data
-saveDir: "/tmp/qaa/savefiles/" # Output subdirectory
+outdir: "/tmp/qaa/savefiles/" # Output subdirectory
 logfile: "/tmp/qaa/log/log.txt"
-figDir: "/tmp/qaa/savefiles/figures/" # Figure subdirectory if 'graph: True'
+figdir: "/tmp/qaa/savefiles/figures/" # Figure subdirectory if 'graph: True'
