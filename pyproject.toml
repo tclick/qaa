@@ -79,6 +79,9 @@ nox-poetry = "^1.0.0"
 numpydoc = "^1.4.0"
 codecov = "^2.1.12"
 pyupgrade = "^2.34.0"
+types-PyYAML = "^6.0.9"
+types-click = "^7.1.8"
+ipykernel = "^6.15.0"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
