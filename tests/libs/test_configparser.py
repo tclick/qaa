@@ -13,9 +13,11 @@
 #  THIS SOFTWARE.
 # --------------------------------------------------------------------------------------
 """Test ConfigParser class."""
+from typing import Any, Dict
+
 import pytest
 
-from qaa.libs.configparser import Config, ConfigParser
+from qaa.libs.configparser import Config, configure, parse
 
 from ..datafile import BAD_CONFIG, TRAJFILES, TRAJFORM
 
@@ -23,54 +25,66 @@ from ..datafile import BAD_CONFIG, TRAJFILES, TRAJFORM
 class TestConfigParser:
     """Test ConfigParser class."""
 
-    def test_load(self) -> None:
-        """Test the load method.
+    @pytest.fixture
+    def context(self) -> Config:
+        """Create an mock click.Context object.
 
-        GIVEN a YAML filename
-        WHEN a configuration is loaded
-        THEN the parameters are added to the class
+        Returns
+        -------
+        Config
+            a mock click.Context object
         """
-        parser = ConfigParser(TRAJFILES)
-        parser.load()
-        assert isinstance(parser._config, Config)
-        assert len(parser._config.keys()) > 0
-        assert hasattr(parser._config, "trajfiles")
+        config = Config()
+        config.default_map = {}
+        return config
 
-    def test_parse_trajfiles(self) -> None:
-        """Test a configuration file with `trajfiles` set.
+    def test_configure(self, context: Config) -> None:
+        """Test the configure function.
 
-        GIVEN a YAML filename
-        WHEN a configuration is loaded
-        THEN the parameters are added to the class with a list of trajectory files
+        Parameters
+        ----------
+        context: Config
+            mock object
+
+        GIVEN a click.Context and a filename
+        WHEN the configure function is called
+        THEN context.default_map is populated with the YAML configuration
         """
-        parser = ConfigParser(TRAJFILES)
-        parser.load()
-        config = parser.parse()
-        assert len(config.trajfiles) == 1
-        assert not hasattr(config, "trajform")
+        configure(context, [], TRAJFILES)
 
-    def test_parse_trajform(self) -> None:
-        """Test a configuration file with `trajform` set.
+        assert len(context.default_map) > 0
+        assert "trajfiles" in context.default_map
+        assert context.default_map["trajfiles"] is not None
 
-        GIVEN a YAML filename
-        WHEN a configuration is loaded
-        THEN the parameters are added to the class with a list of trajectory files
+    def test_parse(self, context: Config) -> None:
+        """Test the configuration parsing function.
+
+        Parameters
+        ----------
+        context: Config
+            mock object
+
+        GIVEN a click.Context object and a configuration file
+        WHEN the contents of the file with `trajform` defined is parsed
+        THEN the `trajfiles` list is populated
         """
-        parser = ConfigParser(TRAJFORM)
-        parser.load()
-        config = parser.parse()
-        assert len(config.trajform) == 2
-        assert "pnas2013-native-1-protein-010.dcd" in config.trajfiles
-        assert len(config.trajfiles) == 10
+        configure(context, [], TRAJFORM)
+        context.default_map["trajfiles"] = None
+        parser = Config(context.default_map)
+        parse(parser)
 
-    def test_bad_config(self) -> None:
+        assert len(parser) > 0
+        assert "pnas2013-native-1-protein-010.dcd" in parser.trajfiles
+
+    def test_bad_config(self, context: Dict[Any, Any]) -> None:
         """Test a configuration file that has both `trajform` and `trajfiles` defined.
 
         GIVEN a YAML configuration file
         WHEN both `trajform` and `trajfiles` are defined
         THEN a ValueError is raised
         """
-        parser = ConfigParser(BAD_CONFIG)
-        parser.load()
+        configure(context, [], BAD_CONFIG)
+        parser = Config(context.default_map)
+
         with pytest.raises(ValueError):
-            parser.parse()
+            parse(parser)

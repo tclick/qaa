@@ -15,8 +15,10 @@
 """Parse a configuration file."""
 import logging
 from collections import Counter, UserDict
+from pathlib import Path
 from typing import Any, Dict, List
 
+import click
 import pylibyaml  # noqa: F401
 import yaml
 
@@ -157,96 +159,93 @@ class Config(UserDict[str, Any]):
         self.data = state
 
 
-class ConfigParser:
-    """Parse a configuration file."""
+def configure(ctx: click.Context, param: List[Any], filename: PathLike) -> None:
+    """Read a configuration file and pouplate click.Context.default_map with contents.
 
-    def __init__(self, filename: PathLike):
-        """Initialize the config parser.
+    Parameters
+    ----------
+    ctx : click.Context
+        Context object
+    param : list
+        List of parameters
+    filename : PathLike
+        configuration file
+    """
+    if Path(filename).exists():
+        logger.debug(f"Using configuration file: {filename}")
+        with open(filename) as config_file:
+            ctx.default_map = yaml.safe_load(config_file)
 
-        Parameters
-        ----------
-        filename : PathLike
-            name of configuration file
-        """
-        self._filename: PathLike = filename
-        self._config = Config()
-        self.trajfiles: List[str] = []
-        self.trajform: List[str] = []
 
-    def load(self) -> None:
-        """Load configuration file."""
-        with open(self._filename) as config_file:
-            self._config.update(yaml.safe_load(config_file))
+def parse(parser: Config) -> Config:
+    """Parse the configuration file.
 
-    def parse(self) -> Config:
-        """Parse the configuration file.
+    Parameters
+    ----------
+    parser: Config
+        configuration data
 
-        Returns
-        -------
-        Config
-            configuration data
+    Returns
+    -------
+    Config
+        configuration data
 
-        Raises
-        ------
-        ValueError
-            If both 'trajfiles' and 'trajform' are defined in the configuration file
+    Raises
+    ------
+    ValueError
+        If both 'trajfiles' and 'trajform' are defined in the configuration file
 
-        Notes
-        -----
-        The configuration file should look something like the following example. Use
-        either 'trajfiles' or 'trajform' but not both.
+    Notes
+    -----
+    The configuration file should look something like the following example. Use
+    either 'trajfiles' or 'trajform' but not both.
 
-        analysis: "coordinate" # Can either be 'coordinate' or 'dihedral'
-        verbose: False # Verbose output
-        debug: False # Ouput debugging information
-        graph: False # Save graphical data
+    analysis: "coordinate" # Can either be 'coordinate' or 'dihedral'
+    verbose: False # Verbose output
+    debug: False # Ouput debugging information
+    graph: False # Save graphical data
 
-        # Runs setup calculations: Cum. Sum. of cov. spectrum and unit radius neighbor search.
-        setup: False
+    # Runs setup calculations: Cum. Sum. of cov. spectrum and unit radius neighbor search.
+    setup: False
 
-        # Topology and trajectory files
-        topology: "pentapeptide/init-ww-penta.pdb"
-        # Explicit list of trajectory files
-        trajfiles:
-          - "pentapeptide/job1-protein.dcd"
-          - "pentapeptide/job2-protein.dcd"
-        # Define trajectory filenames using regular expressions and zero-padded numbers
-        trajform:
-          - "pnas2013-native-1-protein-***.dcd" # noqa: RST210, RST213
-          - "1-10"
+    # Topology and trajectory files
+    topology: "pentapeptide/init-ww-penta.pdb"
+    # Explicit list of trajectory files
+    trajfiles:
+      - "pentapeptide/job1-protein.dcd"
+      - "pentapeptide/job2-protein.dcd"
+    # Define trajectory filenames using regular expressions and zero-padded numbers
+    trajform:
+      - "pnas2013-native-1-protein-***.dcd" # noqa: RST210, RST213
+      - "1-10"
 
-        pname: "pentapeptide" # name of protein
-        startRes: 1 # Starting residue number
-        endRes: 5 # Final residue number
-        icaDim: 8 # Number of dimensions calculated
-        sliceVal: 1 # Number of frames to use
+    pname: "pentapeptide" # name of protein
+    startRes: 1 # Starting residue number
+    endRes: 5 # Final residue number
+    icaDim: 8 # Number of dimensions calculated
+    sliceVal: 1 # Number of frames to use
 
-        # Locations of output data
-        saveDir: "savefiles/" # Output subdirectory
-        logfile: "log/log.txt"
-        figDir: "savefiles/figures/" # Figure subdirectory if 'graph: True'
-        """
-        if (
-            self._config.analysis != "coordinates"
-            and self._config.analysis != "dihedrals"
-        ):
-            raise ValueError(
-                "Analysis type must either be 'coordinates' or 'dihedrals'"
-            )
-        if hasattr(self._config, "trajform") and hasattr(self._config, "trajfiles"):
-            raise ValueError(
-                "You cannot have both 'trajform' and 'trajfiles' "
-                "defined in your configuration file. Please edit your file."
-            )
+    # Locations of output data
+    saveDir: "savefiles/" # Output subdirectory
+    logfile: "log/log.txt"
+    figDir: "savefiles/figures/" # Figure subdirectory if 'graph: True'
+    """
+    if parser.analysis != "coordinates" and parser.analysis != "dihedrals":
+        raise ValueError("Analysis type must either be 'coordinates' or 'dihedrals'")
+    if parser.trajform is not None and parser.trajfiles is not None:
+        raise ValueError(
+            "You cannot have both 'trajform' and 'trajfiles' "
+            "defined in your configuration file. Please edit your file."
+        )
 
-        if hasattr(self._config, "trajform"):
-            filename = self._config.trajform[0]
-            start, stop = self._config.trajform[1].split("-")
-            padval = Counter(filename)["*"]
-            prefix, suffix = filename.split("*" * padval)
-            self._config.trajfiles = [
-                "{}{:0{}d}{}".format(prefix, _, padval, suffix)
-                for _ in range(int(start), int(stop) + 1)
-            ]
+    if parser.trajform is not None:
+        filename = parser.trajform[0]
+        start, stop = parser.trajform[1].split("-")
+        padval = Counter(filename)["*"]
+        prefix, suffix = filename.split("*" * padval)
+        parser.trajfiles = [
+            "{}{:0{}d}{}".format(prefix, _, padval, suffix)
+            for _ in range(int(start), int(stop) + 1)
+        ]
 
-        return self._config
+    return parser
