@@ -17,6 +17,7 @@
 A trajectory will be read, and the selected frames will be extracted into a new file for
 further processing.
 """
+import json
 import logging.config
 import time
 from pathlib import Path
@@ -135,8 +136,8 @@ def cli(**kwargs: Any) -> None:
     parser.update(**kwargs)
     configparser.parse(parser)
 
-    Path(parser.outdir).mkdir(exist_ok=True)
-    Path(parser.logfile).parent.mkdir(exist_ok=True)
+    parser.outdir.mkdir(exist_ok=True)
+    parser.logfile.parent.mkdir(exist_ok=True)
 
     # Setup logging
     level = logging.WARNING
@@ -167,6 +168,11 @@ def cli(**kwargs: Any) -> None:
         traj.get_positions(filename, align=parser.align)
     else:
         traj.get_dihedrals(filename)
+
+    # Save array shape for later memmap usage.
+    shape_file = parser.outdir / f"{parser.analysis}_shape.json"
+    with open(shape_file, mode="w") as outfile:
+        json.dump(traj._array_shape, outfile)
 
     # Calculate total execution time
     stop_time: float = time.perf_counter()

@@ -73,10 +73,11 @@ class TestExtract:
             Temporary directory
         """
         # Paths
-        saveDir = tmp_path / "qaa"
-        saveDir.mkdir(exist_ok=True)
-        logfile = saveDir / "log.txt"
-        output = saveDir / "coordinates.npy"
+        outdir = tmp_path / "qaa"
+        outdir.mkdir(exist_ok=True)
+        logfile = outdir / "log.txt"
+        output = outdir / "coordinates.npy"
+        shape = outdir / "coordinates_shape.json"
 
         result = script_runner.run(
             "qaa",
@@ -88,7 +89,7 @@ class TestExtract:
             "-f",
             TRJWW,
             "-o",
-            saveDir,
+            outdir,
             "-l",
             logfile,
             "--debug",
@@ -101,6 +102,7 @@ class TestExtract:
         assert result.success
         assert logfile.exists()
         assert output.exists()
+        assert shape.exists()
 
         data = np.memmap(output, mode="r", dtype=np.float_)
         assert data.size == size
@@ -122,10 +124,11 @@ class TestExtract:
             Temporary directory
         """
         # Paths
-        saveDir = tmp_path / "qaa"
-        saveDir.mkdir(exist_ok=True)
-        logfile = saveDir / "log.txt"
-        output = saveDir / "dihedrals.npy"
+        outdir = tmp_path / "qaa"
+        outdir.mkdir(exist_ok=True)
+        logfile = outdir / "log.txt"
+        output = outdir / "dihedrals.npy"
+        shape = outdir / "dihedrals_shape.json"
 
         result = script_runner.run(
             "qaa",
@@ -137,7 +140,7 @@ class TestExtract:
             "-f",
             TRJWW,
             "-o",
-            saveDir,
+            outdir,
             "-l",
             logfile,
             "--debug",
@@ -152,6 +155,7 @@ class TestExtract:
         assert result.success
         assert logfile.exists()
         assert output.exists()
+        assert shape.exists()
 
         data = np.memmap(output, mode="r", dtype=np.float_)
         assert data.size == size

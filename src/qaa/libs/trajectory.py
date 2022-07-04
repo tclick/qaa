@@ -18,7 +18,7 @@ The class will access the molecular dynamics trajectory and offer access to the
 coordinates or calculate the dihedral angles.
 """
 import logging
-from typing import List, Sequence
+from typing import List, Sequence, Tuple
 
 import MDAnalysis as mda
 import numpy as np
@@ -64,6 +64,7 @@ class Trajectory:
         self._mask: str = mask
         self._select: str = f"{mask} and resnum {start_res}:{end_res}"
         self._skip: int = skip
+        self._array_shape: Tuple[int, int] = ()
 
     def get_positions(
         self, filename: PathLike, align: bool = True
@@ -85,10 +86,9 @@ class Trajectory:
         selection = self._universe.select_atoms(self._select)
         n_frames = self._universe.trajectory.n_frames // self._skip
         n_atoms = selection.n_atoms
+        shape = (n_frames, n_atoms, 3)
 
-        data = np.memmap(
-            filename, dtype=np.float_, shape=(n_frames, n_atoms, 3), mode="w+"
-        )
+        data = np.memmap(filename, dtype=np.float_, shape=shape, mode="w+")
         for i, _ in enumerate(self._universe.trajectory[:: self._skip]):
             data[i, :] = selection.positions
         if align:
@@ -98,6 +98,7 @@ class Trajectory:
         n_frames, n_dims, n_atoms = data.shape
         data.resize(n_frames, n_dims * n_atoms)
         data.flush()
+        self._array_shape = data.shape
         logger.info(f"Saved coordinates to {filename}")
 
         return data
@@ -125,10 +126,9 @@ class Trajectory:
         selection = self._universe.select_atoms(self._select)
         n_frames = self._universe.trajectory.n_frames // self._skip
         n_residues = selection.residues.n_residues
+        shape = (n_frames, n_residues * 4)
 
-        data = np.memmap(
-            filename, dtype=np.float_, shape=(n_frames, n_residues * 4), mode="w+"
-        )
+        data = np.memmap(filename, dtype=np.float_, shape=shape, mode="w+")
 
         phi: List[mda.AtomGroup] = selection.residues.phi_selections()
         psi: List[mda.AtomGroup] = selection.residues.psi_selections()
@@ -182,6 +182,7 @@ class Trajectory:
             data[i, 3::4] = np.cos(psi_angle)
 
         data.flush()
+        self._array_shape = data.shape
         logger.info(f"Saved dihedrals to {filename}")
 
         return data
