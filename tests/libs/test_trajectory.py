@@ -35,7 +35,14 @@ class TestTrajectory:
         Trajectory
             a trajectory object
         """
-        return Trajectory(TOPWW, TRJWW, start_res=1, end_res=133)
+        return Trajectory(
+            TOPWW,
+            [
+                TRJWW,
+            ],
+            start_res=1,
+            end_res=133,
+        )
 
     def test_positions(self, trajectory: Trajectory, tmp_path: Path) -> None:
         """Test output of Trajectory.get_positions().
