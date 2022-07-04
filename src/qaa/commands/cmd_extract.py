@@ -123,6 +123,9 @@ from ..libs import configparser, trajectory
     type=click.Choice(_MASK.keys()),
     help="Atom selection",
 )
+@click.option(
+    "--align / --no-align", default=True, help="Align coordinate trajectories"
+)
 def cli(**kwargs: Any) -> None:
     """Write extracted frames to a new file."""
     start_time: float = time.perf_counter()
@@ -161,7 +164,7 @@ def cli(**kwargs: Any) -> None:
     analysis = parser.analysis
     filename = parser.outdir / Path(parser.analysis).with_suffix(".npy")
     if analysis == "coordinates":
-        traj.get_positions(filename)
+        traj.get_positions(filename, align=parser.align)
     else:
         traj.get_dihedrals(filename)
 
