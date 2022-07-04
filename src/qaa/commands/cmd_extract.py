@@ -128,7 +128,8 @@ def cli(**kwargs: Any) -> None:
     start_time: float = time.perf_counter()
 
     # Create subdirectories
-    parser = configparser.Config(kwargs)
+    parser = configparser.Config()
+    parser.update(**kwargs)
     configparser.parse(parser)
 
     Path(parser.outdir).mkdir(exist_ok=True)

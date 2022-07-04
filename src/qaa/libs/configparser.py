@@ -14,9 +14,10 @@
 # --------------------------------------------------------------------------------------
 """Parse a configuration file."""
 import logging
-from collections import Counter, UserDict
+from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, List
 
 import click
 import pylibyaml  # noqa: F401
@@ -27,136 +28,20 @@ from .. import PathLike
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class Config(UserDict[str, Any]):
+@dataclass
+class Config:
     """Configuration data."""
 
-    def _validate_key(self, key: str) -> None:
-        """Validate the configuration key.
+    def update(self, **kwargs: Any) -> None:
+        """Add or update attributes.
 
         Parameters
         ----------
-        key : str
-            Configuration key
-
-        Raises
-        ------
-        AttributeError
-            If the key already exists
-        ValueError
-            If the key is invalid
+        kwargs : Any
+            Dict of attributes to add
         """
-        if key in dir(self):
-            raise AttributeError(f"'{key}' is a protected dictionary attribute")
-        elif isinstance(key, str) and not key.isidentifier():
-            raise ValueError(f"'{key}' is not a valid attribute")
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Create a configuration class.
-
-        Parameters
-        ----------
-        args
-            Positional arguments
-        kwargs
-            Keyword arguments
-
-        Raises
-        ------
-        AttributeError
-            If `data` exists in the passed data
-        """
-        kwargs = dict(*args, **kwargs)
-        if "data" in kwargs.keys():
-            raise AttributeError("'data' is a protected dictionary attribute")
-        self.__dict__["data"] = {}
-        self.update(kwargs)
-
-    def __setitem__(self, key: str, item: Any) -> None:
-        """Set data according to a provided key.
-
-        Parameters
-        ----------
-        key : str
-            configuration key
-        item : Any
-            data
-        """
-        self._validate_key(key)
-        super().__setitem__(key, item)
-
-    def __setattr__(self, attr: str, val: Any) -> None:
-        """Set attribute data.
-
-        Parameters
-        ----------
-        attr : str
-            attribute
-        val : Any
-            data
-        """
-        if attr == "data":
-            super().__setattr__(attr, val)
-        else:
-            self.__setitem__(attr, val)
-
-    def __getattr__(self, attr: str) -> Any:
-        """Return data.
-
-        Parameters
-        ----------
-        attr : str
-            configuration key
-
-        Returns
-        -------
-        Data
-
-        Raises
-        ------
-        AttributeError
-            If key does not exist
-        """
-        try:
-            return self[attr]
-        except KeyError as err:
-            raise AttributeError(f"'Config' object has no attribute '{attr}'") from err
-
-    def __delattr__(self, attr: str) -> None:
-        """Remove the key and data.
-
-        Parameters
-        ----------
-        attr : str
-            configuration key
-
-        Raises
-        ------
-        AttributeError
-            If key does not exist
-        """
-        try:
-            del self[attr]
-        except KeyError as err:
-            raise AttributeError(f"'Config' object has no attribute '{attr}'") from err
-
-    def __getstate__(self) -> Dict[str, Any]:
-        """Return the underlying data.
-
-        Returns
-        -------
-        dictionary of underlying data
-        """
-        return self.data
-
-    def __setstate__(self, state: Dict[str, Any]) -> None:
-        """Set the state of the configuration class.
-
-        Parameters
-        ----------
-        state : Dict
-            data
-        """
-        self.data = state
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 
 def configure(ctx: click.Context, param: List[Any], filename: PathLike) -> None:
@@ -232,6 +117,17 @@ def parse(parser: Config) -> Config:
     """
     if parser.analysis != "coordinates" and parser.analysis != "dihedrals":
         raise ValueError("Analysis type must either be 'coordinates' or 'dihedrals'")
+
+    if not hasattr(parser, "trajform"):
+        parser.trajform = None
+    if not hasattr(parser, "trajfiles"):
+        parser.trajfiles = None
+
+    if parser.trajform is None and parser.trajfiles is None:
+        raise ValueError(
+            "You need to have either 'trajform' or 'trajfiles' "
+            "defined in your configuration file. Please edit your file."
+        )
     if parser.trajform is not None and parser.trajfiles is not None:
         raise ValueError(
             "You cannot have both 'trajform' and 'trajfiles' "
