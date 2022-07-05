@@ -18,10 +18,12 @@ The class will access the molecular dynamics trajectory and offer access to the
 coordinates or calculate the dihedral angles.
 """
 import logging
+from tempfile import NamedTemporaryFile
 from typing import List, Sequence, Tuple
 
 import MDAnalysis as mda
 import numpy as np
+import numpy.lib.format as npf
 import numpy.typing as npt
 from MDAnalysis.lib.distances import calc_dihedrals
 
@@ -88,19 +90,23 @@ class Trajectory:
         n_atoms = selection.n_atoms
         shape = (n_frames, n_atoms, 3)
 
-        data = np.memmap(filename, dtype=np.float_, shape=shape, mode="w+")
-        for i, _ in enumerate(self._universe.trajectory[:: self._skip]):
-            data[i, :] = selection.positions
-        if align:
-            logger.info("Aligning coordinates.")
-            align_trajectory(data, data[0])
+        with NamedTemporaryFile(mode="wb") as tmp:
+            temp_data = np.memmap(tmp.name, dtype=np.float_, shape=shape, mode="w+")
+            for i, _ in enumerate(self._universe.trajectory[:: self._skip]):
+                temp_data[i, :] = selection.positions
+            if align:
+                logger.info("Aligning coordinates.")
+                align_trajectory(temp_data, temp_data[0])
 
-        n_frames, n_dims, n_atoms = data.shape
-        data.resize(n_frames, n_dims * n_atoms)
-        data.flush()
-        self._array_shape = data.shape
+            temp_data.resize(n_frames, 3 * n_atoms)
+            temp_data.flush()
+            print(temp_data.shape)
+            data = npf.open_memmap(
+                filename, mode="w+", dtype=temp_data.dtype, shape=temp_data.shape
+            )
+            data[:] = temp_data[:]
+
         logger.info(f"Saved coordinates to {filename}")
-
         return data
 
     def get_dihedrals(self, filename: PathLike) -> npt.NDArray[np.float_]:
@@ -128,7 +134,7 @@ class Trajectory:
         n_residues = selection.residues.n_residues
         shape = (n_frames, n_residues * 4)
 
-        data = np.memmap(filename, dtype=np.float_, shape=shape, mode="w+")
+        data = npf.open_memmap(filename, dtype=np.float_, shape=shape, mode="w+")
 
         phi: List[mda.AtomGroup] = selection.residues.phi_selections()
         psi: List[mda.AtomGroup] = selection.residues.psi_selections()
@@ -182,7 +188,6 @@ class Trajectory:
             data[i, 3::4] = np.cos(psi_angle)
 
         data.flush()
-        self._array_shape = data.shape
         logger.info(f"Saved dihedrals to {filename}")
 
         return data

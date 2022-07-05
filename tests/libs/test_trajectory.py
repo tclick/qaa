@@ -15,10 +15,8 @@
 """Test the Trajectory class."""
 from pathlib import Path
 
-import numpy as np
 import pytest
 from datafile import TOPWW, TRJWW
-from numpy import testing
 
 from qaa.libs.trajectory import Trajectory
 
@@ -62,16 +60,10 @@ class TestTrajectory:
         n_frames = trajectory._universe.trajectory.n_frames
         data_file = tmp_path / "coordinates.npy"
         positions = trajectory.get_positions(data_file)
-        arr = np.memmap(data_file, dtype=np.float_, mode="r")
 
         assert positions.ndim == 2
         assert positions.shape == (n_frames, n_atoms * 3)
         assert data_file.exists()
-        testing.assert_allclose(
-            arr.reshape(n_frames, n_atoms * 3),
-            positions,
-            err_msg="The memmap arrays don't match.",
-        )
 
     def test_dihedrals(self, trajectory: Trajectory, tmp_path: Path) -> None:
         """Test output of Trajectory.get_dihedrals().
@@ -92,13 +84,7 @@ class TestTrajectory:
         n_frames = trajectory._universe.trajectory.n_frames
         data_file = tmp_path / "coordinates.npy"
         dihedrals = trajectory.get_dihedrals(data_file)
-        arr = np.memmap(data_file, dtype=np.float_, mode="r")
 
         assert dihedrals.ndim == 2
         assert dihedrals.shape == (n_frames, n_residues * 4)
         assert data_file.exists()
-        testing.assert_allclose(
-            arr.reshape(n_frames, n_residues * 4),
-            dihedrals,
-            err_msg="The memmap arrays don't mach.",
-        )
