@@ -77,7 +77,6 @@ class TestExtract:
         outdir.mkdir(exist_ok=True)
         logfile = outdir / "log.txt"
         output = outdir / "coordinates.npy"
-        shape = outdir / "coordinates_shape.json"
 
         result = script_runner.run(
             "qaa",
@@ -97,15 +96,14 @@ class TestExtract:
         universe = mda.Universe(TOPWW, TRJWW)
         n_atoms = universe.select_atoms("protein and name CA").n_atoms
         n_frames = universe.trajectory.n_frames
-        size = n_frames * n_atoms * 3
 
         assert result.success
         assert logfile.exists()
         assert output.exists()
-        assert shape.exists()
 
-        data = np.memmap(output, mode="r", dtype=np.float_)
-        assert data.size == size
+        data = np.load(output)
+        assert data.ndim == 2
+        assert data.shape == (n_frames, n_atoms * 3)
 
     def test_extract_dihedrals(
         self, script_runner: ScriptRunner, tmp_path: Path
@@ -128,7 +126,6 @@ class TestExtract:
         outdir.mkdir(exist_ok=True)
         logfile = outdir / "log.txt"
         output = outdir / "dihedrals.npy"
-        shape = outdir / "dihedrals_shape.json"
 
         result = script_runner.run(
             "qaa",
@@ -150,12 +147,11 @@ class TestExtract:
             "backbone and resnum 2:132"
         ).residues.n_residues
         n_frames = universe.trajectory.n_frames
-        size = n_frames * n_residues * 4
 
         assert result.success
         assert logfile.exists()
         assert output.exists()
-        assert shape.exists()
 
-        data = np.memmap(output, mode="r", dtype=np.float_)
-        assert data.size == size
+        data = np.load(output)
+        assert data.ndim == 2
+        assert data.shape == (n_frames, n_residues * 4)
